@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freeze Chat - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+/* Freeze Chat — ASPX: frmArchiveChat.aspx has no page-specific CSS beyond
+   the shared Atlantis card/form-control/btn classes, so nothing to keep here
+   except a small warning callout with no Atlantis equivalent. */
+.warn-box{background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.35);border-radius:6px;padding:10px 14px;margin:0 0 14px;font-size:.85rem;color:#856404;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row" style="margin-top:30px;">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Freeze Chat</div>
+        </div>
+        <div class="card-body">
+          <!-- Warning — page-specific, no ASPX/Atlantis equivalent -->
+          <div class="warn-box">
+            ⚠️ Ye action selected date tak ke saare chats ko freeze/archive kar dega. Dobara sochke karo!
+          </div>
+          <div class="row">
+            <div class="col">
+              <label for="txtStartDate">Date</label>
+              <!-- ASPX: onkeydown="return false" → no manual typing, calendar only -->
+              <input type="text" class="form-control" id="txtStartDate" placeholder="Enter Start Date"
+                onfocus="this.select()" readonly>
+            </div>
+            <div class="col">
+              <br>
+              <!-- ASPX: btnArchiveChat_Click → SP InsertSettledChat(@fUID, @Date) -->
+              <button class="btn btn-success" id="btnArchiveChat" onclick="archiveChat()">Freeze</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+async function init() {
+  const u = await initPage('archive');
+  if (!u) return;
+
+  // ASPX: today IST
+  const d = new Date(Date.now()+5.5*3600000);
+  const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('txtStartDate').value =
+    `${String(d.getDate()).padStart(2,'0')}/${m[d.getMonth()]}/${d.getFullYear()}`;
+}
+
+// ── btnArchiveChat_Click → SP InsertSettledChat(@fUID, @Date) ──
+async function archiveChat() {
+  const date = document.getElementById('txtStartDate').value;
+  if (!date) { showToast('Date select karo!', true); return; }
+
+  // Confirm dialog (ASPX mein nahi tha, but safety ke liye)
+  if (!confirm(`${date} tak ke chats freeze karein?`)) return;
+
+  try {
+    const r = await API.post('/api/home/archive', { date });
+    if (r?.success) {
+      showToast('Data Saved Successfully!');
+    } else {
+      showToast('Something Went Wrong!', true);
+    }
+  } catch(e) {
+    showToast('Something Went Wrong!', true);
+  }
+}
+
+// ── SweetAlert-based feedback (matches ASPX SucessMessage/ErrorMessage) ──
+function showToast(msg, err=false) {
+  swal(err ? 'Wrong Inputs!' : 'Sucess!', msg, {
+    icon: err ? 'error' : 'success',
+    timer: 900,
+    buttons: false
+  });
+}
+
+window.__escPageHandler = function() {
+  history.back();
+  return true;
+};
+
+init();
+</script>
+</body>
+</html>

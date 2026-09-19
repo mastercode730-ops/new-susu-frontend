@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Home - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+.navbar{background:var(--green2);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.15);position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:3px;text-decoration:none;white-space:nowrap;}
+.nav-links{display:flex;gap:1px;overflow-x:auto;scrollbar-width:none;flex:1;margin:0 10px;flex-wrap:nowrap;}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-link{color:rgba(255,255,255,.75);text-decoration:none;padding:4px 9px;border-radius:5px;font-size:.75rem;font-weight:500;white-space:nowrap;}
+.nav-link:hover,.nav-link.active{background:rgba(255,255,255,.2);color:#fff;}
+.nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.nav-uid{color:rgba(255,255,255,.7);font-size:.76rem;white-space:nowrap;}
+.btn-logout{background:rgba(255,82,82,.22);color:#fff;border:1px solid rgba(255,82,82,.35);padding:4px 11px;border-radius:5px;cursor:pointer;font-size:.76rem;}
+.nav-hamburger{display:none;background:none;border:none;cursor:pointer;color:#fff;font-size:1.4rem;padding:4px 6px;min-width:36px;min-height:36px;border-radius:5px;align-items:center;justify-content:center;}
+.nav-hamburger:active{background:rgba(255,255,255,.15);}
+.nav-drawer{display:none;position:fixed;top:56px;left:0;right:0;background:var(--green3);z-index:99;padding:6px 0;box-shadow:0 4px 12px rgba(0,0,0,.2);max-height:calc(100vh - 56px);overflow-y:auto;}
+.nav-drawer.open{display:block;}
+.nav-drawer .nav-link{display:block;padding:12px 18px;border-radius:0;font-size:.92rem;border-bottom:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.85);}
+.nav-drawer .nav-link.active{background:rgba(255,255,255,.15);color:#fff;}
+
+.games-bar{background:transparent;padding:14px 14px 6px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+.games-bar::-webkit-scrollbar{display:none;}
+.gb-label{color:var(--muted);font-size:.68rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;flex-shrink:0;display:none;}
+/* ASPX: `.notification` pill — white bg, green border, red overlapping badge */
+.game-pill{position:relative;display:inline-flex;align-items:center;gap:6px;background:#fff;border:2px solid var(--green);border-radius:50px;padding:10px 16px;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap;font-weight:bolder;}
+.game-pill:hover,.game-pill:active{background:var(--green);color:#fff;}
+.gp-name{font-weight:700;font-size:.86rem;color:inherit;text-transform:capitalize;}
+.gp-time{font-size:.7rem;color:var(--muted);}
+.gp-badge{position:absolute;top:-7px;right:-7px;background:#dc3545;color:#fff;font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:50%;}
+
+.main-layout{display:flex;flex:1;overflow:hidden;}
+.contact-panel{width:100%;background:transparent;display:flex;flex-direction:column;overflow:hidden;}
+.search-wrap{padding:8px 14px;display:flex;gap:6px;}
+/* ASPX: txtSearchatHead — full-width form-control, capitalize, Arial */
+.search-input{flex:1;background:#fff;border:1px solid #ced4da;border-radius:4px;height:42px;padding:0 14px;color:#000;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;outline:none;}
+.search-input::placeholder{color:var(--muted);text-transform:none;}
+.search-input:focus{border-color:#25d366;box-shadow:0 0 0 3px rgba(37,211,102,.12);}
+.search-btn{display:none;}
+.clist{flex:1;overflow-y:auto;scrollbar-width:thin;padding:0 14px;}
+.sec-label{padding:8px 4px;background:transparent;color:var(--muted);font-size:.66rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;position:sticky;top:0;z-index:1;}
+/* ASPX: `card card-stats card-primary card-round` white rounded row, `.button1` hover */
+.citem{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:15px;margin-bottom:8px;transition:background .12s;}
+.citem:hover,.citem:active{background:#f5f5f5;}
+.citem.sel{border-color:var(--green);}
+.av{display:none;}
+.ci{flex:1;min-width:0;}
+.cn{font-weight:700;font-size:1rem;color:var(--green);text-transform:capitalize;font-family:Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cm{font-size:.86rem;color:#000;font-weight:700;margin-top:2px;}
+.ubadge{background:var(--green);color:#fff;font-size:.78rem;font-weight:bolder;padding:0;width:25px;height:25px;line-height:25px;border-radius:50%;text-align:center;flex-shrink:0;}
+.right-panel{flex:1;display:none;flex-direction:column;overflow:hidden;background:var(--bg);width:100%;}
+.ws{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+.ws-icon{font-size:4rem;opacity:.1;}
+.ws-title{font-size:1.1rem;color:var(--text2);}
+.ws-sub{font-size:.84rem;color:var(--muted);}
+.gp{flex:1;display:none;flex-direction:column;overflow:hidden;}
+.ph{background:var(--panel);padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.back-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:3px 7px;border-radius:5px;min-width:36px;min-height:36px;}
+.back-btn:hover,.back-btn:active{color:var(--text);background:var(--panel2);}
+.hav{width:36px;height:36px;border-radius:50%;background:var(--green2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.92rem;color:#fff;text-transform:uppercase;}
+.hn{font-weight:600;font-size:.92rem;color:var(--text);}
+.hs{font-size:.72rem;color:var(--muted);margin-top:1px;}
+.ggrid{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;overflow-y:auto;align-content:start;}
+.gcrd{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center;}
+.gcrd:hover,.gcrd:active{background:var(--green3);border-color:var(--green);}
+.gcrd-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;color:var(--green);letter-spacing:1px;}
+.gcrd-time{font-size:.72rem;color:var(--muted);margin-top:3px;}
+.rp{flex:1;display:none;flex-direction:column;overflow:hidden;}
+.rlist{padding:14px;overflow-y:auto;}
+.ritem{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:11px 15px;margin-bottom:7px;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center;}
+.ritem:hover,.ritem:active{background:var(--green3);border-color:var(--green);}
+.rv{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--green);}
+.rd{font-size:.72rem;color:var(--muted);margin-top:2px;}
+.cp{flex:1;display:none;flex-direction:column;overflow:hidden;background:#fff;font-family:Arial,sans-serif;font-size:13px;}
+.chat-hdr{background:#fff;border-bottom:2px solid #e0e0e0;padding:6px 12px 4px;flex-shrink:0;}
+.hr1{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;}
+.hr2{font-size:.78rem;color:#000;padding:1px 0 2px;}
+#c_gameName{color:var(--green3);font-weight:bold;font-size:.94rem;cursor:pointer;}
+#c_txtDate{width:100px;height:26px;border:1px solid #ced4da;border-radius:4px;padding:0 6px;font-size:.78rem;color:#000;outline:none;text-align:center;background:#fff;}
+#c_txtDate:focus{border-color:var(--green2);}
+#c_btnYantri{background:none;border:none;cursor:pointer;color:var(--green2);font-size:1.1rem;padding:0 2px;}
+#c_btnBulk{display:none;background:none;border:none;cursor:pointer;color:var(--green2);font-weight:bold;font-size:.8rem;}
+#c_balance{font-size:.9rem;font-weight:bold;color:green;margin-left:auto;flex-shrink:0;}
+#c_backBtn2{background:rgba(0,0,0,.07);border:1px solid #ccc;padding:2px 7px;border-radius:4px;cursor:pointer;font-size:.78rem;flex-shrink:0;}
+#c_scroll{flex:1;overflow-y:auto;background:#fff;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+.chat-row{width:100%;padding:3px 8px;border-bottom:1px solid #f0f0f0;overflow:hidden;}
+.bg-sent{background:#f9f4d9;}.bg-recv{background:#fff;}
+.msg-text{word-break:break-word;font-size:13px;color:#000;font-weight:bold;}
+.lbl-total{font-weight:bold;font-size:11px;color:#000;}
+.msg-meta{font-size:10px;color:#555;display:block;margin-top:1px;}
+.last-upd{font-size:10px;color:#6c757d;}
+.s-sent{font-weight:700;font-size:11px;color:#000;}.s-ok{font-weight:700;font-size:11px;color:green;}.s-cancel{font-weight:700;font-size:11px;color:red;}
+.by-admin{color:var(--green2);font-weight:bold;font-size:10px;margin-left:6px;}
+.btn-acc{color:#198754;background:none;border:none;cursor:pointer;font-size:.85rem;margin-left:2px;}
+.btn-rej{color:#dc3545;background:none;border:none;cursor:pointer;font-size:.85rem;margin-left:28px;}
+.btn-del{color:#dc3545;background:none;border:none;cursor:pointer;font-size:.8rem;float:right;}
+.btn-edit{background:none;border:none;cursor:pointer;font-size:.8rem;}
+.btn-share{background:none;border:none;cursor:pointer;color:var(--green2);font-size:.82rem;float:right;padding:0 2px;}
+.btn-copy{background:none;border:none;cursor:pointer;color:#6c757d;font-size:.82rem;float:right;padding:0 2px;}
+.sub-lbl{font-size:.62rem;color:#888;float:right;}
+.row-sep{height:2px;background:#fff;width:100%;clear:both;}
+#c_grandTotal{padding:3px 10px;font-weight:bold;font-size:.86rem;background:#fff;border-bottom:1px solid #e0e0e0;text-align:center;color:#000;min-height:20px;flex-shrink:0;}
+.chat-input-area{background:#fff;border-top:1px solid #e0e0e0;flex-shrink:0;padding:4px 8px;}
+.tbl-wrap{display:none;margin-bottom:3px;overflow-x:auto;max-height:95px;overflow-y:auto;}
+#c_myTable{width:100%;border-collapse:collapse;border:1px solid #000;}
+#c_myTable td{padding:1px 5px;font-size:13px;font-weight:bold;color:#000;text-align:center;height:22px;border:1px solid #ccc;}
+.tot-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;font-size:.76rem;}
+#c_SpanClear{display:none;background:#FF474C;color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;cursor:pointer;border-radius:4px;}
+.input-row{display:flex;align-items:stretch;gap:0;margin-bottom:3px;}
+#c_txtText{flex:1;height:36px;border:1px solid #aaa;border-radius:4px 0 0 4px;padding:0 9px;font-size:.88rem;color:#000;outline:none;display:none;}
+#c_txtMsg{flex:3;height:36px;border:1px solid #aaa;border-radius:4px 0 0 4px;padding:0 9px;font-size:.88rem;color:#000;outline:none;}
+#c_txtMsg:focus{border-color:#6861ce;}
+#c_txtMsg2{width:65px;height:36px;border:1px solid #aaa;border-left:none;padding:0 5px;font-size:.88rem;color:#000;outline:none;display:none;text-align:center;}
+#c_txtAmt{flex:1;height:36px;border:1px solid #aaa;border-left:none;padding:0 5px;font-size:.88rem;color:#000;outline:none;display:none;text-align:center;min-width:52px;}
+#c_txtAmt:focus{border-color:#6861ce;}
+#c_txtAmtP{width:80px;height:36px;border:1px solid #aaa;border-left:none;padding:0 5px;font-size:.88rem;color:#000;outline:none;display:none;text-align:center;}
+#c_btnSave{background:var(--green2);color:#fff;font-weight:700;border:none;padding:0 14px;height:36px;font-size:.86rem;cursor:pointer;white-space:nowrap;border-radius:0 4px 4px 0;flex-shrink:0;}
+#c_btnSave:hover{background:var(--green3);}
+.extra-opts{font-size:.76rem;color:#000;margin-bottom:2px;}
+.extra-opts span{margin-right:10px;}
+.extra-opts input[type=checkbox]{margin-right:3px;cursor:pointer;vertical-align:middle;}
+.nav-pills{display:flex;flex-wrap:wrap;gap:3px;list-style:none;padding:0;margin:0;}
+.pill{display:inline-block;padding:4px 10px;border-radius:20px;font-size:.71rem;font-weight:500;cursor:pointer;color:#6c757d;border:1px solid #dee2e6;background:#f8f9fa;line-height:1.4;white-space:nowrap;transition:all .15s;}
+.pill:hover,.pill:active{background:#e9ecef;color:#333;}
+.pill.active{background:var(--green2);color:#fff;font-weight:700;border-color:var(--green2);}
+.hid-r{display:none;}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #dee2e6;border-top-color:var(--green2);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.emsg{color:var(--muted);font-size:.82rem;padding:20px;text-align:center;}
+.toast-msg{position:fixed;bottom:55px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 14px;border-radius:6px;font-size:.78rem;z-index:9999;display:none;white-space:nowrap;}
+
+/* ══ MOBILE ══ */
+@media (max-width:768px){
+  .nav-links{display:none!important;}
+  .nav-uid{display:none!important;}
+  .nav-hamburger{display:flex!important;}
+  .btn-logout{padding:4px 8px;font-size:.72rem;}
+  .games-bar{padding:5px 10px;gap:6px;}
+  .game-pill{padding:3px 9px;}
+  .gp-name{font-size:.78rem;}
+  .gp-time{display:none;}
+  .main-layout{flex-direction:column;}
+  .back-btn{font-size:1.4rem;min-width:40px;min-height:40px;}
+  .ggrid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;padding:10px;}
+  .gcrd{padding:10px 8px;border-radius:8px;}
+  .gcrd-name{font-size:1.1rem;}
+  .pill{padding:3px 8px;font-size:.68rem;}
+  .toast-msg{left:10px;right:10px;bottom:8px;transform:none;max-width:calc(100vw - 20px);white-space:normal;text-align:center;}
+}
+@media (max-width:380px){
+  .nav-logo{font-size:1.1rem;letter-spacing:2px;}
+  .btn-logout{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="games-bar" id="gamesBar">
+  <div id="gamesBarContent" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex:1;"><span class="spin"></span></div>
+  <a href="/pages/sale-history.html" title="Find Chat" style="color:var(--green);text-decoration:none;font-size:1.8rem;line-height:1;flex-shrink:0;">📋</a>
+</div>
+
+<div class="main-layout" id="mainLayout">
+  <div class="contact-panel" id="sidebar">
+    <div class="search-wrap">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search Name / Mobile.." autocomplete="off"
+        oninput="onType()" onkeydown="if(event.key==='Enter'){clearTimeout(st);doSearch();return false;}">
+      <button class="search-btn" onclick="doSearch()">🔍</button>
+    </div>
+    <div class="clist" id="clist"><div class="emsg"><span class="spin"></span> Loading...</div></div>
+  </div>
+
+  <div class="right-panel" id="rightPanel">
+    <div class="ws" id="ws">
+      <div class="ws-icon">💬</div>
+      <div class="ws-title">Welcome to Susu9</div>
+      <div class="ws-sub">Select a contact to start</div>
+    </div>
+    <div class="gp" id="gp">
+      <div class="ph">
+        <button class="back-btn" onclick="back()">←</button>
+        <div class="hav" id="gpAv">?</div>
+        <div><div class="hn" id="gpName"></div><div class="hs" id="gpMob"></div></div>
+      </div>
+      <div class="ggrid" id="ggrid"><div class="emsg"><span class="spin"></span></div></div>
+    </div>
+    <div class="rp" id="rp">
+      <div class="ph">
+        <button class="back-btn" onclick="showP('gp')">←</button>
+        <div class="hav" id="rpAv">?</div>
+        <div><div class="hn" id="rpName">Select Rate</div><div class="hs" id="rpGame"></div></div>
+      </div>
+      <div class="rlist" id="rlist"></div>
+    </div>
+    <div class="cp" id="cp">
+      <div class="chat-hdr">
+        <div class="hr1">
+          <button id="c_backBtn2" onclick="chatBack()">←</button>
+          <span style="font-size:1.1rem;cursor:pointer;" onclick="c_OpenYantri()">🎮</span>
+          <span id="c_gameID" style="display:none;"></span><span id="c_chatid" style="display:none;"></span>
+          <span id="c_lblRefresh" style="display:none;"></span><span id="c_selPage" style="display:none;"></span>
+          <span id="c_selUID" style="display:none;"></span><span id="c_mobile1" style="display:none;"></span>
+          <span id="c_isUttar" style="display:none;"></span><span id="c_lblMsg" style="display:none;"></span>
+          <span id="c_isBulk" style="display:none;">1</span><span id="c_actBal" style="display:none;"></span>
+          <span id="c_actLim" style="display:none;"></span><span id="c_rates" style="display:none;"></span>
+          <span id="c_todayDate" style="display:none;"></span><span id="c_dPComm" style="display:none;"></span>
+          <span id="c_dAmt" style="display:none;"></span><span id="c_aPComm" style="display:none;"></span>
+          <span id="c_aAmt" style="display:none;"></span><span id="c_pati" style="display:none;"></span>
+          <span id="c_hissaID" style="display:none;"></span><span id="c_hissaPer" style="display:none;"></span>
+          <span id="c_senderMob" style="display:none;"></span><span id="c_yantriOn" style="display:none;"></span>
+          <span id="c_gameName" onclick="c_OpenYantri()"></span>
+          <input type="text" id="c_txtDate" placeholder="Date" onchange="c_FilterByDate(this)" autocomplete="off">
+          <button id="c_btnYantri" onclick="c_OpenYantri()">📅</button>
+          <button id="c_btnBulk" onclick="c_openBulkMove()">💬 Bulk</button>
+          <span id="c_balance"></span>
+        </div>
+        <div class="hr2"><span id="c_custName"></span>&nbsp;(<span id="c_rateDisplay"></span>)</div>
+      </div>
+      <div id="c_scroll"><div style="text-align:center;padding:16px;color:#aaa;"><span class="spin"></span></div></div>
+      <div id="c_grandTotal"></div>
+      <div class="chat-input-area">
+        <div class="tbl-wrap" id="c_tableWrap">
+          <table id="c_myTable"><tbody id="c_tableBody"></tbody></table>
+          <div class="tot-row">
+            <div><span id="c_totShow"></span><span id="c_totAmt"></span></div>
+            <span id="c_SpanClear" onclick="c_ClearTableNew()">Clear(F5)</span>
+          </div>
+        </div>
+        <div class="input-row">
+          <input type="text" id="c_txtText" placeholder="Enter text..." onkeydown="if(event.keyCode==13&&this.value.trim()){c_sendPlain();return false;}">
+          <input type="text" id="c_txtMsg" placeholder="Number" onkeypress="return c_isNumSpl(event)" oninput="c_procSpl(this)" onkeydown="c_msgKD(event)" onpaste="return c_pasteMsg(event)">
+          <input type="tel" id="c_txtMsg2" placeholder="To" onkeypress="return c_isNum(event)" oninput="c_proc(this)" onkeydown="if(event.keyCode==13){document.getElementById('c_txtAmt').focus();return false;}">
+          <input type="tel" id="c_txtAmt" placeholder="Amt" onkeypress="return c_isNum(event)" oninput="c_proc(this)" onkeydown="c_amtKD(event)">
+          <input type="tel" id="c_txtAmtP" placeholder="Palat Amt" onkeypress="return c_isNum(event)" oninput="c_proc(this)" onkeydown="if(event.keyCode==13){c_SaveBulk(document.getElementById('c_txtMsg').value,document.getElementById('c_txtAmt').value);return false;}">
+          <button id="c_btnSave" onclick="c_btnSaveClick()">Save(F2)</button>
+        </div>
+        <div class="extra-opts">
+          <span id="c_WithOutJode" style="display:none;"><input type="checkbox" id="c_chkNoJode" onclick="c_focusMsg()"> Without Jode</span>
+          <span id="c_Add3" style="display:none;"><input type="checkbox" id="c_CHFP" value="50" onclick="c_focusMsg()"> ADD 3</span>
+        </div>
+        <ul class="nav-pills">
+          <li><a class="pill active" id="c_Bulk" onclick="c_BulkClick()">Typing(Home)</a></li>
+          <li><a class="pill" id="c_Laddi" onclick="c_LaddiClick()">Laddi (F4)</a></li>
+          <li><a class="pill" id="c_Jode" onclick="c_JodeClick()">Jode (F8)</a></li>
+          <li><a class="pill" id="c_Cross" onclick="c_CrossClick()">Cross (F9)</a></li>
+          <li><a class="pill" id="c_Pahada" onclick="c_PahadaClick()">Pahada(P)</a></li>
+          <li><a class="pill" id="c_Ander" onclick="c_AnderClick()">Ander(A)</a></li>
+          <li><a class="pill" id="c_Bahar" onclick="c_BaharClick()">Bahar(B)</a></li>
+          <li><a class="pill" id="c_Yantri" onclick="c_YantriClick()">Yantri(End)</a></li>
+          <li><a class="pill" id="c_57" onclick="c_57Click()">57</a></li>
+          <li><a class="pill" id="c_43" onclick="c_43Click()">43</a></li>
+          <li><a class="pill" id="c_Palat" onclick="c_PalatClick()">Palat</a></li>
+          <li><a class="pill" id="c_Chat" onclick="c_ChatClick()">Chat</a></li>
+        </ul>
+        <input class="hid-r" type="radio" id="c_rCross" name="cr"><input class="hid-r" type="radio" id="c_rJode" name="cr">
+        <input class="hid-r" type="radio" id="c_rLaddi" name="cr"><input class="hid-r" type="radio" id="c_rPahada" name="cr">
+        <input class="hid-r" type="radio" id="c_rAnder" name="cr"><input class="hid-r" type="radio" id="c_rBahar" name="cr">
+        <input class="hid-r" type="radio" id="c_r57" name="cr"><input class="hid-r" type="radio" id="c_r43" name="cr">
+        <input class="hid-r" type="radio" id="c_rPalat" name="cr">
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="text" id="c_clipInput" style="display:none;">
+<div class="toast-msg" id="toastMsg"></div>
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let myUID=null,SC=null,PG=null,st=null;
+// ASPX shows one full-width view at a time: contact list OR the picked game/rate/chat panel.
+function _sidebarCollapse(){document.getElementById('sidebar').style.display='none';document.getElementById('rightPanel').style.display='flex';}
+function _sidebarExpand(){document.getElementById('sidebar').style.display='flex';document.getElementById('rightPanel').style.display='none';}
+
+async function init(){
+  const u=await initPage('home');
+  if(!u)return;
+  myUID=u.UID;
+  loadBar();loadContacts('');
+  setInterval(()=>{if(!document.hidden)loadBar();},5000);
+  // Tab wapas visible hote hi turant refresh (background me polling ruki thi)
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadBar();});
+  // ASPX: $('#txtSearchatHead').focus().select() on page load
+  const si=document.getElementById('searchInput');
+  si.focus();si.select();
+}
+
+async function loadBar(){
+  const r=await API.get('/api/home/games');
+  const el=document.getElementById('gamesBarContent');
+  if(!r||!r.success||!r.data||!r.data.length){el.innerHTML='<span style="color:var(--muted);font-size:.8rem">No games</span>';return;}
+  el.innerHTML=r.data.map(g=>`<div class="game-pill" onclick="openMyGame('${g.GID}','${esc(g.GameName)}')"><span class="gp-name">${g.GameName}</span><span class="gp-time">${g.DrawTime||''}</span>${parseInt(g.UnReadTotal)>0?`<span class="gp-badge">${g.UnReadTotal}</span>`:''}</div>`).join('');
+}
+
+async function loadContacts(f){
+  const el=document.getElementById('clist');
+  el.innerHTML='<div class="emsg"><span class="spin"></span> Loading...</div>';
+  const r=await API.get(`/api/home/messages?filter=${encodeURIComponent(f)}`);
+  if(!r||!r.success||!r.data||!r.data.length){el.innerHTML='<div class="emsg">No contacts found</div>';return;}
+  renderList(r.data,'Contacts');
+}
+
+// ASPX: txtSearchatHead searches the FULL receiver list (all customers),
+// not just contacts with recent messages — a customer with no chat today
+// must still be findable by name/mobile.
+async function doSearch(){
+  const f=document.getElementById('searchInput').value.trim();
+  if(!f){loadContacts('');return;}
+  const el=document.getElementById('clist');
+  el.innerHTML='<div class="emsg"><span class="spin"></span> Searching...</div>';
+  const r=await API.get(`/api/home/receivers?filter=${encodeURIComponent(f)}`);
+  if(!r||!r.success||!r.data||!r.data.length){el.innerHTML='<div class="emsg">No customer found</div>';return;}
+  renderList(r.data,'Search Results');
+}
+
+function onType(){clearTimeout(st);const v=document.getElementById('searchInput').value.trim();if(!v){loadContacts('');return;}st=setTimeout(()=>doSearch(),350);}
+
+function renderList(data,lbl){
+  document.getElementById('clist').innerHTML=`<div class="sec-label">${lbl} (${data.length})</div>`+
+    data.map(c=>{const name=c.CustomerName||c.Mobile||'Unknown',mob=c.Mobile||c.MobileNo||'',fuid=c.fUID||c.UID||'',cid=c.CID||'0',ur=parseInt(c.UnReadTotal)||0;
+      return`<div class="citem" onclick="pickContact('${fuid}','${cid}','${esc(name)}','${mob}',this)"><div class="av">${name.charAt(0).toUpperCase()}</div><div class="ci"><div class="cn">${name}</div><div class="cm">${mob}</div></div>${ur>0?`<div class="ubadge">${ur}</div>`:''}</div>`;
+    }).join('');
+}
+
+async function pickContact(uid,cid,name,mob,el){
+  document.querySelectorAll('.citem').forEach(i=>i.classList.remove('sel'));
+  el.classList.add('sel');SC={uid,cid,name,mob};showP('gp');
+  document.getElementById('gpAv').textContent=name.charAt(0).toUpperCase();
+  document.getElementById('gpName').textContent=name;
+  document.getElementById('gpMob').textContent=mob;
+  document.getElementById('ggrid').innerHTML='<div class="emsg"><span class="spin"></span></div>';
+  const r=await API.get(`/api/home/user-games/${uid}`);
+  if(!r||!r.success||!r.data||!r.data.length){document.getElementById('ggrid').innerHTML='<div class="emsg">No games found</div>';return;}
+  document.getElementById('ggrid').innerHTML=r.data.map(g=>`<div class="gcrd" onclick="pickGame('${g.GID}','${esc(g.GameName)}','${uid}')"><div class="gcrd-name">${g.GameName}</div><div class="gcrd-time">${g.DrawTime||''}</div></div>`).join('');
+}
+
+async function pickGame(gameID,gameName,selUID){
+  PG={gameID,gameName,selUID};const{cid,mob,name}=SC;
+  const r=await API.get(`/api/home/customer-rates/${cid}`);if(!r||!r.success)return;
+  const uRes=await API.get(`/api/home/user-by-mobile/${mob}`);
+  const realUID=(uRes&&uRes.success&&uRes.data&&uRes.data.length>0)?uRes.data[0].UID:selUID;
+  if(r.data.length===0||cid==='0'){openChat(mob,gameID,gameName,realUID,'0/100-0/10-0','0','100','0','10','0','0','0');}
+  else if(r.data.length===1){const d=r.data[0];openChat(mob,gameID,gameName,realUID,d.Rate,d.D_PComm,d.D_Amt,d.A_PComm,d.A_Amt,d.Patti,d.ThirdPartyHissaID,d.ThirdPartyHissaPer);}
+  else{
+    PG.realUID=realUID;showP('rp');
+    document.getElementById('rpAv').textContent=name.charAt(0).toUpperCase();
+    document.getElementById('rpName').textContent=name+' — '+mob;
+    document.getElementById('rpGame').textContent='Game: '+gameName;
+    document.getElementById('rlist').innerHTML=r.data.map(d=>`<div class="ritem" onclick="pickRate('${d.Rate}','${d.D_PComm}','${d.D_Amt}','${d.A_PComm}','${d.A_Amt}','${d.Patti}','${d.ThirdPartyHissaID}','${d.ThirdPartyHissaPer}')"><div><div class="rv">${d.Rate}</div><div class="rd">D:${d.D_PComm}/${d.D_Amt} | A:${d.A_PComm}/${d.A_Amt} | Patti:${d.Patti}</div></div><span style="color:var(--green);font-size:1.1rem">→</span></div>`).join('');
+  }
+}
+
+function pickRate(rate,dpc,da,apc,aa,patti,hid,hper){const{gameID,gameName,realUID}=PG;const{mob}=SC;openChat(mob,gameID,gameName,realUID,rate,dpc,da,apc,aa,patti,hid,hper);}
+function openMyGame(gid,gname){window.location.href=`/pages/received.html?GID=${gid}&Game=${encodeURIComponent(gname)}`;}
+function openChat(mob,gid,gname,suid,rates,dpc,da,apc,aa,pati,hid,hper){const p=new URLSearchParams({SelectedMobile:mob,GameId:gid,GameName:gname,SelectedUID:suid,Rates:rates,D_PComm:dpc,D_Amt:da,A_PComm:apc,A_Amt:aa,Pati_PComm:pati,ThirdPartyHissaID:hid,ThirdPartyHissaPer:hper,SelectedPage:'2'});window.location.href='/pages/chat.html?'+p.toString();}
+
+function showP(id){
+  document.getElementById('ws').style.display='none';
+  document.getElementById('gp').style.display=id==='gp'?'flex':'none';
+  document.getElementById('rp').style.display=id==='rp'?'flex':'none';
+  document.getElementById('cp').style.display=id==='cp'?'flex':'none';
+  _sidebarCollapse();
+}
+function back(){_sidebarExpand();document.getElementById('ws').style.display='flex';['gp','rp','cp'].forEach(id=>document.getElementById(id).style.display='none');document.querySelectorAll('.citem').forEach(i=>i.classList.remove('sel'));c_stopRefresh();}
+function chatBack(){showP('gp');c_stopRefresh();}
+
+// ── EMBEDDED CHAT ──
+let C_P={},c_uid=null,c_isUttar=false,c_Amount=0,c_currentDate='',c_refreshTimer=null;
+const JODE=['11','22','33','44','55','66','77','88','99','100'];
+const S57=['21','23','24','26','27','28','29','31','32','34','36','37','38','39','41','42','43','46','47','48','49','51','52','53','54','56','57','58','59','61','62','63','64','67','68','69','71','72','73','74','76','78','79','81','82','83','84','86','87','89','91','92','93','94','96','97','98'];
+const S43=['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','22','25','30','33','35','40','44','45','50','55','60','65','66','70','75','77','80','85','88','90','95','99','100'];
+const G=id=>document.getElementById(id);
+
+async function c_initChat(){c_uid=myUID;c_stopRefresh();G('c_gameName').textContent=C_P.gameName;G('c_gameID').innerText=C_P.gameId;G('c_selUID').innerText=C_P.selUID;G('c_rates').innerText=C_P.rates;G('c_rateDisplay').textContent=C_P.rates;G('c_dPComm').innerText=C_P.dPComm;G('c_dAmt').innerText=C_P.dAmt;G('c_aPComm').innerText=C_P.aPComm;G('c_aAmt').innerText=C_P.aAmt;G('c_pati').innerText=C_P.pati;G('c_hissaID').innerText=C_P.hissaID;G('c_hissaPer').innerText=C_P.hissaPer;G('c_selPage').innerText=C_P.selPage;G('c_isBulk').innerText='1';G('c_txtAmt').style.display='block';G('c_SpanClear').style.display='none';c_cleartable();c_BulkClick();await c_loadName();await c_loadBalance();await c_loadRefStat();await c_initDate();await c_getTime();c_startRefresh();c_scrollBottom();}
+async function c_loadName(){try{const r=await API.get(`/api/chat/customer-name?mobile=${C_P.mobile}`);if(r?.success&&r.data){const mob=C_P.mobile.substring(5)||C_P.mobile;G('c_custName').textContent=(r.data.CustomerName||'')+' '+mob;c_isUttar=r.data.IsUttar==='True';G('c_isUttar').innerText=r.data.IsUttar||'False';}else G('c_custName').textContent=C_P.mobile;}catch(e){G('c_custName').textContent=C_P.mobile;}}
+async function c_loadBalance(){try{const r=await API.get(`/api/accounts/selected-balance?customerUID=${C_P.selUID}`);const el=G('c_balance');if(r?.success&&r.data?.IsLimit==='True'){G('c_actLim').innerText='True';const bal=Math.trunc(parseFloat(r.data.WinAmount||0));G('c_actBal').innerText=bal;if(bal>0){el.textContent='Bal:'+bal;el.style.color='red';}else if(bal<0){el.textContent='Bal:'+Math.abs(bal);el.style.color='green';}else el.textContent='';}else el.textContent='';}catch(e){}}
+async function c_loadRefStat(){try{const r=await API.get('/api/auth/me');if(r?.user?.IsRefreshStatus)G('c_lblRefresh').innerText=r.user.IsRefreshStatus;}catch(e){}}
+async function c_initDate(){try{const r1=await API.get(`/api/chat/date?gameId=${C_P.gameId}`);const today=r1?.date?c_fmtDate(r1.date):c_getIST();const r2=await API.get(`/api/chat/unread-date?gameId=${C_P.gameId}&selectedUID=${C_P.selUID}`);c_currentDate=r2?.date?c_fmtDate(r2.date):today;}catch(e){c_currentDate=c_getIST();}G('c_txtDate').value=c_currentDate;G('c_todayDate').innerText=c_currentDate;}
+function c_FilterByDate(txt){c_currentDate=txt.value;G('c_todayDate').innerText=c_currentDate;c_cleartable();c_getTime();}
+async function c_getTime(){try{const r=await API.get(`/api/chat/received?gameId=${C_P.gameId}&date=${encodeURIComponent(c_currentDate)}&selectedUID=${C_P.selUID}&rates=${encodeURIComponent(C_P.rates)}`);if(!r?.success){c_renderMsgs([]);return;}c_renderMsgs(r.data||[]);const tot=(r.data||[]).filter(m=>m.IsAccepted==='Accepted'||m.IsAccepted==='Pending').reduce((s,m)=>s+(parseFloat(m.TotalAmount)||0),0);G('c_grandTotal').textContent=tot?'Grand Total: '+tot:'';}catch(e){c_renderMsgs([]);}}
+function c_renderMsgs(msgs){const el=G('c_scroll');if(!msgs.length){el.innerHTML='<div style="text-align:center;padding:16px;color:#aaa;font-size:.8rem;">No messages</div>';return;}el.innerHTML=msgs.map(m=>{const isSent=String(m.Sender)==='0',rowCls=isSent?'bg-sent':'bg-recv',isY=m.IsYantriStyle==='True';const body=m.IsTextChat==='False'?`<img src="${m.Message||''}" style="max-width:150px;border-radius:4px;">`:`<span class="msg-text">${cEsc(m.Message||'')}</span>`;let extra='';if(isY&&m.TotalAmount)extra+=`<div><span class="lbl-total">Total Amt: ${m.TotalAmount}</span></div>`;const ds=m.MessageDateTime?c_fmtShort(m.MessageDateTime):'';if(isY&&(m.Rate||ds))extra+=`<div class="msg-meta">${cEsc(m.Rate||'')}${ds?` Date:(${ds})`:''}</div>`;const full=m.MessageDateTime?c_fmtFull(m.MessageDateTime):'';const lastLine=`<div><span class="last-upd">Last Updated: ${full}</span></div>`;const byA=m.IsSendByReceiver==='True'?`<span class="by-admin">BY ADMIN</span>`:'';const sub=m.subuserID?`<span class="sub-lbl">${m.subuserID}</span>`:'';const share=`<button class="btn-share">↪</button>`;const copy=`<button class="btn-copy" onclick="c_copy('${cEscJs(m.Message||'')}')">📋</button>`;const chk=`<input type="checkbox" style="width:12px;height:12px;margin-top:2px;">`;const showEdit=(m.IsAccepted==='Pending'&&String(m.X)==='1')||(m.IsSendByReceiver==='True'&&String(m.X)==='0'&&m.IsAccepted!=='Rejected');const editBtn=showEdit?`<button class="btn-edit" onclick="c_reEdit('${m.ChatID}','${cEscJs(m.Message||'')}')">✍🏻</button>`:'';if(isSent){let st='';if(m.IsAccepted==='Accepted')st=`<span class="s-ok">Ok</span>`;else if(m.IsAccepted==='Rejected')st=`<span class="s-cancel">Cancelled</span>${byA}`;else if(isY)st=`<span class="s-sent">Sent ✔</span>${byA}`;else st=byA;const del=m.IsAccepted==='Pending'?`<button class="btn-del" onclick="c_delRow('${m.ChatID}')">🗑</button>`:'';return`<div class="chat-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div>${del}${editBtn}<div style="text-align:right;">${body}${extra}${lastLine}<div>${st}</div></div>${sub}<div class="row-sep"></div></div>`;}else{let st='';if(m.IsAccepted==='Rejected')st=`<span class="s-cancel">Cancelled</span>${byA}`;else if(m.IsAccepted==='Accepted'&&isY)st=`<span class="s-ok">Ok</span>${byA}`;else st=byA;const acBtns=m.IsAccepted==='Pending'&&isY?`<button class="btn-acc" onclick="c_accept('${m.ChatID}')">✔</button><button class="btn-rej" onclick="c_reject('${m.ChatID}')">✕</button>`:'';return`<div class="chat-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div>${editBtn}<div style="text-align:left;">${body}${extra}${lastLine}<div>${st}${acBtns}</div></div>${sub}<div class="row-sep"></div></div>`;}}).join('');c_scrollBottom();}
+function c_parseSPDate(str){if(!str)return null;const d=new Date(str);if(!isNaN(d))return d;const m=String(str).match(/^(\d{1,2})\/(\d{2})\/(\d{2})\s+(\d{1,2}):(\d{2})(AM|PM)$/i);if(m){let h=parseInt(m[4]);const mn=parseInt(m[5]),ap=m[6].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return new Date(2000+parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,mn,0);}return null;}
+function c_fmtShort(str){const d=c_parseSPDate(str);if(!d||isNaN(d))return'';return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2);}
+function c_fmtFull(str){const d=c_parseSPDate(str);if(!d||isNaN(d))return'';const h=d.getHours(),mn=d.getMinutes(),ap=h>=12?'PM':'AM',h12=h%12||12;return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2)+' '+h12+':'+String(mn).padStart(2,'0')+ap;}
+function c_fmtDate(dt){try{const d=new Date(dt);if(isNaN(d))return String(dt).split('T')[0];return String(d.getDate()).padStart(2,'0')+'/'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+'/'+d.getFullYear();}catch{return String(dt);}}
+function c_getIST(){return c_fmtDate(new Date(Date.now()+5.5*3600000));}
+async function c_accept(id){const r=await API.post('/api/chat/accept-reject',{chatId:id,status:'Accepted'});if(r?.success)c_getTime();}
+async function c_reject(id){const r=await API.post('/api/chat/accept-reject',{chatId:id,status:'Rejected'});if(r?.success)c_getTime();}
+async function c_delRow(id){await API.delete(`/api/chat/${id}`);c_getTime();}
+function c_copy(msg){const el=G('c_clipInput');el.value=msg;el.select();navigator.clipboard?.writeText(msg);}
+function c_startRefresh(){c_stopRefresh();c_refreshTimer=setInterval(()=>{if(document.hidden)return;const tb=G('c_tableBody');if(G('c_lblRefresh').innerText==='True'&&(!tb||!tb.rows.length))c_getTime();},2000);}
+function c_stopRefresh(){if(c_refreshTimer){clearInterval(c_refreshTimer);c_refreshTimer=null;}}
+
+function c_SaveBulk(s1,s2){
+  const isJode=G('c_rJode').checked,isPalat=G('c_rPalat').checked,is57=G('c_r57').checked,is43=G('c_r43').checked;
+  const isPahada=G('c_rPahada').checked,isAnder=G('c_rAnder').checked,isBahar=G('c_rBahar').checked;
+  const isLaddi=G('c_rLaddi').checked,isCross=G('c_rCross').checked;
+  const isAdd3=G('c_CHFP').checked;
+  if(!((s1!=='')||(isJode&&s2!==''&&s2!=='0')||(is57&&s2!==''&&s2!=='0')||(is43&&s2!==''&&s2!=='0')))return;
+  if(isJode){JODE.forEach(n=>c_addRow(n,s2));c_clearI();return;}
+  if(isPalat){const s3=G('c_txtAmtP').value,raw=s1.replace(/[^0-9]/g,'');if(raw.length===1){c_addRow('0'+raw,s2);c_SubT();c_addRow(raw+'0',s3);c_SubT();c_clearI();return;}if(raw.length%2===0){for(let i=0;i<raw.length;i+=2){let c2=raw.substr(i,2);if(c2==='00')c2='100';c_addRow(c2,s2);c_SubT();const rev=parseInt(c2.split('').reverse().join(''));c_addRow(rev<10?'0'+rev:String(rev),s3);c_SubT();}c_clearI();return;}c_err();return;}
+  if(is57){S57.forEach(n=>c_addRow(n,s2));c_clearI();return;}
+  if(is43){S43.forEach(n=>c_addRow(n,s2));c_clearI();return;}
+  if(isPahada){let start=parseInt(s1.replace(/[^0-9]/g,''));if(isNaN(start)||start<=0)start=1;const step=isAdd3?3:start;for(let i=start;i<=100;i+=step){c_addRow(i>=1&&i<=9?'0'+i:String(i),s2);c_SubT();}c_clearI();return;}
+  if(isAnder){s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d+d;if(n==='0000')n='10000';c_addRow(n,s2);c_SubT();});c_clearI();return;}
+  if(isBahar){s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d;if(n==='000')n='1000';c_addRow(n,s2);c_SubT();});c_clearI();return;}
+  if(isLaddi){const from=parseInt(s1.replace(/[^0-9]/g,'')),to=parseInt(G('c_txtMsg2').value);if(!isNaN(from)&&!isNaN(to)&&parseInt(s2)>0&&from<to&&to<=100){for(let i=from;i<=to;i++){c_addRow(i>=1&&i<=9?'0'+i:String(i),s2);c_SubT();}c_clearI();}else c_err();return;}
+  if(isCross){const dig=s1.replace(/[^0-9]/g,'').split(''),noJ=G('c_chkNoJode').checked;for(let i=0;i<dig.length;i++)for(let j=0;j<dig.length;j++){if(noJ&&i===j)continue;let p=dig[i]+dig[j];if(p==='00'||p==='0')p='100';c_addRow(p,s2);c_SubT();}c_clearI();return;}
+  if((s2!==''&&s2!=='0')&&/[aAbB]/.test(s1)){c_parseAB(s1,s2);c_clearI();return;}
+  if(s2!==''&&s2!=='0'&&s1!=='0'){c_parseTyp(s1.replace(/[^0-9]/g,'')).forEach(n=>{if(n){c_addRow(n,s2);c_SubT();}});c_clearI();}
+  else if(s2!==''&&s2==='0'&&s1!=='0'){c_parsePaste(s1);c_clearI();}
+  else c_err();
+}
+function c_parseAB(s1,s2){if(s1.match(/ab/i)){const str=s1.replace(/[aAbB]/g,'');str.split('').forEach(d=>{let n=d+d+d+d;if(n==='0000')n='10000';c_addRow(n,s2);c_SubT();});str.split('').forEach(d=>{let n=d+d+d;if(n==='000')n='1000';c_addRow(n,s2);c_SubT();});}else if(/[aA]/.test(s1)){s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d+d;if(n==='0000')n='10000';c_addRow(n,s2);c_SubT();});}else{s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d;if(n==='000')n='1000';c_addRow(n,s2);c_SubT();});}}
+function c_parseTyp(raw){if(!raw)return[];const v=parseInt(raw);if(raw.length===1)return[v>=1&&v<=9?'0'+v:v===0?'100':String(v)];if(raw.length===3&&c_allSame(raw))return[raw==='000'?'1000':raw];if(raw.length===4&&c_allSame(raw))return[raw==='0000'?'10000':raw];if(raw.length%2===0){const r=[];for(let i=0;i<raw.length;i+=2){let c2=raw.substr(i,2);if(c2==='00')c2='100';r.push(c2);}return r;}if(v>=1&&v<=9)return['0'+v];return[String(v)];}
+function c_parsePaste(s1){let str=s1.replace(/ /g,'');const parts=str.split(/[\n),+$#@\\_]/);let pend='';parts.forEach(part=>{const segs=part.split(/[=(]/);let num=(segs[0]||'').replace(/[^0-9]/g,'');const amt=segs[1];if(!amt){pend+=num;return;}let fn=num+pend;pend='';c_parseTyp(fn).forEach(n=>{if(n&&amt){c_addRow(n,amt);c_SubT();}});});}
+function c_allSame(s){return s.split('').every(c2=>c2===s[0]);}
+function c_addRow(s1,s2){if(!s1||!s2)return;const valid=((parseInt(s1)<=100&&parseInt(s1)>0)||(s1.length>=3&&c_allSame(s1))||s1==='1000'||s1==='10000');if(!valid)return;const amt=parseFloat(s2)||0;if(amt===0)return;const fa=c_isUttar?-Math.abs(amt):Math.abs(amt);if(isNaN(fa)||fa===0)return;const tb=G('c_tableBody'),tr=document.createElement('tr');tr.innerHTML=`<td style="width:48px;text-align:center;font-size:13px;font-weight:bold;">${s1}</td><td style="width:75px;text-align:center;font-size:13px;font-weight:bold;">${fa}</td><td style="width:45px;text-align:center;"><button onclick="c_delTR(this)" style="width:17px;height:17px;background:red;color:#fff;border:2px solid red;border-radius:4px;font-size:9px;font-weight:bold;">X</button></td>`;tb.appendChild(tr);c_Amount+=fa;G('c_SpanClear').style.display='block';G('c_tableWrap').style.display='block';const wrap=G('c_tableWrap');wrap.scrollTop=wrap.scrollHeight;}
+function c_delTR(btn){const row=btn.closest('tr');c_Amount-=parseFloat(row.cells[1].textContent)||0;row.remove();c_SubT();}
+function c_SubT(){const tb=G('c_tableBody');let sum=0;Array.from(tb.rows).forEach(r=>{sum+=parseFloat(r.cells[1]?.textContent)||0;});c_Amount=sum;G('c_totAmt').textContent=sum?sum:'';G('c_totShow').textContent=sum?'Total Amount:':'';if(!sum){G('c_tableWrap').style.display='none';G('c_SpanClear').style.display='none';}}
+function c_myFunc(){const tb=G('c_tableBody');let f='';for(let i=0;i<tb.rows.length;i++)f+=tb.rows[i].cells[0].innerHTML+'='+tb.rows[i].cells[1].innerHTML+',';if(f)f=f.slice(0,-1);G('c_lblMsg').innerHTML=f;}
+function c_cleartable(){G('c_tableBody').innerHTML='';c_Amount=0;c_SubT();}
+function c_ClearTableNew(){c_cleartable();G('c_isBulk').innerText='1';G('c_txtAmt').style.display='block';G('c_txtAmt').value='';G('c_lblMsg').innerHTML='';G('c_totAmt').innerText='';c_Amount=0;c_clearI();G('c_chatid').innerText='';G('c_btnSave').textContent='Save(F2)';G('c_SpanClear').style.display='none';c_focusMsg();}
+function c_clearI(){const isPahada=G('c_rPahada').checked,isAdd3=G('c_CHFP').checked;['c_txtMsg2','c_txtMsg','c_txtAmt','c_txtText','c_txtAmtP'].forEach(id=>G(id).value='');G('c_txtMsg').maxLength=50000;if(isPahada){G('c_CHFP').checked=isAdd3;c_PahadaClick_noReset();}else{G('c_CHFP').checked=false;c_BulkClick();}}
+function c_PahadaClick_noReset(){c_setI();G('c_Pahada').classList.add('active');G('c_rPahada').checked=true;G('c_Add3').style.display='block';G('c_WithOutJode').style.display='none';G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtMsg').maxLength=2;c_focusMsg();}
+async function c_sendMsg(){c_myFunc();const msg=G('c_lblMsg').innerHTML,tot=c_Amount;if(!msg||tot===0){c_toast('Sorry Please Check Value !');c_focusMsg();return;}const limT=G('c_actLim').innerText==='True',actB=parseFloat(G('c_actBal').innerText||0);if(limT&&tot>0){if(actB<0&&tot>Math.abs(actB)){c_toast('Amount Greater than limit.');return;}else if(actB>0){c_toast('Limit Out!');return;}}const eid=G('c_chatid').innerText,isY=G('c_isBulk').innerText==='1'?'True':'False';const r=await API.post('/api/chat/save-receiver-message',{gameId:C_P.gameId,message:msg,totalAmount:tot,isYantriStyle:isY,checkAcceptedStatus:isY==='True',fUserID:C_P.selUID,date:c_currentDate,chatId:eid||'',btnText:eid?'Update(Insert)':'Send(Insert)',D_PComm:C_P.dPComm,D_Amt:C_P.dAmt,A_PComm:C_P.aPComm,A_Amt:C_P.aAmt,Pati_PComm:C_P.pati,fHissaPartyID:C_P.hissaID,HissaPerc:C_P.hissaPer,ThirdPartyCommID:'0',ThirdPartyDaraComm:'0',ThirdPartyAkharComm:'0'});if(r?.success||r?.message==='SuccessFully'){G('c_lblMsg').innerHTML='';c_Amount=0;c_cleartable();c_clearI();G('c_chatid').innerText='';G('c_btnSave').textContent='Save(F2)';G('c_SpanClear').style.display='none';c_getTime();}else{c_toast(r?.message||'Error!');c_focusMsg();}}
+async function c_sendPlain(){const msg=G('c_txtText').value.trim();if(!msg){G('c_txtText').focus();return;}const r=await API.post('/api/chat/save-receiver-message',{gameId:C_P.gameId,message:msg,totalAmount:0,isYantriStyle:'False',checkAcceptedStatus:false,fUserID:C_P.selUID,date:c_currentDate,chatId:'',btnText:'Send(Insert)',D_PComm:'0',D_Amt:'100',A_PComm:'0',A_Amt:'10',Pati_PComm:'0',fHissaPartyID:'0',HissaPerc:'0',ThirdPartyCommID:'0',ThirdPartyDaraComm:'0',ThirdPartyAkharComm:'0'});if(r?.success||r?.message==='SuccessFully'){G('c_txtText').value='';await c_getTime();c_ChatClick();}else c_toast(r?.message||'Error!');}
+function c_reEdit(chatId,msg){G('c_lblMsg').innerHTML='';c_cleartable();G('c_chatid').innerText=chatId;G('c_btnSave').textContent='Update(Insert)';G('c_isBulk').innerText='1';G('c_SpanClear').style.display='block';c_SaveBulk(msg,'0');c_focusMsg();}
+function c_btnSaveClick(){if(G('c_isBulk').innerText==='1'){c_myFunc();const msg=G('c_lblMsg').innerHTML;if(msg&&c_Amount!==0)c_sendMsg();else{c_toast('Sorry Please Check Value !');c_focusMsg();}}else c_sendPlain();}
+function c_amtKD(e){if(e.keyCode===13){const num=G('c_txtMsg').value,amt=G('c_txtAmt').value;if(amt){const pV=window.getComputedStyle(G('c_txtAmtP')).display!=='none';if(!pV){c_SaveBulk(num,amt);return false;}else G('c_txtAmtP').focus();}e.preventDefault();}}
+function c_msgKD(e){if(e.keyCode===13){if(G('c_txtMsg2').style.display!=='none'&&G('c_txtMsg').value)G('c_txtMsg2').focus();else if(G('c_txtAmt').style.display!=='none'&&G('c_txtMsg').value)G('c_txtAmt').focus();e.preventDefault();}}
+function c_pasteMsg(e){e.preventDefault();let t=e.clipboardData.getData('text').replace(/(\r\n|\n|\r)/gm,',');G('c_txtMsg').value+=t;c_procSpl(G('c_txtMsg'));return false;}
+function c_isNum(e){const c2=(e.which||e.keyCode);return!(c2>31&&(c2<48||c2>57));}
+function c_isNumSpl(e){const c2=(e.which||e.keyCode);if((c2>64&&c2<91)||(c2>96&&c2<123)&&c2!==13)return false;return true;}
+function c_proc(i){i.value=i.value.replace(/[^0-9]/g,'');}
+function c_procSpl(i){i.value=i.value.replace(/[a-zA-Z]/g,'');}
+function c_focusMsg(){setTimeout(()=>{const el=G('c_txtMsg');el.focus();el.select();},50);}
+function c_scrollBottom(){setTimeout(()=>{const w=G('c_scroll');if(w)w.scrollTop=w.scrollHeight;},80);}
+function c_setI(){['c_Bulk','c_Laddi','c_Jode','c_Cross','c_Pahada','c_Ander','c_Bahar','c_Yantri','c_57','c_43','c_Palat','c_Chat'].forEach(id=>G(id)?.classList.remove('active'));}
+function c_BulkClick(){c_setI();G('c_Bulk').classList.add('active');['c_rJode','c_rBahar','c_rAnder','c_rCross','c_rLaddi','c_rPahada','c_r57','c_r43','c_rPalat'].forEach(id=>G(id).checked=false);G('c_WithOutJode').style.display='none';G('c_Add3').style.display='none';G('c_isBulk').innerText='1';G('c_txtAmt').style.display='block';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtMsg').value='';G('c_txtAmt').value='';G('c_txtMsg').maxLength=50000;c_focusMsg();}
+function c_LaddiClick(){c_setI();G('c_Laddi').classList.add('active');G('c_rLaddi').checked=true;G('c_WithOutJode').style.display='none';G('c_Add3').style.display='none';G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='block';G('c_txtAmt').style.display='block';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtMsg').maxLength=2;G('c_txtMsg2').maxLength=3;c_focusMsg();}
+function c_JodeClick(){c_setI();G('c_Jode').classList.add('active');G('c_rJode').checked=true;G('c_isBulk').innerText='1';G('c_txtMsg').style.display='none';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtAmt').focus();G('c_txtAmt').select();}
+function c_CrossClick(){c_setI();G('c_Cross').classList.add('active');G('c_rCross').checked=true;G('c_WithOutJode').style.display='block';G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtMsg').maxLength=50000;c_focusMsg();}
+function c_PahadaClick(){c_setI();G('c_Pahada').classList.add('active');G('c_rPahada').checked=true;G('c_Add3').style.display='block';G('c_WithOutJode').style.display='none';G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtMsg').maxLength=2;G('c_CHFP').checked=false;c_focusMsg();}
+function c_AnderClick(){c_setI();G('c_Ander').classList.add('active');G('c_rAnder').checked=true;G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtMsg').maxLength=50000;c_focusMsg();}
+function c_BaharClick(){c_setI();G('c_Bahar').classList.add('active');G('c_rBahar').checked=true;G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtMsg').maxLength=50000;c_focusMsg();}
+function c_YantriClick(){c_setI();G('c_Yantri').classList.add('active');c_cleartable();window.location.href=`/pages/yantri.html?GameID=${C_P.gameId}&SelectedUID=${C_P.selUID}&Date=${c_currentDate}&Rates=${C_P.rates}&SelectedPage=2`;}
+function c_57Click(){c_setI();G('c_57').classList.add('active');G('c_r57').checked=true;G('c_isBulk').innerText='1';G('c_txtMsg').style.display='none';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtAmt').focus();G('c_txtAmt').select();}
+function c_43Click(){c_setI();G('c_43').classList.add('active');G('c_r43').checked=true;G('c_isBulk').innerText='1';G('c_txtMsg').style.display='none';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtAmt').style.display='block';G('c_txtAmt').focus();G('c_txtAmt').select();}
+function c_PalatClick(){c_setI();G('c_Palat').classList.add('active');G('c_rPalat').checked=true;G('c_isBulk').innerText='1';G('c_txtMsg').style.display='block';G('c_txtMsg2').style.display='none';G('c_txtText').style.display='none';G('c_txtAmtP').style.display='block';G('c_txtAmtP').value='';G('c_txtAmt').style.display='block';G('c_txtMsg').maxLength=50000;c_focusMsg();}
+function c_ChatClick(){c_setI();G('c_Chat').classList.add('active');['c_rJode','c_rBahar','c_rAnder','c_rCross','c_rLaddi','c_rPahada','c_r57','c_r43','c_rPalat'].forEach(id=>G(id).checked=false);G('c_isBulk').innerText='0';G('c_txtAmt').style.display='none';G('c_txtMsg2').style.display='none';G('c_txtMsg').style.display='none';G('c_txtAmtP').style.display='none';G('c_txtText').style.display='block';G('c_txtText').focus();G('c_txtText').select();}
+function c_OpenYantri(){window.location.href=`/pages/yantri.html?GameID=${C_P.gameId}&SelectedUID=${C_P.selUID}&Date=${c_currentDate}&Rates=${C_P.rates}&SelectedPage=2`;}
+function c_openBulkMove(){c_toast('Bulk feature coming soon');}
+function c_err(){c_toast('Wrong Inputs!');}
+function c_toast(msg){const t=G('toastMsg');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2800);}
+window.__escPageHandler = function() {
+  if (G('cp').style.display === 'flex') { chatBack(); return true; }
+  return false;
+};
+document.addEventListener('keyup',e=>{if(G('cp').style.display==='none')return;const k=e.keyCode||e.which;if(k===65&&G('c_isBulk').innerText==='1')c_AnderClick();if(k===66&&G('c_isBulk').innerText==='1')c_BaharClick();if(k===80&&G('c_isBulk').innerText==='1')c_PahadaClick();if(k===115)c_LaddiClick();if(k===119)c_JodeClick();if(k===120)c_CrossClick();if(k===36)c_BulkClick();if(k===35)c_YantriClick();if(k===113){G('c_btnSave').click();c_scrollBottom();}});
+function cEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function cEscJs(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"');}
+function esc(s){return String(s||'').replace(/'/g,"\\'");}
+async function doLogout(){await API.post('/api/auth/logout',{});window.location.href='/login.html';}
+init();
+</script>
+</body>
+</html>

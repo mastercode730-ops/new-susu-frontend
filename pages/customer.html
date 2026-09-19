@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="/css/main.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contacts - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<style>
+.hideGridColumn{display:none;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emsg{color:var(--muted);text-align:center;padding:20px;font-size:.84rem;}
+/* Bolder, higher-contrast text on this page — visual only, no behavior change */
+.content .form-group label{font-weight:700;color:var(--text);}
+.content .card-title{font-weight:700;color:var(--text);}
+.content table th{font-weight:700;color:var(--text);}
+.content table td{font-weight:600;color:var(--text);}
+.content .form-control{font-weight:600;color:var(--text);}
+/* Legacy desktop-app look for this page: maroon bold labels, cream inputs,
+   centered red form title, bordered data-grid list — visual only. */
+.content #formCard .form-group label,.content #ratesCard .form-group label{color:#8b1d1d;font-weight:800;}
+.content #formCard .form-control,.content #ratesCard .form-control{background:#fffbe0;border:1px solid #c9b458;}
+.content #formCard .card-title,.content #ratesCard .card-title{color:#8b1d1d;font-weight:800;font-size:1.05rem;text-align:center;margin:0;}
+.legacy-toplink{color:#1d5fa8;font-weight:700;text-decoration:underline;cursor:pointer;font-size:.85rem;background:none;border:none;padding:0;}
+.legacy-grid table{border-collapse:collapse;}
+.legacy-grid th{background:#d9d9d9;border:1px solid #999;font-weight:800;color:#000;}
+.legacy-grid td{border:1px solid #ccc;}
+.legacy-grid tbody tr:hover td{background:#eef3ff;}
+.legacy-grid tbody tr.table-active td{background:#2f6fed!important;color:#fff!important;}
+.legacy-radio label{font-weight:800;margin-right:14px;cursor:pointer;}
+/* Compact form — smaller fields/spacing, text stays bold/clear */
+.content #formCard .card-header,.content #ratesCard .card-header{padding:8px 16px!important;}
+.content #formCard .card-body,.content #ratesCard .card-body{padding:6px 16px!important;}
+.content #formCard .card-action,.content #ratesCard .card-action{padding:8px 16px!important;}
+.content #formCard .form-group,.content #ratesCard .form-group{margin-bottom:3px!important;}
+.content #formCard .form-group label,.content #ratesCard .form-group label{font-size:.68rem!important;margin-bottom:0!important;line-height:1.3!important;display:block;}
+.content #formCard .form-control,.content #ratesCard .form-control{padding:.08rem .35rem!important;height:1.5rem!important;line-height:1.3!important;font-size:.74rem!important;}
+.content #formCard select.form-control{height:1.5rem!important;}
+.content #formCard .row,.content #ratesCard .row{margin-left:-6px;margin-right:-6px;}
+.content #formCard .row > [class*="col-"],.content #ratesCard .row>.col{padding-left:6px;padding-right:6px;}
+.content #formCard .checkbox-inline,.content #formCard input[type=checkbox]{vertical-align:middle;}
+.content #formCard .chk-row{display:flex;flex-wrap:wrap;align-items:center;column-gap:14px;row-gap:4px;}
+.content #formCard .chk-row label{display:inline!important;font-size:.72rem!important;margin:0 0 0 3px!important;color:#8b1d1d;font-weight:800;vertical-align:middle;}
+.content #formCard .chk-row input[type=checkbox]{margin:0;vertical-align:middle;}
+/* Grid: horizontal scroll instead of squeezing columns */
+#customerList{overflow-x:auto;}
+#customerList table{width:auto;min-width:1150px;}
+.legacy-grid th,.legacy-grid td{padding:5px 10px;white-space:nowrap;font-size:.82rem;}
+.legacy-grid td[style*="text-align:left"]{white-space:normal;}
+/* Fit both panels to the viewport instead of growing the whole page — each
+   scrolls internally past that point. Also stops Bootstrap's row stretch
+   from force-expanding the shorter card into empty space. */
+.content > .row{align-items:flex-start;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — shrink that dead space down to just clearing the
+   fixed blue top bar. Page-scoped so it doesn't touch other pages' layout. */
+.main-panel > .content{margin-top:50px!important;padding-top:8px!important;}
+#formCard,#searchCard,#ratesCard{max-height:calc(100vh - 70px);display:flex;flex-direction:column;}
+#formCard .card-body{flex:1 1 auto;min-height:0;overflow-y:auto;}
+#customerList{flex:1 1 auto;min-height:0;max-height:none;}
+#ratesTableWrap{flex:1 1 auto;min-height:0;overflow-y:auto;}
+#ratesTableWrap table{width:100%;}
+.legacy-grid#ratesTableWrap th,.legacy-grid#ratesTableWrap td{padding:5px 10px;font-size:.8rem;}
+/* Search header: View All / Search / Find Party / filter — all one slim row */
+#searchHeader{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;padding:8px 16px!important;}
+#searchHeader .card-title{margin:0;}
+#searchHeader .search-find{display:flex;align-items:center;gap:6px;flex:1 1 200px;}
+#searchHeader .search-find label{margin:0;white-space:nowrap;font-size:.78rem;}
+#searchHeader .search-find .form-control{margin:0;padding:.2rem .5rem;height:auto;font-size:.82rem;}
+#searchHeader .legacy-radio{display:flex;align-items:center;gap:10px;}
+#searchHeader .legacy-radio label{margin:0;font-size:.78rem;}
+#searchHeader #custCount{font-weight:700;font-size:.8rem;color:var(--text);white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <!-- Desktop reference app: the party list/search panel is the dominant
+         element on screen, the New Party form is the smaller side panel —
+         opposite of what this had (form 8, list 4). Swapped to match. -->
+    <div class="col-md-5">
+      <div class="card" id="formCard">
+        <div class="card-header">
+          <button class="legacy-toplink" onclick="resetForm()">Reset</button>
+          <div class="card-title">
+            <span id="formTitle">New Party</span>
+            <button class="btn btn-success btn-sm" style="float:right;display:none;" onclick="resetForm()" id="btnNewTop">+ New</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="form-group">
+                <label for="txtCustomerName">Party Name</label>
+                <input type="text" class="form-control" id="txtCustomerName" placeholder="Enter Customer Name" style="text-transform:capitalize;" autofocus>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="txtCity">City</label>
+                <input type="text" class="form-control" id="txtCity" placeholder="Enter City">
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="txtMobileNo">Phone</label>
+                <input type="text" class="form-control" id="txtMobileNo" placeholder="Enter Mobile No" maxlength="10" inputmode="numeric">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group"><label for="txtD_PComm">D_PComm</label><input type="number" class="form-control" id="txtD_PComm" value="0" min="0" max="100"></div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group"><label for="txtD_Amt">D_Amt</label><input type="number" class="form-control" id="txtD_Amt" value="100" min="0" max="100"></div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group"><label for="txtA_PComm">A_PComm</label><input type="number" class="form-control" id="txtA_PComm" value="0" min="0" max="100"></div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group"><label for="txtA_Amt">A_Amt</label><input type="number" class="form-control" id="txtA_Amt" value="10" min="0" max="10"></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group"><label for="txtPatti">Patti</label><input type="number" class="form-control" id="txtPatti" value="0" min="0" max="100"></div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group"><label for="txtLC">LC</label><input type="number" class="form-control" id="txtLC" value="0" min="0"></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group"><label for="ddlSrchCustomers">3rd Hissa Party</label><select class="form-control" id="ddlSrchCustomers"><option value="0">Select Customer Name</option></select></div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group"><label for="txt3rdPartyHissaPer">Hissa (%)</label><input type="number" class="form-control" id="txt3rdPartyHissaPer" value="0" min="0" max="100"></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group"><label for="ddlCommParty">3rd Comm Party</label><select class="form-control" id="ddlCommParty"><option value="0">Select Customer Name</option></select></div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group"><label for="txtDaraCommPer">Dara (%)</label><input type="number" class="form-control" id="txtDaraCommPer" value="0" min="0"></div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group"><label for="txtAkharCommPer">Akhar (%)</label><input type="number" class="form-control" id="txtAkharCommPer" value="0" min="0"></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group"><label for="ddlLCParty">3rd LC Party</label><select class="form-control" id="ddlLCParty"><option value="0">Select Customer Name</option></select></div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group"><label for="txtLCCommPer">LC (%)</label><input type="number" class="form-control" id="txtLCCommPer" value="0" min="0"></div>
+            </div>
+          </div>
+          <div class="form-group chk-row">
+            <input type="checkbox" id="chkSelfComm"> <label for="chkSelfComm">Self Commission</label>
+            <input type="checkbox" id="chkYantriTo"> <label for="chkYantriTo">Yantri To</label>
+            <input type="checkbox" id="chkIsLimit"> <label for="chkIsLimit">Limit</label>
+            <input type="checkbox" id="chkIsUttar"> <label for="chkIsUttar">Uttar</label>
+          </div>
+          <input type="hidden" id="hidCID">
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" onclick="saveCustomer()" id="btnSave">Save</button>
+          <button class="btn btn-danger" onclick="resetForm()">Reset</button>
+          <button class="btn btn-danger" onclick="deleteCustomer()" id="btnDelete" style="display:none;">Delete</button>
+        </div>
+      </div>
+
+      <div class="card" id="ratesCard" style="display:none;">
+        <div class="card-header">
+          <button class="legacy-toplink" onclick="closeRates()">Close</button>
+          <div class="card-title">Rates &mdash; <span id="ratesFor"></span></div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col"><div class="form-group"><label for="rD_PComm">D%</label><input type="number" class="form-control" id="rD_PComm" value="0" min="0" max="100"></div></div>
+            <div class="col"><div class="form-group"><label for="rD_Amt">D Amt</label><input type="number" class="form-control" id="rD_Amt" value="100" min="0" max="100"></div></div>
+            <div class="col"><div class="form-group"><label for="rA_PComm">A%</label><input type="number" class="form-control" id="rA_PComm" value="0" min="0" max="100"></div></div>
+            <div class="col"><div class="form-group"><label for="rA_Amt">A Amt</label><input type="number" class="form-control" id="rA_Amt" value="10" min="0" max="10"></div></div>
+            <div class="col"><div class="form-group"><label for="rPatti">Patti%</label><input type="number" class="form-control" id="rPatti" value="0" min="0" max="100"></div></div>
+          </div>
+          <input type="hidden" id="hidRateID">
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" onclick="saveRate()" id="btnAddRate">ADD Rate</button>
+          <button class="btn btn-danger" onclick="resetRateForm()">Reset</button>
+          <button class="btn btn-danger" onclick="deleteRate()" id="btnDeleteRate" style="display:none;">Delete Rate</button>
+        </div>
+        <div class="table-responsive legacy-grid" id="ratesTableWrap">
+          <div class="emsg"><span class="spin"></span> Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+      <div class="card" id="searchCard">
+        <div class="card-header" id="searchHeader">
+          <button class="legacy-toplink" onclick="document.getElementById('srchCustomer').value='';liveSearch();">View All</button>
+          <div class="card-title">Search</div>
+          <div class="search-find">
+            <label for="srchCustomer">Find Party</label>
+            <input type="text" class="form-control" id="srchCustomer" placeholder="Search name / mobile..." oninput="liveSearch()">
+          </div>
+          <!-- Desktop reference app: Active/Deactivate filter beside the party
+               search box. Only Super Admin can see/use this — it toggles the
+               underlying login (Users.Status), which is a Super-Admin-only
+               action everywhere else in the app (Admin > Users), and this
+               page's regular users don't have that permission at all. -->
+          <div class="legacy-radio" id="activeFilterRow" style="display:none;">
+            <label><input type="radio" name="activeFilter" value="all" checked onchange="liveSearch()"> All</label>
+            <label><input type="radio" name="activeFilter" value="active" onchange="liveSearch()"> Active</label>
+            <label><input type="radio" name="activeFilter" value="inactive" onchange="liveSearch()"> Deactivate</label>
+          </div>
+          <span id="custCount"></span>
+        </div>
+        <div class="table-responsive legacy-grid" id="customerList" style="overflow-y:auto;">
+          <div class="emsg"><span class="spin"></span> Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let allCustomers = [];
+let selectedCID = null;
+let editingRate = false;
+let isSuperAdmin = false;
+let activeStatusMap = {}; // Mobile -> { UID, IsActive } — only populated for Super Admin
+
+// ============ INIT ============
+async function init() {
+  try {
+    const u = await initPage('customer');
+    if (!u) return;
+    isSuperAdmin = u.SuperAdmin === 'SuperAdmin';
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('Mobile')) document.getElementById('txtMobileNo').value = params.get('Mobile');
+
+    if (isSuperAdmin) {
+      document.getElementById('activeFilterRow').style.display = 'flex';
+      await loadActiveStatus();
+    }
+    await loadCustomers();
+    document.getElementById('txtCustomerName').focus();
+  } catch(e) { window.location.href = '/login.html'; }
+}
+
+async function loadActiveStatus() {
+  const r = await API.get('/api/customer/active-status');
+  activeStatusMap = {};
+  (r?.data || []).forEach(row => { activeStatusMap[row.Mobile] = { UID: row.UID, IsActive: row.IsActive }; });
+}
+
+// ============ LOAD CUSTOMERS ============
+async function loadCustomers() {
+  const r = await API.get('/api/customer/list');
+  const el = document.getElementById('customerList');
+  if (!r || !r.success || !r.data || !r.data.length) {
+    el.innerHTML = '<div class="emsg">No contacts found</div>';
+    allCustomers = [];
+    document.getElementById('custCount').textContent = '';
+    populateDropdowns([]);
+    return;
+  }
+  allCustomers = r.data;
+  document.getElementById('custCount').textContent = r.data.length + ' contacts';
+  populateDropdowns(r.data);
+  renderCustomerList(r.data);
+}
+
+function liveSearch() {
+  const term = document.getElementById('srchCustomer').value.toLowerCase();
+  let filtered = term ? allCustomers.filter(c =>
+    (c.CustomerName||'').toLowerCase().includes(term) ||
+    (c.Mobile||c.MobileNo||'').toLowerCase().includes(term)
+  ) : allCustomers;
+
+  if (isSuperAdmin) {
+    const mode = document.querySelector('input[name=activeFilter]:checked')?.value || 'all';
+    if (mode !== 'all') {
+      filtered = filtered.filter(c => {
+        const status = activeStatusMap[c.Mobile || c.MobileNo];
+        const active = status && (status.IsActive === 'True' || status.IsActive === true);
+        return mode === 'active' ? active : !active;
+      });
+    }
+  }
+  renderCustomerList(filtered);
+}
+
+function renderCustomerList(data) {
+  const el = document.getElementById('customerList');
+  document.getElementById('custCount').textContent = data.length + ' contacts';
+  if (!data.length) { el.innerHTML = '<div class="emsg">No contacts found</div>'; return; }
+  const yn = (val, cid, field) => {
+    const isYes = (val === 'True' || val === 1 || val === true);
+    return `<button onclick="event.stopPropagation();toggleFlag('${cid}','${field}','${val}')"
+      style="cursor:pointer;color:#fff;border:none;border-radius:2px;font-size:small;height:28px;width:42px;font-weight:bold;background-color:${isYes ? '#31ce36' : '#f25961'};">${isYes ? 'Yes' : 'No'}</button>`;
+  };
+  // Login-active status (Users.IsActive, via Mobile) — only Super Admin sees
+  // this column; not every contact even HAS a login (some customers are
+  // ledger-only, never registered) so it can legitimately be blank.
+  const statusCol = (mob) => {
+    const status = activeStatusMap[mob];
+    if (!status) return '<span style="color:var(--text2);font-weight:700;font-size:.72rem;">No login</span>';
+    const isActive = status.IsActive === 'True' || status.IsActive === true;
+    return `<button onclick="event.stopPropagation();toggleActiveStatus('${esc(mob)}',${isActive})"
+      style="cursor:pointer;color:#fff;border:none;border-radius:2px;font-size:small;height:28px;width:76px;font-weight:bold;background-color:${isActive ? '#31ce36' : '#f25961'};">${isActive ? 'Active' : 'Deactivated'}</button>`;
+  };
+  el.innerHTML = `
+    <table cellpadding="4" style="text-align:center;">
+      <thead>
+        <tr>
+          <th>Pno</th><th>PName</th><th>LC</th><th>City</th><th>Phone</th>
+          <th>D&nbsp;Comm(%)</th><th>D&nbsp;Amt</th><th>A&nbsp;Comm(%)</th><th>A&nbsp;Amt</th><th>Pati(%)</th>
+          <th>Self&nbsp;Comm</th><th>Yantri&nbsp;To</th>${isSuperAdmin ? '<th>Status</th>' : ''}<th>Rates</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(c => {
+          const cid = c.CID;
+          const name = c.CustomerName || '';
+          const mob = c.Mobile || c.MobileNo || '';
+          const city = c.City || '';
+          const dataAttr = JSON.stringify(c).replace(/"/g,"'");
+          return `
+          <tr id="row_${cid}" onclick="selectCustomer('${cid}','${esc(name)}','${mob}',${dataAttr})" style="cursor:pointer;">
+            <td>${cid}</td>
+            <td style="text-align:left;font-weight:700;text-transform:capitalize;">${name}</td>
+            <td>${c.LC ?? 0}</td>
+            <td>${city}</td>
+            <td>${mob}</td>
+            <td>${c.D_PComm ?? 0}</td>
+            <td>${c.D_Amt ?? 0}</td>
+            <td>${c.A_PComm ?? 0}</td>
+            <td>${c.A_Amt ?? 0}</td>
+            <td>${c.Patti ?? 0}</td>
+            <td>${yn(c.IsSelfComm, cid, 'IsSelfComm')}</td>
+            <td>${yn(c.IsYantriTo, cid, 'IsYantriTo')}</td>
+            ${isSuperAdmin ? `<td>${statusCol(mob)}</td>` : ''}
+            <td><button class="btn btn-success btn-sm" onclick="event.stopPropagation();showRates('${cid}','${esc(name)}')">Rate</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function toggleActiveStatus(mobile, currentlyActive) {
+  // Users.Status is a real `bit` column — send an actual boolean, not the
+  // 'True'/'False' strings used elsewhere (those were copied from the
+  // Admin > Users page's UPDATE, which itself was silently failing against
+  // a column name — "IsActive" — that doesn't exist in this table at all).
+  const newVal = !currentlyActive;
+  const r = await API.post('/api/customer/toggle-active', { mobile, isActive: newVal });
+  if (r && r.success) {
+    if (activeStatusMap[mobile]) activeStatusMap[mobile].IsActive = newVal;
+    liveSearch();
+  } else {
+    toast(r?.message || 'Error updating status', 'err');
+  }
+}
+
+function populateDropdowns(data) {
+  const opts = '<option value="0">Select Customer Name</option>' +
+    data.map(c => `<option value="${c.CID}">${c.CustomerName}</option>`).join('');
+  ['ddlSrchCustomers','ddlCommParty','ddlLCParty'].forEach(id => {
+    const el = document.getElementById(id);
+    const prev = el.value;
+    el.innerHTML = opts;
+    if (prev && prev !== '0') el.value = prev;
+  });
+}
+
+// ============ SELECT CUSTOMER ============
+function selectCustomer(cid, name, mob, data) {
+  document.querySelectorAll('#customerList tr').forEach(i => i.classList.remove('table-active'));
+  const el = document.getElementById('row_' + cid);
+  if (el) el.classList.add('table-active');
+
+  document.getElementById('hidCID').value = cid;
+  document.getElementById('txtCustomerName').value = data.CustomerName || name;
+  document.getElementById('txtCity').value = data.City || '';
+  document.getElementById('txtMobileNo').value = data.Mobile || data.MobileNo || mob;
+  document.getElementById('txtMobileNo').readOnly = true;
+  document.getElementById('txtD_PComm').value = data.D_PComm || '0';
+  document.getElementById('txtD_Amt').value = data.D_Amt || '100';
+  document.getElementById('txtA_PComm').value = data.A_PComm || '0';
+  document.getElementById('txtA_Amt').value = data.A_Amt || '10';
+  document.getElementById('txtPatti').value = data.Patti || '0';
+  document.getElementById('txtLC').value = data.LC || '0';
+  const toBool = v => v === 'True' || v === true || v === 1 || v === '1';
+  document.getElementById('chkSelfComm').checked = toBool(data.IsSelfComm);
+  document.getElementById('chkYantriTo').checked = toBool(data.IsYantriTo);
+  document.getElementById('chkIsLimit').checked = toBool(data.IsLimit);
+  document.getElementById('chkIsUttar').checked = toBool(data.IsUttar);
+  document.getElementById('txt3rdPartyHissaPer').value = data.ThirdPartyHissaPer || '0';
+  document.getElementById('txtDaraCommPer').value = data.ThirdPartyDaraComm || '0';
+  document.getElementById('txtAkharCommPer').value = data.ThirdPartyAkharComm || '0';
+  document.getElementById('txtLCCommPer').value = data.ThirdPartyLCPer || '0';
+
+  if (data.ThirdPartyHissaID && data.ThirdPartyHissaID !== '0') document.getElementById('ddlSrchCustomers').value = data.ThirdPartyHissaID;
+  if (data.ThirdPartyCommID && data.ThirdPartyCommID !== '0') document.getElementById('ddlCommParty').value = data.ThirdPartyCommID;
+  if (data.ThirdPartyLCID && data.ThirdPartyLCID !== '0') document.getElementById('ddlLCParty').value = data.ThirdPartyLCID;
+
+  document.getElementById('btnSave').textContent = 'Update';
+  document.getElementById('btnDelete').style.display = 'inline-block';
+  document.getElementById('btnNewTop').style.display = 'inline-block';
+  document.getElementById('formTitle').textContent = 'Edit Contact';
+
+  checkRatesReadonly(cid);
+
+  window.scrollTo({top:0,behavior:'smooth'});
+  setTimeout(()=>document.getElementById('txtCustomerName').focus(), 300);
+}
+
+async function checkRatesReadonly(cid) {
+  const r = await API.get(`/api/customer/${cid}/rates`);
+  const fields = ['txtD_PComm','txtD_Amt','txtA_PComm','txtA_Amt','txtPatti'];
+  if (r && r.success && r.data && r.data.length > 1) {
+    fields.forEach(id => document.getElementById(id).readOnly = true);
+  } else if (r && r.success && r.data && r.data.length === 1) {
+    fields.forEach(id => document.getElementById(id).readOnly = false);
+    const rate = r.data[0];
+    document.getElementById('txtD_PComm').value = rate.D_PComm;
+    document.getElementById('txtD_Amt').value = rate.D_Amt;
+    document.getElementById('txtA_PComm').value = rate.A_PComm;
+    document.getElementById('txtA_Amt').value = rate.A_Amt;
+    document.getElementById('txtPatti').value = rate.Patti;
+  } else {
+    fields.forEach(id => document.getElementById(id).readOnly = false);
+  }
+}
+
+// ============ SAVE CUSTOMER ============
+async function saveCustomer() {
+  const name = document.getElementById('txtCustomerName').value.trim();
+  const mob = document.getElementById('txtMobileNo').value.trim();
+  if (!name || !mob) { toast('Name and Mobile required', 'err'); return; }
+
+  // ASPX exact: btnSubmit.Enabled = false — double save prevent karo
+  const btnSave = document.getElementById('btnSave');
+  if(btnSave) btnSave.disabled = true;
+
+  const cid = document.getElementById('hidCID').value;
+  const hissaID = document.getElementById('ddlSrchCustomers').value;
+  const commID = document.getElementById('ddlCommParty').value;
+  const lcID = document.getElementById('ddlLCParty').value;
+
+  const city = document.getElementById('txtCity').value.trim();
+  const body = {
+    customerName: name, mobileNo: mob, city,
+    d_PComm: document.getElementById('txtD_PComm').value,
+    d_Amt: document.getElementById('txtD_Amt').value,
+    a_PComm: document.getElementById('txtA_PComm').value,
+    a_Amt: document.getElementById('txtA_Amt').value,
+    patti: document.getElementById('txtPatti').value,
+    lc: document.getElementById('txtLC').value,
+    isSelfComm: document.getElementById('chkSelfComm').checked,
+    isYantriTo: document.getElementById('chkYantriTo').checked,
+    isLimit: document.getElementById('chkIsLimit').checked,
+    isUttar: document.getElementById('chkIsUttar').checked,
+    thirdPartyHissaID: hissaID !== '0' ? hissaID : 0,
+    thirdPartyHissaPer: hissaID !== '0' ? document.getElementById('txt3rdPartyHissaPer').value : 0,
+    thirdPartyCommID: commID !== '0' ? commID : 0,
+    thirdPartyDaraComm: commID !== '0' ? document.getElementById('txtDaraCommPer').value : 0,
+    thirdPartyAkharComm: commID !== '0' ? document.getElementById('txtAkharCommPer').value : 0,
+    thirdPartyLCID: lcID !== '0' ? lcID : 0,
+    thirdPartyLCPer: lcID !== '0' ? document.getElementById('txtLCCommPer').value : 0,
+    cid: cid || ''
+  };
+
+  const r = cid
+    ? await API.post('/api/customer/update', body)
+    : await API.post('/api/customer', body);
+
+  if (r && r.success) {
+    toast(cid ? 'Contact updated!' : 'Contact saved!', 'ok');
+    resetForm();
+    await loadCustomers();
+  } else {
+    toast(r?.message || 'Error saving contact', 'err');
+  }
+  if(btnSave) btnSave.disabled = false;
+}
+
+// ============ DELETE ============
+async function deleteCustomer() {
+  const cid = document.getElementById('hidCID').value;
+  if (!cid) return;
+  if (!confirm('Delete this contact? All pending chats will be rejected.')) return;
+  const r = await API.post('/api/customer/delete', { cid });
+  if (r && r.success) {
+    toast('Contact deleted', 'ok');
+    resetForm();
+    await loadCustomers();
+  } else {
+    toast(r?.message || 'Error deleting', 'err');
+  }
+}
+
+// ============ TOGGLE FLAGS ============
+async function toggleFlag(cid, field, current) {
+  const newVal = (current === 'True' || current === 1 || current === true) ? 'False' : 'True';
+  const r = await API.post('/api/customer/toggle', { cid, field, value: newVal });
+  if (r && r.success) {
+    await loadCustomers();
+  } else {
+    toast('Error updating', 'err');
+  }
+}
+
+// ============ RATES ============
+async function showRates(cid, name) {
+  selectedCID = cid;
+  document.getElementById('ratesFor').textContent = name;
+  document.getElementById('ratesCard').style.display = 'block';
+  resetRateForm();
+  await loadRates(cid);
+  document.getElementById('ratesCard').scrollIntoView({behavior:'smooth'});
+}
+
+async function loadRates(cid) {
+  document.getElementById('ratesTableWrap').innerHTML = '<div class="emsg"><span class="spin"></span></div>';
+  const r = await API.get(`/api/customer/${cid}/rates`);
+  if (!r || !r.success || !r.data || !r.data.length) {
+    document.getElementById('ratesTableWrap').innerHTML = '<div class="emsg">No rates added yet. Add first rate above.</div>';
+    return;
+  }
+  document.getElementById('ratesTableWrap').innerHTML = `
+    <table cellpadding="4" style="text-align:center;">
+      <thead><tr><th>#</th><th>D%</th><th>D Amt</th><th>A%</th><th>A Amt</th><th>Patti%</th><th>Rate</th><th>Edit</th></tr></thead>
+      <tbody>${r.data.map((d,i) => `
+        <tr>
+          <td>${i+1}</td>
+          <td>${d.D_PComm}</td><td>${d.D_Amt}</td>
+          <td>${d.A_PComm}</td><td>${d.A_Amt}</td>
+          <td>${d.Patti}</td>
+          <td style="color:var(--green2);font-weight:700;">${d.D_PComm}/${d.D_Amt}-${d.A_PComm}/${d.A_Amt}-${d.Patti}</td>
+          <td><img src="/vendor/images/edit-icon-orange-pencil-0.png" width="22" height="22" style="cursor:pointer;" onclick="editRate('${d.RateID}','${d.D_PComm}','${d.D_Amt}','${d.A_PComm}','${d.A_Amt}','${d.Patti}')"></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function editRate(rateID, dpc, da, apc, aa, patti) {
+  document.getElementById('hidRateID').value = rateID;
+  document.getElementById('rD_PComm').value = dpc;
+  document.getElementById('rD_Amt').value = da;
+  document.getElementById('rA_PComm').value = apc;
+  document.getElementById('rA_Amt').value = aa;
+  document.getElementById('rPatti').value = patti;
+  document.getElementById('btnAddRate').textContent = 'Edit Rate';
+  document.getElementById('btnDeleteRate').style.display = 'inline-block';
+  editingRate = true;
+}
+
+async function saveRate() {
+  if (!selectedCID) return;
+  const rateID = document.getElementById('hidRateID').value;
+  const type = editingRate ? 1 : 0;
+  const dpc = parseFloat(document.getElementById('rD_PComm').value);
+  const da = parseFloat(document.getElementById('rD_Amt').value);
+  const apc = parseFloat(document.getElementById('rA_PComm').value);
+  const aa = parseFloat(document.getElementById('rA_Amt').value);
+  const patti = parseFloat(document.getElementById('rPatti').value);
+  if (dpc < 0 || dpc > 100 || apc < 0 || apc > 100 || patti < 0 || patti > 100 || da <= 0 || da > 100 || aa <= 0 || aa > 10) {
+    toast('Invalid values! D Amt: 1-100, A Amt: 1-10, % fields: 0-100', 'err');
+    return;
+  }
+  const r = await API.post('/api/customer/rates', {
+    cid: selectedCID, rateID: rateID || 0,
+    d_PComm: dpc, d_Amt: da, a_PComm: apc, a_Amt: aa, patti,
+    type
+  });
+  if (r && r.success) {
+    toast(editingRate ? 'Rate updated!' : 'Rate added!', 'ok');
+    resetRateForm();
+    await loadRates(selectedCID);
+  } else {
+    toast(r?.message || 'Error saving rate', 'err');
+  }
+}
+
+async function deleteRate() {
+  const rateID = document.getElementById('hidRateID').value;
+  if (!rateID || !selectedCID) return;
+  const r = await API.post('/api/customer/rates', {
+    cid: selectedCID, rateID, type: 2,
+    d_PComm: document.getElementById('rD_PComm').value,
+    d_Amt: document.getElementById('rD_Amt').value,
+    a_PComm: document.getElementById('rA_PComm').value,
+    a_Amt: document.getElementById('rA_Amt').value,
+    patti: document.getElementById('rPatti').value
+  });
+  if (r && r.success) {
+    toast('Rate deleted', 'ok');
+    resetRateForm();
+    await loadRates(selectedCID);
+  } else {
+    toast(r?.message || 'Error', 'err');
+  }
+}
+
+function resetRateForm() {
+  document.getElementById('hidRateID').value = '';
+  document.getElementById('rD_PComm').value = '0';
+  document.getElementById('rD_Amt').value = '100';
+  document.getElementById('rA_PComm').value = '0';
+  document.getElementById('rA_Amt').value = '10';
+  document.getElementById('rPatti').value = '0';
+  document.getElementById('btnAddRate').textContent = 'ADD Rate';
+  document.getElementById('btnDeleteRate').style.display = 'none';
+  editingRate = false;
+}
+
+function closeRates() {
+  document.getElementById('ratesCard').style.display = 'none';
+  selectedCID = null;
+  resetRateForm();
+}
+
+// ============ RESET FORM ============
+function resetForm() {
+  document.getElementById('hidCID').value = '';
+  document.getElementById('txtCustomerName').value = '';
+  document.getElementById('txtCity').value = '';
+  document.getElementById('txtMobileNo').value = '';
+  document.getElementById('txtMobileNo').readOnly = false;
+  ['txtD_PComm','txtD_Amt','txtA_PComm','txtA_Amt','txtPatti'].forEach(id => {
+    document.getElementById(id).readOnly = false;
+  });
+  document.getElementById('txtD_PComm').value = '0';
+  document.getElementById('txtD_Amt').value = '100';
+  document.getElementById('txtA_PComm').value = '0';
+  document.getElementById('txtA_Amt').value = '10';
+  document.getElementById('txtPatti').value = '0';
+  document.getElementById('txtLC').value = '0';
+  document.getElementById('txt3rdPartyHissaPer').value = '0';
+  document.getElementById('txtDaraCommPer').value = '0';
+  document.getElementById('txtAkharCommPer').value = '0';
+  document.getElementById('txtLCCommPer').value = '0';
+  document.getElementById('chkSelfComm').checked = false;
+  document.getElementById('chkYantriTo').checked = false;
+  document.getElementById('chkIsLimit').checked = false;
+  document.getElementById('chkIsUttar').checked = false;
+  document.getElementById('ddlSrchCustomers').value = '0';
+  document.getElementById('ddlCommParty').value = '0';
+  document.getElementById('ddlLCParty').value = '0';
+  document.getElementById('btnSave').textContent = 'Save';
+  document.getElementById('btnDelete').style.display = 'none';
+  document.getElementById('btnNewTop').style.display = 'none';
+  document.getElementById('formTitle').textContent = 'New Party';
+  document.querySelectorAll('#customerList tr').forEach(i => i.classList.remove('table-active'));
+  document.getElementById('txtCustomerName').focus();
+}
+
+// ============ HELPERS ============
+// ── SweetAlert-based feedback (matches original ASPX SucessMessage/ErrorMessage) ──
+function toast(msg, type='ok') {
+  swal(type === 'ok' ? 'Sucess!' : 'Wrong Inputs!', msg, {
+    icon: type === 'ok' ? 'success' : 'error',
+    timer: 900,
+    buttons: false
+  });
+}
+function esc(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"'); }
+
+// Enter key navigation
+(function(){
+  const fields = [
+    'txtCustomerName','txtCity','txtMobileNo',
+    'txtD_PComm','txtD_Amt','txtA_PComm','txtA_Amt','txtPatti','txtLC',
+    'ddlSrchCustomers','txt3rdPartyHissaPer',
+    'ddlCommParty','txtDaraCommPer','txtAkharCommPer',
+    'ddlLCParty','txtLCCommPer'
+  ];
+  fields.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (idx === fields.length - 1) { document.getElementById('btnSave').click(); return; }
+        for (let i = idx + 1; i < fields.length; i++) {
+          const next = document.getElementById(fields[i]);
+          if (next && !next.readOnly) { next.focus(); next.select && next.select(); break; }
+        }
+      }
+    });
+  });
+})();
+
+init();
+</script>
+</body>
+</html>

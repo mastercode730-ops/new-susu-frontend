@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balance Sheet - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.pos{color:var(--green2);font-weight:600;}
+.neg{color:var(--red);font-weight:600;}
+.emsg{padding:24px;text-align:center;color:var(--muted);font-size:.85rem;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+tbody tr[data-row]{cursor:pointer;}
+tbody tr[data-row]:hover td{background:rgba(18,140,126,.06);}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Balance Sheet
+            <button class="btn btn-danger btn-sm" style="float:right;" onclick="history.back()">&larr; Back</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- ASPX: SelectUID=1 → Game customers (GetMyGameBalanceHistory) -->
+          <!-- ASPX: SelectUID=2 → Receivers    (GetMYBalanceHistory)       -->
+          <div class="btn-group" style="margin-bottom:14px;">
+            <button class="btn btn-success" id="tabGame" onclick="switchTab(1)">Game Customers</button>
+            <button class="btn btn-secondary" id="tabRcv"  onclick="switchTab(2)">Receivers</button>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="custSel">Customer</label>
+                <select class="form-control" id="custSel" onchange="loadData()">
+                  <option value="">Select Customer</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="fromDate">From</label>
+                <input type="date" class="form-control" id="fromDate">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="toDate">To</label>
+                <input type="date" class="form-control" id="toDate">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-success btn-block" onclick="loadData()">Load</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ASPX: RadioButtonAll, RadioButtonSale, RadioButtonAccounts -->
+          <div class="btn-group" style="margin-bottom:14px;">
+            <button class="btn btn-success" id="typeAll"      onclick="setType('all')">All</button>
+            <button class="btn btn-secondary" id="typeSale"     onclick="setType('sale')">Sale</button>
+            <button class="btn btn-secondary" id="typeAccounts" onclick="setType('accounts')">Account</button>
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;">Tap a row to see that date's game-wise breakdown</div>
+        </div>
+
+        <div class="table-responsive" id="tableWrap">
+          <div class="emsg">Select a customer and click Load</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Game-wise history modal (row click) — same pattern as Hisab.aspx's history popup -->
+<div class="modal fade" id="histModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="histTitle">Game History</h5>
+        <button type="button" class="close" onclick="closeHist()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+            <thead>
+              <tr style="background-color:LightGray;">
+                <th>Game</th><th>Rates</th><th>T_Sale</th><th>D_Sale</th><th>A_Sale</th>
+                <th>Comm</th><th>O_Dara</th><th>O_Akhar</th><th>WinAmt</th><th>Hissa</th><th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="bodyHist">
+              <tr><td colspan="11" class="emsg">Loading...</td></tr>
+            </tbody>
+            <tfoot id="footHist" style="display:none;background-color:LightGray;font-weight:bold;">
+              <tr>
+                <td>&ndash;</td><td>Total</td>
+                <td id="ft_h_tsale">&ndash;</td><td id="ft_h_dsale">&ndash;</td><td id="ft_h_asale">&ndash;</td>
+                <td id="ft_h_comm">&ndash;</td><td id="ft_h_odara">&ndash;</td><td id="ft_h_oakhar">&ndash;</td>
+                <td id="ft_h_win">&ndash;</td><td id="ft_h_pati">&ndash;</td><td id="ft_h_bal">&ndash;</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+// ASPX: SelectUID=1 → Game tab, SelectUID=2 → Receiver tab
+let currentTab  = 1;   // 1=game, 2=receiver
+let currentType = 'all';
+let currentCustUID = '';
+let currentCustName = '';
+let rowsData = [];
+
+const p = new URLSearchParams(location.search);
+
+async function init() {
+  await initPage('all-balance-sheet');
+
+  // Default dates: first of month to today
+  const ist   = new Date(new Date().getTime() + 5.5*3600000);
+  const today = ist.toISOString().split('T')[0];
+  const first = today.substring(0,8) + '01';
+  document.getElementById('fromDate').value = first;
+  document.getElementById('toDate').value   = today;
+
+  // URL params: ?UID=X&SelectUID=1or2 (same as AllBalanceSheet.aspx?UID=X&SelectUID=1)
+  const uid       = p.get('UID')       || '';
+  const selectUID = p.get('SelectUID') || '1';
+  currentTab = parseInt(selectUID) === 2 ? 2 : 1;
+  updateTabUI();
+
+  await loadCustomers();
+
+  // Auto-select if UID given in URL
+  if (uid) {
+    document.getElementById('custSel').value = uid;
+    loadData();
+  }
+
+  window.__escPageHandler = function() {
+    if ($('#histModal').hasClass('show')) { closeHist(); return true; }
+    return false;
+  };
+}
+
+async function loadCustomers() {
+  try {
+    const r = await API.get('/api/home/receiver-list');
+    const sel = document.getElementById('custSel');
+    sel.innerHTML = '<option value="">Select Customer</option>';
+    (r?.data || []).forEach(c => {
+      sel.innerHTML += `<option value="${c.UID}">${c.CustomerName || c.Mobile}</option>`;
+    });
+  } catch(e) {}
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  updateTabUI();
+  loadCustomers();
+  document.getElementById('tableWrap').innerHTML = '<div class="emsg">Select a customer and click Load</div>';
+}
+
+function updateTabUI() {
+  document.getElementById('tabGame').className = 'btn ' + (currentTab === 1 ? 'btn-success' : 'btn-secondary');
+  document.getElementById('tabRcv').className  = 'btn ' + (currentTab === 2 ? 'btn-success' : 'btn-secondary');
+}
+
+function setType(t) {
+  currentType = t;
+  ['all','sale','accounts'].forEach(x => {
+    const el = document.getElementById('type' + x.charAt(0).toUpperCase() + x.slice(1));
+    if (el) el.className = 'btn ' + (x === t ? 'btn-success' : 'btn-secondary');
+  });
+  loadData();
+}
+
+async function loadData() {
+  const custUID = document.getElementById('custSel').value;
+  if (!custUID) return;
+  currentCustUID  = custUID;
+  currentCustName = document.getElementById('custSel').selectedOptions[0]?.text || '';
+  const from = document.getElementById('fromDate').value;
+  const to   = document.getElementById('toDate').value;
+
+  document.getElementById('tableWrap').innerHTML = '<div class="emsg"><span class="spin"></span></div>';
+
+  try {
+    // ASPX: SelectUID=1 → GetMyGameBalanceHistory/Sale/Accounts
+    //       SelectUID=2 → GetMYBalanceHistory/Sale/Accounts
+    const endpoint = currentTab === 1
+      ? `/api/balance/game-balance-history?customerUID=${custUID}&fromDate=${from}&toDate=${to}&type=${currentType === 'all' ? '' : currentType}`
+      : `/api/balance/my-balance-history?customerUID=${custUID}&fromDate=${from}&toDate=${to}&type=${currentType === 'all' ? '' : currentType}`;
+
+    const r = await API.get(endpoint);
+    renderTable(r?.data || []);
+  } catch(e) {
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg">Error loading data</div>';
+  }
+}
+
+// ASPX GridView columns for this SP: MessageDateTime, Lene (Debit), Dene (Credit),
+// RunningTotal (Balance), Type — there is NO CustomerName/Narration column (this
+// is a single customer's own statement, so repeating their name every row would
+// be redundant — matches the real ASPX design, which has no Customer column here).
+function renderTable(data) {
+  rowsData = data || [];
+  if (!rowsData.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg">No records found</div>';
+    return;
+  }
+  let totalLene = 0, totalDene = 0;
+  const rows = rowsData.map((d, i) => {
+    totalLene += parseFloat(d.Lene || 0);
+    totalDene += parseFloat(d.Dene || 0);
+    const date = d.MessageDateTime ? new Date(d.MessageDateTime).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const bal = parseFloat(d.RunningTotal || 0);
+    return `<tr data-row onclick="rowClick(${i})">
+      <td>${date}</td>
+      <td class="pos">${d.Lene > 0 ? parseFloat(d.Lene).toLocaleString('en-IN') : ''}</td>
+      <td class="neg">${d.Dene > 0 ? parseFloat(d.Dene).toLocaleString('en-IN') : ''}</td>
+      <td class="${bal < 0 ? 'neg' : 'pos'}">${bal.toLocaleString('en-IN')}</td>
+      <td>${d.Type || ''}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('tableWrap').innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead><tr style="background-color:LightGray;">
+        <th>Date</th><th>Debit (Lene)</th><th>Credit (Dene)</th><th>Balance</th><th>Type</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot style="background-color:LightGray;font-weight:bold;"><tr>
+        <td>Total (${rowsData.length})</td>
+        <td class="pos">${totalLene.toLocaleString('en-IN')}</td>
+        <td class="neg">${totalDene.toLocaleString('en-IN')}</td>
+        <td colspan="2" class="${(totalLene - totalDene) < 0 ? 'neg' : 'pos'}">Net: ${(totalLene - totalDene).toLocaleString('en-IN')}</td>
+      </tr></tfoot>
+    </table>`;
+}
+
+// ASPX: row click on grvGameHisab/grvgames → GetDateWiseMyHisabHistory (game
+// customers) or GetDateWiseWinAmountHistory (receivers) for that exact date.
+function rowClick(i) {
+  const d = rowsData[i];
+  if (!d || !d.MessageDateTime) return;
+  showHistory(d.MessageDateTime);
+}
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function toDdMmmYyyy(dateVal) {
+  const d = new Date(dateVal);
+  return String(d.getDate()).padStart(2,'0') + '/' + MONTHS[d.getMonth()] + '/' + d.getFullYear();
+}
+
+async function showHistory(dateVal) {
+  const dateStr = toDdMmmYyyy(dateVal);
+  $('#histModal').modal('show');
+  document.getElementById('histTitle').textContent = `${currentCustName} — Game History`;
+  document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg"><span class="spin"></span> Loading...</td></tr>';
+  document.getElementById('footHist').style.display = 'none';
+
+  try {
+    const endpoint = currentTab === 1
+      ? `/api/hisab/game-hisab-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`
+      : `/api/hisab/win-amount-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`;
+    const r = await API.get(endpoint);
+    if (!r?.success || !r.data?.length) {
+      document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg">No Data Found!</td></tr>';
+      return;
+    }
+    const data = r.data;
+    document.getElementById('bodyHist').innerHTML = data.map(d => `
+      <tr>
+        <td>${d.GameName||'–'}</td>
+        <td>${d.Rates||'–'}</td>
+        <td>${d.Total_Amount||0}</td>
+        <td>${d.D_Sale||0}</td>
+        <td>${d.A_Sale||0}</td>
+        <td>${d.Commision||0}</td>
+        <td>${d.O_Dara||0}</td>
+        <td>${d.O_Akhar||0}</td>
+        <td>${d.WinAmount||0}</td>
+        <td>${d.Pati||0}</td>
+        <td>${d.Balance||0}</td>
+      </tr>`).join('');
+
+    const sum = f => data.reduce((s,x)=>s+(parseFloat(x[f])||0),0).toString();
+    document.getElementById('ft_h_tsale').textContent  = sum('Total_Amount');
+    document.getElementById('ft_h_dsale').textContent  = sum('D_Sale');
+    document.getElementById('ft_h_asale').textContent  = sum('A_Sale');
+    document.getElementById('ft_h_comm').textContent   = sum('Commision');
+    document.getElementById('ft_h_odara').textContent  = sum('O_Dara');
+    document.getElementById('ft_h_oakhar').textContent = sum('O_Akhar');
+    document.getElementById('ft_h_win').textContent    = sum('WinAmount');
+    document.getElementById('ft_h_pati').textContent   = sum('Pati');
+    document.getElementById('ft_h_bal').textContent    = sum('Balance');
+    document.getElementById('footHist').style.display = '';
+  } catch(e) {
+    document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg">Error loading</td></tr>';
+  }
+}
+
+function closeHist() { $('#histModal').modal('hide'); }
+
+init();
+</script>
+</body>
+</html>

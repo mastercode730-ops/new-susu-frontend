@@ -1,0 +1,172 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Susu9 - Received Chat</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.rc-wrap{display:flex;height:calc(100vh - 54px);overflow:hidden;}
+.rc-sidebar{width:280px;min-width:240px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.rc-main{flex:1;display:flex;flex-direction:column;background:var(--bg);}
+.rc-head{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.rc-head-info{flex:1;}
+.rc-msgs{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
+.rc-footer{background:var(--panel);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.msg-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px;max-width:680px;}
+.msg-card.pending{border-left:3px solid var(--yellow);}
+.msg-card.accepted{border-left:3px solid var(--green);}
+.msg-card.rejected{border-left:3px solid var(--red);opacity:.65;}
+.msg-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:.7rem;color:var(--muted);}
+.msg-text{font-family:monospace;font-size:.84rem;color:var(--text);white-space:pre-wrap;word-break:break-all;}
+.msg-actions{display:flex;gap:6px;margin-top:8px;}
+.msg-total-line{font-size:.72rem;font-weight:700;color:var(--primary);margin-top:4px;}
+.filter-row{padding:8px;border-bottom:1px solid var(--border);background:var(--panel2);}
+.game-item{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;font-size:.84rem;}
+.game-item:hover,.game-item.active{background:var(--primary-pale);}
+.game-item.active{border-left:2px solid var(--primary);font-weight:600;}
+</style>
+</head>
+<body>
+<script src="/js/api.js"></script><script src="/js/nav.js"></script>
+
+<div class="rc-wrap">
+  <div class="rc-sidebar">
+    <div class="filter-row">
+      <input type="date" class="inp" id="dateFilter" onchange="loadGames()">
+    </div>
+    <div id="gameList" style="overflow-y:auto;flex:1"><div class="emsg">Loading...</div></div>
+  </div>
+
+  <div class="rc-main">
+    <div class="rc-head" id="rcHead">
+      <div style="color:var(--muted);font-size:.84rem;">← Select a game from sidebar</div>
+    </div>
+    <div class="rc-msgs" id="rcMsgs">
+      <div class="emsg">Select game to view messages</div>
+    </div>
+    <div class="rc-footer" id="rcFooter" style="display:none">
+      <div style="flex:1;font-size:.8rem;color:var(--muted)" id="pendingCount"></div>
+      <button class="btn btn-primary btn-sm" onclick="acceptAll()">✓ Accept All</button>
+      <button class="btn btn-danger btn-sm" onclick="rejectAll()">✕ Reject All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selGame = null, selDate = null, myUID = null;
+const params = new URLSearchParams(location.search);
+
+async function init() {
+  const u = await initPage('received');
+  myUID = u?.UID;
+  
+  const today = new Date(new Date().getTime() + 5.5 * 3600000);
+  document.getElementById('dateFilter').value = today.toISOString().split('T')[0];
+  
+  // If came from ViewCustomers with params
+  if (params.get('SelectedUID') && params.get('GameId')) {
+    await loadGames();
+    setTimeout(() => selectGame(params.get('GameId'), params.get('GameName'), selDate), 500);
+  } else {
+    loadGames();
+  }
+}
+
+async function loadGames() {
+  const date = document.getElementById('dateFilter').value;
+  selDate = date;
+  const r = await API.get('/api/game/list');
+  if (!r?.success) return;
+  const list = document.getElementById('gameList');
+  list.innerHTML = (r.data||[]).map(g => 
+    `<div class="game-item ${selGame===g.GID?'active':''}" onclick="selectGame('${g.GID}','${g.GameName}','${date}')" data-gid="${g.GID}">${g.GameName}<br><small style="color:var(--muted)">${g.DrawTime||''}</small></div>`
+  ).join('') || '<div class="emsg">No games</div>';
+}
+
+async function selectGame(gid, name, date) {
+  selGame = gid;
+  document.querySelectorAll('.game-item').forEach(el => el.classList.toggle('active', el.dataset.gid === gid));
+  document.getElementById('rcHead').innerHTML = `
+    <div class="rc-head-info"><div style="font-weight:700">${name}</div><div style="font-size:.72rem;color:var(--muted)">${date}</div></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-sm" style="background:var(--primary);color:#fff" onclick="acceptAll()">✓ Accept All</button>
+      <button class="btn btn-danger btn-sm" onclick="rejectAll()">✕ Reject All</button>
+      <label class="chk-item"><input type="checkbox" id="autoRefresh" checked onchange="toggleAuto()"> Auto</label>
+    </div>`;
+  document.getElementById('rcFooter').style.display = '';
+  loadMessages(gid, date);
+  startAutoRefresh();
+}
+
+let autoTimer = null;
+function startAutoRefresh() {
+  clearInterval(autoTimer);
+  autoTimer = setInterval(() => {
+    if (document.getElementById('autoRefresh')?.checked && selGame) loadMessages(selGame, selDate);
+  }, 5000);
+}
+function toggleAuto() { if (!document.getElementById('autoRefresh')?.checked) clearInterval(autoTimer); else startAutoRefresh(); }
+
+async function loadMessages(gid, date) {
+  const r = await API.get(`/api/chat/received?gameID=${gid}&date=${date}`);
+  if (!r?.success) return;
+  
+  const msgs = r.data || [];
+  const pending = msgs.filter(m => m.IsAccepted === 'Pending').length;
+  if (document.getElementById('pendingCount')) document.getElementById('pendingCount').textContent = `${pending} pending • ${msgs.length} total`;
+  
+  document.getElementById('rcMsgs').innerHTML = msgs.length ? msgs.map(m => {
+    const cls = m.IsAccepted === 'Accepted' ? 'accepted' : m.IsAccepted === 'Rejected' ? 'rejected' : 'pending';
+    const statusBadge = m.IsAccepted === 'Accepted' ? '<span class="badge badge-green">Accepted</span>' :
+      m.IsAccepted === 'Rejected' ? '<span class="badge badge-red">Rejected</span>' :
+      '<span class="badge badge-yellow">Pending</span>';
+    const total = calcTotal(m.Message);
+    return `<div class="msg-card ${cls}" id="msg_${m.ChatID}">
+      <div class="msg-meta">
+        ${statusBadge}
+        <span>${m.CustomerName||m.fSenderID||''}</span>
+        <span>${m.MessageDateTime ? new Date(m.MessageDateTime).toLocaleString('en-IN',{hour:'2-digit',minute:'2-digit'}) : ''}</span>
+      </div>
+      <div class="msg-text">${m.Message||''}</div>
+      <div class="msg-total-line">Total: ${total}</div>
+      ${m.IsAccepted === 'Pending' ? `<div class="msg-actions">
+        <button class="btn btn-primary btn-xs" onclick="acceptMsg('${m.ChatID}')">✓ Accept</button>
+        <button class="btn btn-danger btn-xs" onclick="rejectMsg('${m.ChatID}')">✕ Reject</button>
+      </div>` : ''}
+    </div>`;
+  }).join('') : '<div class="emsg">No messages for this game/date</div>';
+}
+
+function calcTotal(msg) {
+  if (!msg) return 0;
+  let sum = 0;
+  for (const p of msg.split(',')) {
+    const kv = p.split('=');
+    if (kv.length === 2) sum += parseFloat(kv[1]) || 0;
+  }
+  return sum;
+}
+
+async function acceptMsg(chatID) {
+  const r = await API.post('/api/chat/accept', { chatID, isAccepted: 'Accepted' });
+  if (r?.success) { toast('Accepted'); loadMessages(selGame, selDate); }
+}
+async function rejectMsg(chatID) {
+  const r = await API.post('/api/chat/accept', { chatID, isAccepted: 'Rejected' });
+  if (r?.success) { toast('Rejected', 'err'); loadMessages(selGame, selDate); }
+}
+async function acceptAll() {
+  if (!selGame || !confirm('Accept all pending?')) return;
+  const r = await API.post('/api/chat/accept-all', { gameID: selGame, date: selDate });
+  if (r?.success) { toast('All Accepted'); loadMessages(selGame, selDate); }
+}
+async function rejectAll() {
+  if (!selGame || !confirm('Reject all pending?')) return;
+  const r = await API.post('/api/chat/reject-all', { gameID: selGame, date: selDate });
+  if (r?.success) { toast('All Rejected', 'err'); loadMessages(selGame, selDate); }
+}
+
+init();
+</script>
+</body>
+</html> -->

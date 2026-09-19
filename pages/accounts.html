@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accounts - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<style>
+/* Select2 v3.5.2 override — matches the exact polished styling established
+   in received.html (bigger, bolder, more readable names) */
+.select2-container{width:100%!important;}
+.select2-container .select2-choice{height:42px;line-height:40px;border:1px solid #ced4da;border-radius:4px;padding:0 8px;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;background:#fff;}
+.select2-container .select2-choice .select2-chosen{color:#000;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;}
+.select2-container .select2-choice .select2-arrow{height:40px;}
+.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;}
+.select2-drop .select2-search{padding:8px;}
+.select2-drop .select2-search input{width:100%!important;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:1rem;}
+.select2-results{width:100%;max-height:360px;}
+.select2-results .select2-highlighted{background-color:#128c7e!important;}
+.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:4px 10px;line-height:1.5;color:#1572e8;}
+.select2-results li.select2-highlighted{color:#fff;}
+
+.net-bal{margin-top:6px;font-weight:700;font-size:.85rem;color:#000;}
+.net-bal.neg{color:#c62828;}
+.net-bal.pos{color:#2e7d32;}
+
+/* Bootstrap's plain .col (no breakpoint infix) stays side-by-side at every
+   width, including mobile — Date/Customer Name and the other field pairs end
+   up squeezed into half-width columns, which is what was truncating the date
+   text ("19/Ju" instead of "19/Jul/2026"). Stack them to full width below
+   768px, same as every other form on the site. */
+@media (max-width:768px){
+  .card-body > .row { flex-direction: column; }
+  .card-body > .row > .col { flex: 0 0 100%; max-width: 100%; }
+}
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;}
+.select2-container .select2-choice .select2-chosen{font-weight:800!important;}
+/* Compact, well-aligned cards — smaller fields, tighter spacing */
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:10px 16px!important;}
+.content .form-group{margin-bottom:8px!important;}
+/* Data grids: bold bordered header instead of the faint Bootstrap table look */
+.content table{border-collapse:collapse!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
+.content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
+.content table tfoot td{background:#eee!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-6">
+      <!-- Entry form + inline History side-by-side (like the desktop reference
+           app's Accounts screen) — "P / R History" still links to the full
+           show-transactions.html page for the extra Sub User filter that
+           doesn't fit in this compact panel. -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Payment/Receipt
+            <button class="btn btn-success" style="float:right;font-weight:900;" onclick="location.href='/pages/show-transactions.html'">P / R History</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label for="txtDate">Date</label>
+                <input type="text" class="form-control" id="txtDate" placeholder="dd/MMM/yyyy" tabindex="1"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();$('#ddlAccounts').select2('open');}">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="ddlAccounts">Customer Name</label>
+                <select id="ddlAccounts" tabindex="2" style="text-transform:capitalize;">
+                  <option value="">Select Customer</option>
+                </select>
+                <div class="net-bal" id="netBadge"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Desktop reference app: right under Party/Opposite Party there's a
+               small table of that party's recent entries — a quick "did I
+               already pay them today" glance without opening the wider History
+               panel. Same idea, sized just as small (~4 rows, then scroll). -->
+          <div class="row" id="miniHistRow" style="display:none;">
+            <div class="col">
+              <div class="table-responsive" style="max-height:130px;overflow-y:auto;border:1px solid #dee2e6;border-radius:4px;margin-bottom:12px;">
+                <table cellpadding="3" style="width:100%;text-align:center;text-transform:capitalize;">
+                  <thead><tr><th>Date</th><th>Paid</th><th>Received</th><th>Narration</th><th>Type</th></tr></thead>
+                  <tbody id="miniHistTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label for="ddlType">Type</label>
+                <select class="form-control" id="ddlType" tabindex="3">
+                  <option value="Paid">Paid</option>
+                  <option value="Received">Received</option>
+                  <option value="Paid Adjustment">Paid Adjustment</option>
+                  <option value="Receive Adjustment">Receive Adjustment</option>
+                  <option value="Commission">Commission</option>
+                </select>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="txtAmount">Amount</label>
+                <input type="tel" class="form-control" id="txtAmount" placeholder="Enter Amount" tabindex="4"
+                  onkeypress="return isNumber(event)" oninput="process(this)"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('txtNarration').focus();document.getElementById('txtNarration').select();}">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label for="txtNarration">Narration</label>
+                <input type="text" class="form-control" id="txtNarration" placeholder="Add note..." tabindex="5"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();
+                    const staffVisible=document.getElementById('staffRow').style.display!=='none';
+                    if(staffVisible){$('#ddlStaff').select2('open');}else{saveTransaction();}}">
+              </div>
+            </div>
+            <!-- Only relevant for the main admin picking WHICH staff member an
+                 entry belongs to — a subuser's own session only ever acts as
+                 themselves, so there's no one else to pick, and this stays hidden. -->
+            <div class="col" id="staffRow" style="display:none;">
+              <div class="form-group">
+                <label for="ddlStaff">Sub User</label>
+                <select class="form-control" id="ddlStaff" tabindex="6"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();saveTransaction();}">
+                  <option value="0">Self</option>
+                </select>
+                <!-- Desktop reference shows a Net Balance for BOTH Party and
+                     Opposite Party. This dropdown is a merged list of real
+                     Sub Users (staff) and customers (see
+                     appendCustomersToStaffList) — only the customer entries
+                     actually have a ledger balance to show, a real staff
+                     member doesn't. -->
+                <div class="net-bal" id="staffNetBadge"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <br>
+              <button class="btn btn-success" id="btnSubmit" tabindex="7" onclick="saveTransaction()">Submit</button>
+              <button class="btn btn-danger" tabindex="8" onclick="resetForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History — desktop reference app shows Entry + History side-by-side on
+         one screen; this mirrors that instead of requiring a page navigation
+         for every lookup. -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">History</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label for="histParty">Party</label>
+                <select class="form-control" id="histParty" tabindex="20"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('histType').focus();}">
+                  <option value="">All Customers</option>
+                </select>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="histType">Type</label>
+                <select class="form-control" id="histType" tabindex="21"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('histFrom').focus();}">
+                  <option value="">All</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Received">Received</option>
+                  <option value="Paid Adjustment">Paid Adjustment</option>
+                  <option value="Receive Adjustment">Receive Adjustment</option>
+                  <option value="Commission">Commission</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="align-items:flex-end;">
+            <div class="col">
+              <div class="form-group">
+                <label for="histFrom">From</label>
+                <input type="date" class="form-control" id="histFrom" tabindex="22"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('histTo').focus();}">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label for="histTo">To</label>
+                <input type="date" class="form-control" id="histTo" tabindex="23"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();loadHistory();document.getElementById('btnHistShow').focus();}">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <button class="btn btn-primary" id="btnHistShow" tabindex="24" onclick="loadHistory()" style="width:100%;">Show</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
+          <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+            <thead>
+              <tr>
+                <th>Date</th><th>Customer</th><th>Paid</th><th>Received</th><th>Type</th><th>Narration</th><th>SubUser</th>
+              </tr>
+            </thead>
+            <tbody id="histTbody"><tr><td colspan="7">Loading...</td></tr></tbody>
+            <tfoot id="histFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+const TX_TYPES = ['Paid', 'Received', 'Paid Adjustment', 'Receive Adjustment', 'Commission'];
+let allCustomers = [];
+let mySubUID = null; // set when the logged-in user IS a subuser — used to correctly attribute their own saves since the (inapplicable) picker stays hidden for them
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  try {
+    const u = await initPage('accounts');
+    if (!u) return;
+    mySubUID = u.SubUID || null;
+
+    // Customer Name always shows the full/total customer list, regardless
+    // of which Sub User is picked below — Sub User only decides who a
+    // transaction gets attributed to, it doesn't filter the customer list.
+    await loadCustomers();
+    await setLatestDate();
+    initDatePickers();
+    populateHistParty();
+    initHistDates();
+    loadHistory();
+
+    // ASPX pageLoad(): Select2 init + focus + fetch balance on change
+    $('#ddlAccounts').select2({ placeholder: 'Select Customer', allowClear: true });
+    $('#ddlAccounts').on('change', function(){
+      const val = $(this).val();
+      fetchNetBal(val);
+      // Enter-chain: Date opens this dropdown, picking a customer should
+      // then move on to Type — same as every other field in this form.
+      // Guarded on a real value so resetForm()'s val('').trigger('change')
+      // (Cancel / after Save) doesn't yank focus into the form.
+      // setTimeout — Select2 v3.5.2 tries to restore focus to its own
+      // container right after closing; that happens a tick after 'change'
+      // fires, so a synchronous .focus() here gets silently overridden a
+      // moment later. Queue this after it instead of racing it.
+      if (val) setTimeout(() => $('#ddlType').select2('open'), 50);
+    });
+    bindSelect2Open('#ddlAccounts');
+    $('#ddlAccounts').select2('focus');
+
+    // Type — also Select2 now (not a plain native <select>) purely so Enter
+    // can reliably *open* it (native selects have no cross-browser JS way to
+    // do that) — matches the desktop reference's "dropdown opens, but if you
+    // leave it on the Paid default and just press Enter again, it moves on"
+    // behavior. minimumResultsForSearch:-1 hides the search box since there
+    // are only 5 short options — it's a plain dropdown, not something you'd
+    // type into.
+    $('#ddlType').select2({ minimumResultsForSearch: -1 });
+    bindSelect2Open('#ddlType');
+    const advanceToAmount = () => { const el = document.getElementById('txtAmount'); el.focus(); el.select(); };
+    // 'change' — fires when a different Type is actually picked.
+    $('#ddlType').on('change', () => setTimeout(advanceToAmount, 50));
+    // 'select2-close' — fires on EVERY close, including "opened it, left the
+    // default Paid selected, pressed Enter again" — 'change' alone wouldn't
+    // fire for that since the value never actually changed.
+    $('#ddlType').on('select2-close', () => setTimeout(advanceToAmount, 50));
+
+    // Sub User picker — only makes sense for the main admin (choosing which
+    // staff member an entry belongs to). A subuser's own session only ever
+    // acts as themselves, so there's no one else to pick from — keep it
+    // hidden and skip the API call/Select2 init entirely for that case.
+    if (!u.SubUID) {
+      await loadSubUsers();
+      appendCustomersToStaffList();
+      appendSubUsersToCustomerList();
+      document.getElementById('staffRow').style.display = 'block';
+      $('#ddlStaff').select2();
+      bindSelect2Open('#ddlStaff');
+      // SubUser is the LAST field in the Enter-chain (when visible) — picking
+      // one here should submit the whole entry directly, not just move focus
+      // to the Submit button and wait for one more Enter/click. setTimeout
+      // for the same reason as ddlAccounts' handler above — Select2 restores
+      // its own focus a tick after 'change' fires and would otherwise race it.
+      $('#ddlStaff').on('change', function(){
+        const val = $(this).val();
+        // '0' (Self, the "nothing really picked" default) is a non-empty
+        // STRING — truthy in JS — so a plain `if (val)` treated resetForm()'s
+        // reset-to-Self as a real pick and submitted on every Cancel. Must
+        // explicitly exclude it, same idea as ddlAccounts' empty-string check.
+        if (val && val !== '0') setTimeout(saveTransaction, 50);
+        fetchStaffNetBal(val);
+      });
+    }
+  } catch(e) { window.location.href = '/login.html'; }
+}
+
+// Select2 v3.5.2 sometimes sets a stale/narrow inline width on the open
+// dropdown instead of matching its own closed control's real width. This
+// page has TWO select2 fields (Customer, Sub User) sharing ONE reused
+// .select2-drop element — so the observer/cleanup state below is a single
+// shared (module-level) instance, not one per field, to avoid the two
+// fields' fixes racing each other. But WHICH width to apply is computed
+// from a stable id ("s2id_<field>") known at bind time, NOT by asking
+// "which container currently looks open" — that dynamic lookup depended on
+// Select2 having already added its select2-dropdown-open class, and that
+// class-add can lose the race against select2-open firing on some opens
+// but not others (hence "works first time, breaks second time").
+let _dropObserver = null;
+let _activeFieldId = null; // set by bindSelect2Open's own open handler, always correct for whichever field it was bound to
+
+function fixDropWidth() {
+  if (!_activeFieldId) return;
+  const container = document.getElementById('s2id_' + _activeFieldId);
+  if (!container) return;
+  const w = Math.round(container.getBoundingClientRect().width);
+  if (!w) return;
+  const target = w + 'px';
+  document.querySelectorAll('.select2-drop-active').forEach(drop => {
+    // Skip the no-op write when it's already correct — the observer also
+    // watches the style attribute, so writing the same value again would
+    // still fire another mutation and loop forever.
+    if (drop.offsetParent !== null && drop.style.width !== target) drop.style.width = target;
+  });
+}
+// "No matches found" (and other) re-renders can happen on a later/debounced
+// tick that a fixed set of timeouts would miss — a MutationObserver reacts
+// to any change, whenever it actually happens, instead of guessing timing.
+function watchDropWidth() {
+  // Select2 v3.5.2 gives EACH field its own dedicated drop element and never
+  // removes it on close — just hides it (display:none) while leaving the
+  // .select2-drop-active CLASS in place. A plain querySelector() (singular)
+  // always grabs the FIRST one in DOM order, which after the first field
+  // has ever been opened once is permanently that stale hidden element —
+  // not whichever field is actually open now. Must filter for the visible one.
+  const drop = Array.from(document.querySelectorAll('.select2-drop-active')).find(d => d.offsetParent !== null);
+  if (!drop) return;
+  if (_dropObserver) _dropObserver.disconnect();
+  _dropObserver = new MutationObserver(() => fixDropWidth());
+  // attributes:true + attributeFilter:['style'] — Select2's own
+  // positionDropdown() repositions itself via a direct style-attribute
+  // write, which childList/characterData alone doesn't catch. Missing this
+  // was the earlier "sometimes right, sometimes wrong" gap.
+  _dropObserver.observe(drop, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style'] });
+}
+document.addEventListener('keyup', function(e){
+  if (e.target.classList.contains('select2-input') && document.querySelector('.select2-drop-active')) {
+    fixDropWidth();
+  }
+});
+
+function bindSelect2Open(sel) {
+  const fieldId = sel.replace('#', '');
+  $(sel).on('select2-open', function(){
+    _activeFieldId = fieldId; // this field is now definitely the one that's open
+    const sf = document.querySelector('.select2-drop-active .select2-input');
+    if (sf) sf.focus();
+    // Right when switching between the two fields in quick succession, the
+    // newly-opening field's own container can momentarily read a
+    // getBoundingClientRect() width of 0 (its layout hasn't settled from
+    // the previous field's close yet) — fixDropWidth() correctly skips
+    // applying a 0 width, but without a retry it just gives up rather than
+    // catching the real width a moment later. Retry across a few frames.
+    let attempts = 0;
+    (function tryFix(){
+      fixDropWidth();
+      if (attempts++ < 10) requestAnimationFrame(tryFix);
+    })();
+    watchDropWidth();
+  });
+  $(sel).on('select2-close', function(){
+    if (_dropObserver) { _dropObserver.disconnect(); _dropObserver = null; }
+    _activeFieldId = null;
+  });
+}
+
+function isNumber(evt) {
+  const charCode = evt.which ? evt.which : evt.keyCode;
+  if (charCode > 31 && (charCode < 48 || charCode > 57)) return false;
+  return true;
+}
+function process(input) { input.value = input.value.replace(/[^0-9]/g, ''); }
+
+function getSelectedType() {
+  return document.getElementById('ddlType').value || 'Paid';
+}
+
+// ── DATES ─────────────────────────────────────────────
+function initDatePickers() {
+  const fmt = { dateFormat: 'j/M/Y',
+    formatDate(d) {
+      const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${String(d.getDate()).padStart(2,'0')}/${mo[d.getMonth()]}/${d.getFullYear()}`;
+    },
+    parseDate(s) {
+      const mo = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      const m = s.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/);
+      return m ? new Date(parseInt(m[3]), mo[m[2]], parseInt(m[1])) : null;
+    },
+    allowInput: true,
+    // disableMobile:true — real Android/Chrome combos sometimes render the
+    // native mobile date input blank when its value is set via JS before the
+    // user has touched it (the box shows empty even though a valid date is
+    // stored). Forcing flatpickr's own JS calendar avoids that native-input
+    // quirk entirely and renders the text consistently on every device.
+    disableMobile: true,
+  };
+  flatpickr('#txtDate', fmt);
+}
+
+async function setLatestDate() {
+  const r = await API.get('/api/accounts/latest-date');
+  const today = fmtDate(new Date());
+  // Backend sends this as "19 Jul 2026" (en-GB toLocaleDateString, SPACE
+  // separated) — NOT the "19/Jul/2026" (slash) format fmtDate()/flatpickr's
+  // parseDate/History's isoFromDMY all expect. Using it raw silently broke
+  // flatpickr's parsing AND History's default date range whenever there was
+  // a previous transaction (i.e. most of the time) — reformat it through
+  // fmtDate(new Date(...)) so txtDate is ALWAYS slash-format, same as the
+  // "no previous transaction" fallback case already was.
+  document.getElementById('txtDate').value = r?.date ? (fmtDate(new Date(r.date)) || today) : today;
+}
+
+// ── CUSTOMERS ─────────────────────────────────────────
+// No staff selected (or "Self") → full customer list.
+async function loadCustomers() {
+  const r = await API.get('/api/accounts/customers');
+  allCustomers = [{ UID: 'Self', Name: 'Self' }];
+  const ddl = document.getElementById('ddlAccounts');
+  ddl.innerHTML = '<option value="">Select Customer</option><option value="Self">Self</option>';
+
+  if (r?.success && r.data?.length) {
+    const sorted = [...r.data].sort((a, b) => (a.Name||'').localeCompare(b.Name||''));
+    sorted.forEach(c => {
+      allCustomers.push(c);
+      ddl.innerHTML += `<option value="${c.UID}">${c.Name}</option>`;
+    });
+  }
+  refreshCustomerSelect2();
+}
+
+function refreshCustomerSelect2() {
+  if (window.jQuery && $('#ddlAccounts').data('select2')) $('#ddlAccounts').select2('val', '');
+}
+
+async function fetchNetBal(uid) {
+  const badge = document.getElementById('netBadge');
+
+  // NOTE: deliberately does NOT touch the History panel's Party filter.
+  // Entry form and History are independent — you might be entering a
+  // transaction for one customer while still looking up a different
+  // customer's (or Sub User's) ledger on the right, same as the desktop
+  // reference's separate, unlinked Party/History filter dropdowns.
+
+  if (!uid || uid === 'Self') {
+    badge.textContent = ''; badge.className = 'net-bal';
+    document.getElementById('miniHistRow').style.display = 'none';
+    return;
+  }
+  // A "staff_"-prefixed pick (a Sub User selected in this merged list) has
+  // no ledger — calling the customer-balance/history APIs with it would
+  // just be a bogus request. saveTransaction() blocks the actual save; this
+  // just skips the pointless fetches and warns instead of showing a balance.
+  if (uid.startsWith('staff_')) {
+    badge.textContent = '⚠ Ye Sub User hai, customer nahi'; badge.className = 'net-bal neg';
+    document.getElementById('miniHistRow').style.display = 'none';
+    return;
+  }
+  loadMiniHistory(uid);
+  try {
+    const r = await API.get(`/api/accounts/selected-balance?customerUID=${uid}`);
+    if (r?.success) {
+      const b = parseFloat(r.balance || 0);
+      badge.textContent = 'Net Bal : ' + b.toLocaleString('en-IN');
+      badge.className = 'net-bal ' + (b < 0 ? 'neg' : 'pos');
+    }
+  } catch {}
+  setTimeout(() => { document.getElementById('txtAmount').focus(); document.getElementById('txtAmount').select(); }, 100);
+}
+
+// Sub User dropdown is a merged list of real staff AND customers (see
+// appendCustomersToStaffList) — matching the desktop reference's second
+// "Opposite Party" balance. A "cust_"-prefixed pick uses the same ledger
+// balance lookup as Customer Name; a real Sub User (staff) has its own
+// separate balance concept (same one shown on the "Sub User Balance" page —
+// /api/balance/staff-grid, StaffBalanceSheet SP), for the CURRENTLY entered
+// Date (a staff balance is a running total as of a date, not a flat number).
+async function fetchStaffNetBal(val) {
+  const badge = document.getElementById('staffNetBadge');
+  if (!val || val === '0') { badge.textContent = ''; badge.className = 'net-bal'; return; }
+  try {
+    let b = null;
+    if (val.startsWith('cust_')) {
+      const uid = val.slice('cust_'.length);
+      const r = await API.get(`/api/accounts/selected-balance?customerUID=${uid}`);
+      if (r?.success) b = parseFloat(r.balance || 0);
+    } else {
+      const date = document.getElementById('txtDate').value;
+      const r = await API.get(`/api/balance/staff-grid?date=${encodeURIComponent(date)}`);
+      const row = (r?.data || []).find(s => String(s.SubUserID) === String(val));
+      if (row) b = parseFloat(row.Balance || 0);
+    }
+    if (b === null) { badge.textContent = ''; badge.className = 'net-bal'; return; }
+    badge.textContent = 'Net Bal : ' + b.toLocaleString('en-IN');
+    badge.className = 'net-bal ' + (b < 0 ? 'neg' : 'pos');
+  } catch { badge.textContent = ''; badge.className = 'net-bal'; }
+}
+
+// ── HISTORY ───────────────────────────────────────────
+function populateHistParty() {
+  const sel = document.getElementById('histParty');
+  sel.innerHTML = '<option value="">All Customers</option>' +
+    allCustomers.filter(c => c.UID !== 'Self').map(c => `<option value="${c.UID}">${c.Name}</option>`).join('');
+}
+
+function initHistDates() {
+  const today = document.getElementById('txtDate').value ? isoFromDMY(document.getElementById('txtDate').value) : new Date().toISOString().split('T')[0];
+  document.getElementById('histFrom').value = today;
+  document.getElementById('histTo').value = today;
+}
+
+function isoFromDMY(s) {
+  // "19/Jul/2026" → "2026-07-19"
+  const mo = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const m = s.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/);
+  return m ? `${m[3]}-${mo[m[2]]}-${m[1].padStart(2,'0')}` : new Date().toISOString().split('T')[0];
+}
+
+async function loadHistory() {
+  const from = document.getElementById('histFrom').value;
+  const to = document.getElementById('histTo').value;
+  const cust = document.getElementById('histParty').value;
+  const type = document.getElementById('histType').value;
+  document.getElementById('histTbody').innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
+  const r = await API.get(`/api/accounts/list?fromDate=${from}&toDate=${to}&customerUID=${cust}`);
+  let data = r?.data || [];
+  if (type) data = data.filter(d => d.Type === type);
+  let paid = 0, recv = 0;
+  document.getElementById('histTbody').innerHTML = data.length ? data.map(d => {
+    paid += parseFloat(d.Paid || 0); recv += parseFloat(d.Received || 0);
+    return `<tr>
+      <td>${d.Date ? new Date(d.Date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
+      <td>${d.CustomerName || ''}</td>
+      <td>${d.Paid || 0}</td>
+      <td>${d.Received || 0}</td>
+      <td>${d.Type || ''}</td>
+      <td>${d.Narration || ''}</td>
+      <td>${d.StaffName || ''}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7">No transactions</td></tr>';
+  const net = paid - recv;
+  document.getElementById('histFoot').innerHTML = data.length
+    ? `<tr><td colspan="2">Total (${data.length})</td><td>₹${paid.toFixed(0)}</td><td>₹${recv.toFixed(0)}</td><td colspan="3">Net: ₹${net.toFixed(0)}</td></tr>`
+    : '';
+}
+
+// Compact "recent entries for this party" table right in the Entry form —
+// no date range (whole history for that customer), newest first, capped to
+// the last 10 and scroll-boxed short (~4 rows) same as the desktop reference.
+async function loadMiniHistory(uid) {
+  const row = document.getElementById('miniHistRow');
+  const tbody = document.getElementById('miniHistTbody');
+  row.style.display = 'block';
+  tbody.innerHTML = '<tr><td colspan="5">Loading...</td></tr>';
+  // fromDate/toDate MUST be passed — the backend SP (ShowAllTransaction)
+  // doesn't treat an omitted/empty date range as "no filter", it returns
+  // nothing at all. A wide range (2000-01-01 → today) is effectively
+  // unbounded for real data, unlike actually leaving the params out.
+  const today = new Date().toISOString().split('T')[0];
+  const r = await API.get(`/api/accounts/list?customerUID=${uid}&fromDate=2000-01-01&toDate=${today}`);
+  let data = r?.data || [];
+  data.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+  data = data.slice(0, 10);
+  tbody.innerHTML = data.length ? data.map(d => `
+    <tr>
+      <td>${d.Date ? new Date(d.Date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
+      <td>${d.Paid || 0}</td>
+      <td>${d.Received || 0}</td>
+      <td>${d.Narration || ''}</td>
+      <td>${d.Type || ''}</td>
+    </tr>`).join('') : '<tr><td colspan="5">No previous entries</td></tr>';
+}
+
+// ── STAFF ─────────────────────────────────────────────
+async function loadSubUsers() {
+  const r = await API.get('/api/accounts/subusers');
+  const sel = document.getElementById('ddlStaff');
+  if (r?.success && r.data?.length) {
+    r.data.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.SubUserID; o.textContent = s.subusername;
+      sel.appendChild(o);
+    });
+  }
+}
+
+// Sub User dropdown also lists every customer alongside the subusers (same
+// combined list as the ASPX reference). Customer entries use a "cust_"
+// prefixed value so they stay distinguishable from real SubUserIDs — see
+// saveTransaction(), which must never send a customer's id to the backend
+// as if it were a staff id.
+function appendCustomersToStaffList() {
+  const sel = document.getElementById('ddlStaff');
+  allCustomers.forEach(c => {
+    if (c.UID === 'Self') return;
+    const o = document.createElement('option');
+    o.value = 'cust_' + c.UID; o.textContent = c.Name;
+    sel.appendChild(o);
+  });
+}
+
+// Customer Name also lists every Sub User alongside the customers (mirrors
+// appendCustomersToStaffList in the other direction). Sub User entries use a
+// "staff_" prefixed value so they stay distinguishable from real customer
+// UIDs — a Sub User has no ledger of their own, so saveTransaction() blocks
+// the save outright if one ends up picked here, rather than silently sending
+// a bogus customerUID to the backend.
+function appendSubUsersToCustomerList() {
+  const sel = document.getElementById('ddlAccounts');
+  // Insert right after "Self" (same spot Sub User dropdown puts them, before
+  // its own customer entries) — NOT appended at the very end. With dozens of
+  // alphabetically-sorted customers already in this list, anything appended
+  // last sits below a full page of scrolling and is effectively invisible
+  // without knowing to scroll all the way down for it.
+  const afterSelf = sel.options[1]?.nextSibling || null;
+  Array.from(document.getElementById('ddlStaff').options).forEach(o => {
+    if (o.value === '0' || o.value.startsWith('cust_')) return; // Self / customer entries already in this list
+    const opt = document.createElement('option');
+    opt.value = 'staff_' + o.value; opt.textContent = o.textContent;
+    sel.insertBefore(opt, afterSelf);
+  });
+  refreshCustomerSelect2();
+}
+
+// ── SAVE ──────────────────────────────────────────────
+async function saveTransaction() {
+  const uid = $('#ddlAccounts').val();
+  const amount = document.getElementById('txtAmount').value.trim();
+  const type = getSelectedType();
+  if (!uid) { toast('Customer select karo', 'err'); $('#ddlAccounts').select2('open'); return; }
+  if (uid.startsWith('staff_')) { toast('Ye ek Sub User hai, customer nahi — inka ledger nahi hota', 'err'); $('#ddlAccounts').select2('open'); return; }
+  if (!amount || parseFloat(amount) <= 0) { toast('Amount daalo', 'err'); document.getElementById('txtAmount').focus(); return; }
+
+  document.getElementById('btnSubmit').disabled = true;
+  const staffSel = document.getElementById('ddlStaff');
+  // Subuser's own session: picker is hidden/not applicable — attribute to
+  // themselves directly. Main admin: use whatever they picked (or '0'/Self).
+  // A "cust_" prefixed value means a customer entry got selected in this
+  // merged dropdown — that's never a valid staff id, so treat it the same
+  // as Self rather than sending a customer's id to the backend as if it
+  // were a SubUserID (would silently corrupt the saved record's attribution).
+  const rawStaffVal = staffSel.selectedIndex > 0 ? staffSel.value : '0';
+  const staffID = mySubUID || (rawStaffVal.startsWith('cust_') ? '0' : rawStaffVal);
+
+  try {
+    const r = await API.post('/api/accounts', {
+      customerUID: uid,
+      date: document.getElementById('txtDate').value,
+      type, amount,
+      narration: document.getElementById('txtNarration').value,
+      staffID: (type === 'Paid' || type === 'Received') ? staffID : '0'
+    });
+    if (r?.success) {
+      toast('Data Saved Successfully!', 'ok');
+      resetForm();
+    } else {
+      toast(r?.message || 'Error saving', 'err');
+    }
+  } catch(e) { toast('Error', 'err'); }
+  document.getElementById('btnSubmit').disabled = false;
+}
+
+function resetForm() {
+  $('#ddlAccounts').val('').trigger('change');
+  document.getElementById('txtAmount').value = '';
+  document.getElementById('txtNarration').value = '';
+  // select2('val', ...) — NOT a raw .value= assignment (Select2 wraps the
+  // real <select> and won't notice a plain DOM value change, leaving the
+  // widget showing the old pick e.g. "Received") — and deliberately without
+  // triggering 'change' (unlike ddlStaff below), since ddlType's 'change'
+  // handler auto-advances to Amount, which a plain Cancel/reset shouldn't do.
+  $('#ddlType').select2('val', 'Paid');
+  // ddlStaff's 'change' handler already guards on a truthy value, so
+  // resetting to '0' safely skips its auto-advance-to-Submit side effect.
+  if ($('#ddlStaff').data('select2')) $('#ddlStaff').val('0').trigger('change');
+  // Ready for the next entry — after Submit succeeds (or Cancel), jump
+  // straight back to Customer Name instead of leaving focus stranded on
+  // whatever field the save/cancel action was triggered from.
+  setTimeout(() => $('#ddlAccounts').select2('focus'), 60);
+}
+
+// ── HELPERS ───────────────────────────────────────────
+function fmtDate(d) {
+  if (!d || isNaN(d)) return '';
+  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2,'0')}/${mo[d.getMonth()]}/${d.getFullYear()}`;
+}
+// ── SweetAlert-based feedback (matches ASPX SucessMessage/ErrorMessage) ──
+function toast(msg, type='ok') {
+  swal(type === 'ok' ? 'Sucess!' : 'Wrong Inputs!', msg, {
+    icon: type === 'ok' ? 'success' : 'error',
+    timer: 900,
+    buttons: false
+  });
+}
+
+init();
+</script>
+</body>
+</html>

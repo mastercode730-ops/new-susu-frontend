@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Customers - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.card-title { font-size:14px; }
+.button1 { background-color:white; color:black; border:2px solid #d1d7db; }
+.button1:hover, .button1:focus { background-color:#d1d7db; color:white; }
+.hideGridColumn { display:none; }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="page-inner">
+    <h4 class="page-title" id="lblMobileNo" style="display:none;text-transform:capitalize;"></h4>
+
+    <div class="row" id="searchSection">
+      <div class="col">
+        <!-- ASPX: txtSearchatHead -->
+        <input type="text" class="form-control" id="txtSearchatHead"
+          placeholder="Search  Name / Mobile.. " style="text-transform:capitalize;"
+          oninput="onSearch(this.value)" onfocus="this.select()">
+      </div>
+    </div>
+
+    <!-- ASPX: rptSendMessages → customer list cards -->
+    <div class="row" style="margin-top:25px;margin-left:2px;" id="custSection">
+      <div id="custList" style="width:100%;">
+        <div class="emsg">Loading...</div>
+      </div>
+    </div>
+
+    <!-- ASPX: rptGames → game cards -->
+    <div class="row" style="margin-left:2px;display:none;" id="gameSection">
+      <div id="gameGrid" style="width:100%;display:flex;flex-wrap:wrap;">
+        <div class="emsg">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ASPX: divGameRateHistory modal → GridViewRates → Rate buttons -->
+<div class="modal fade" id="rateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title" id="rateModalTitle" style="text-transform:capitalize;font-weight:bold;"></h6>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-head-bg-success" id="rateModalBody" style="text-transform:capitalize;width:100%;">
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+// ─── State ───
+let _uid = null;
+let _allCustomers = [];
+let _currentUID   = null; // selected customer UID
+let _rateID       = null;
+let _rates        = null;
+let _urlParams    = null;
+
+async function init() {
+  const u = await initPage('view-customers');
+  if (!u) return;
+  _uid = u.UID;
+
+  _urlParams = new URLSearchParams(location.search);
+
+  // ASPX: if QueryString["UID"] → FetchUserGames(UID)
+  if (_urlParams.get('UID')) {
+    _rateID = _urlParams.get('RateID') || '0';
+    _rates  = _urlParams.get('Rates')  || '0/100-0/10-0';
+    await showGames(_urlParams.get('UID'));
+  } else {
+    await loadCustomers('');
+  }
+
+  // ASPX: txtSearchatHead.Focus() + .Select()
+  document.getElementById('txtSearchatHead').focus();
+  document.getElementById('txtSearchatHead').select();
+
+  window.__escPageHandler = function() {
+    if ($('#rateModal').hasClass('show')) { closeRateModal(); return true; }
+    if (document.getElementById('gameSection').style.display !== 'none') { goBack(); return true; }
+    return false;
+  };
+}
+
+// ── FetchReceiverList → rptSendMessages (customer cards) ──
+async function loadCustomers(filter) {
+  const custList = document.getElementById('custList');
+  custList.innerHTML = '<div class="emsg">Loading...</div>';
+
+  const r = await API.get(`/api/home/receiver-list?filter=${encodeURIComponent(filter)}`);
+  _allCustomers = r?.data || [];
+
+  if (!_allCustomers.length) {
+    custList.innerHTML = '<div class="emsg">No Customers Found</div>';
+    return;
+  }
+
+  custList.innerHTML = _allCustomers.map(c => `
+    <div class="col-sm-12 col-md-12" style="margin-bottom:8px;">
+      <div class="card card-stats card-primary card-round" style="background-color:White;">
+        <div class="card-body" style="padding:0!important;background-color:White;">
+          <div class="col-sm-12 col-md-12 col-stats button1"
+               style="margin-left:10px;cursor:pointer;border-radius:15px;"
+               onclick="onCustomerClick('${c.UID}','${c.CID||''}','${esc(c.CustomerName||'')}','${c.Mobile||''}')">
+            <div class="col-sm-12 col-md-12 numbers">
+              <i class="flaticon-chat-7" style="float:left;font-size:40px;margin-right:30px;margin-top:5px;font-weight:bold;color:#25d366;"></i>
+              <h4 class="card-title" style="font-size:medium;text-transform:capitalize;color:#25d366;">${c.CustomerName||''}</h4>
+              <h4 class="card-title" style="color:Black;font-size:small;text-transform:capitalize;">${c.Mobile||''}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── rptSendMessages_ItemCommand → check rates ──
+// ASPX: SELECT from CustomersRates WHERE CID=@CID
+// if 1 rate → redirect ViewCustomersData?UID=x&RateID=x&Rates=x
+// if >1 rates → ShowdivGameRateHistory() modal
+async function onCustomerClick(uid, cid, custName, mobile) {
+  try {
+    const r = await API.get(`/api/home/customer-rates/${cid}`);
+    const rates = r?.data || [];
+
+    if (rates.length === 1) {
+      // ASPX: Response.Redirect("ViewCustomersData.aspx?UID=x&RateID=x&Rates=x")
+      const rateID = rates[0].RateID;
+      const rateStr = rates[0].Rate || '0/100-0/10-0';
+      await showGames(uid, rateID, rateStr);
+    } else if (rates.length > 1) {
+      // ASPX: GridViewRates.DataSource = dt; ShowdivGameRateHistory()
+      showRateModal(custName + '  ' + mobile, rates, uid);
+    } else {
+      // No rates — go directly with defaults
+      await showGames(uid, '0', '0/100-0/10-0');
+    }
+  } catch(e) {
+    await showGames(uid, '0', '0/100-0/10-0');
+  }
+}
+
+// ── Rate Modal ──
+function showRateModal(title, rates, uid) {
+  document.getElementById('rateModalTitle').textContent = title;
+  document.getElementById('rateModalBody').innerHTML = rates.map(r => `
+    <tr>
+      <td>
+        <button class="btn"
+          style="cursor:pointer;margin-left:0;color:White;background-color:#31ce36;border:none;border-radius:2px;font-size:medium;height:40px;width:100%;text-align:center;font-weight:bold;"
+          onclick="onRateSelect('${uid}','${r.RateID}','${esc(r.Rate||'')}')">
+          ${r.Rate||''}
+        </button>
+      </td>
+    </tr>`).join('');
+  $('#rateModal').modal('show');
+}
+async function onRateSelect(uid, rateID, rates) {
+  closeRateModal();
+  await showGames(uid, rateID, rates);
+}
+function closeRateModal() {
+  $('#rateModal').modal('hide');
+}
+
+// ── FetchUserGames(UID) → rptGames ──
+// ASPX: SP FetchGames(@fId=UID) + unread count query
+// Hides rptDashboard, rptSendMessages, txtSearchatHead
+// Shows lblMobileNo
+async function showGames(uid, rateID, rates) {
+  _currentUID = uid;
+  _rateID     = rateID || '0';
+  _rates      = rates  || '0/100-0/10-0';
+
+  // ASPX: hide customer list + search, show games
+  document.getElementById('searchSection').style.display = 'none';
+  document.getElementById('custSection').style.display   = 'none';
+  document.getElementById('gameSection').style.display   = 'flex';
+
+  const gameGrid = document.getElementById('gameGrid');
+  gameGrid.innerHTML = '<div class="emsg">Loading...</div>';
+
+  // ASPX: SP FetchGames(@fId=UID)
+  const r = await API.get(`/api/home/user-games/${uid}`);
+  const games = r?.data || [];
+
+  if (games.length) {
+    // ASPX: lblMobileNo.Text = dt.Rows[0]["Mobile"]
+    document.getElementById('lblMobileNo').textContent = games[0].Mobile || '';
+    document.getElementById('lblMobileNo').style.display = 'block';
+  }
+
+  if (!games.length) {
+    gameGrid.innerHTML = '<div class="emsg">No Games Found</div>';
+    return;
+  }
+
+  gameGrid.innerHTML = games.map(g => `
+    <div class="col-sm-6 col-md-3" style="margin-bottom:12px;">
+      <div class="card card-stats card-primary card-round" style="background-color:#25D366;border-radius:10px;">
+        <div class="card-body" style="background-color:#25D366;border-radius:10px;cursor:pointer;"
+             onclick="onGameClick('${g.GID}','${esc(g.GameName||'')}','${g.Mobile||''}','${g.fUID||uid}')">
+          <div class="row">
+            <div class="col-5">
+              <div class="icon-big text-center">
+                <i class="flaticon-game-controller" style="text-transform:capitalize;font-weight:bold;"></i>
+              </div>
+            </div>
+            <div class="col-7 col-stats">
+              <div class="numbers">
+                ${g.UnReadTotal && g.UnReadTotal !== '0' ? `<span class="text-span" style="color:Red;font-size:small;font-family:Arial Black;display:block">${g.UnReadTotal}</span>` : ''}
+                <p class="card-category" style="text-transform:capitalize;font-weight:bold;">${g.GameName||''}</p>
+                <h4 class="card-title" style="text-transform:capitalize;font-weight:bold;">${g.DrawTime||''}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── rptGames_ItemCommand → WhatsaapLikeReceivedChat.aspx ──
+// ASPX: Response.Redirect("WhatsaapLikeReceivedChat.aspx?SelectedMobile=x&GameId=x&GameName=x&SelectedUID=x&RateID=x&Rates=x&SelectedPage=2")
+function onGameClick(gameId, gameName, mobile, fUID) {
+  const params = new URLSearchParams({
+    SelectedMobile: mobile,
+    GameId:         gameId,
+    GameName:       gameName,
+    SelectedUID:    fUID,
+    RateID:         _rateID || '0',
+    Rates:          _rates  || '0/100-0/10-0',
+    SelectedPage:   '2'
+  });
+  window.location.href = `/pages/chat.html?${params.toString()}`;
+}
+
+// ── txtSearchatHead → FetchReceiverList ──
+let _searchTimer = null;
+function onSearch(val) {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => loadCustomers(val), 300);
+}
+
+// ── Back button ──
+function goBack() {
+  if (document.getElementById('gameSection').style.display !== 'none') {
+    // Go back to customer list
+    document.getElementById('searchSection').style.display = '';
+    document.getElementById('custSection').style.display   = '';
+    document.getElementById('gameSection').style.display   = 'none';
+    document.getElementById('lblMobileNo').style.display   = 'none';
+    _currentUID = null;
+  } else {
+    window.location.href = '/pages/home.html';
+  }
+}
+
+function esc(s) { return String(s||'').replace(/'/g,"\\'"); }
+init();
+</script>
+</body>
+</html>

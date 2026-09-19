@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/css/main.css">
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Date Wise Hisab - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<style>
+.hideGridColumn { display:none; }
+.flatpickr-input { cursor:pointer; background:#fff; }
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label,#histModal .form-group label{font-weight:800!important;color:var(--text)!important;}
+.content .card-title,#histModal .modal-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;}
+.content .form-control::placeholder{font-weight:700!important;color:#555!important;opacity:1!important;}
+/* Compact, well-aligned filter box — smaller fields, tighter spacing */
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:10px 16px!important;border-bottom:1px solid #999;}
+.content .form-group{margin-bottom:4px!important;}
+.content .form-group label{font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .form-control{padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;max-width:240px;}
+/* Data grid: bold bordered header instead of the faint Bootstrap table look */
+.content table,#histModal table{border-collapse:collapse!important;width:100%!important;}
+.content table th,#histModal table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
+.content table td,#histModal table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
+.content table tfoot td{background:#eee!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+.content table td[onclick]{color:#1572E8!important;}
+/* Flatpickr calendar popup — bold, clear text */
+.flatpickr-weekday{font-weight:800!important;color:#000!important;}
+.flatpickr-day{font-weight:800!important;color:#000!important;}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{color:#999!important;font-weight:700!important;}
+.flatpickr-current-month .cur-month,.flatpickr-current-month input.cur-year{font-weight:800!important;color:#000!important;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12" style="margin-top:0px;">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 col-lg-4">
+              <div class="form-group">
+                <label for="txtStartDate">From Date</label>
+                <input type="text" class="form-control" id="txtStartDate" readonly placeholder="Enter Start Date" onfocus="this.select()">
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+              <div class="form-group">
+                <label for="txtEndDate">To Date</label>
+                <input type="text" class="form-control" id="txtEndDate" readonly placeholder="Enter End Date" onfocus="this.select()">
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+              <div class="form-group">
+                <br>
+                <button class="btn btn-success" onclick="bindGrid()">Search</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-header">
+          <div class="card-title">Show Date Wise Hisab</div>
+        </div>
+        <div class="table-responsive">
+          <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Sale</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="bodyHisab">
+              <tr><td colspan="3">Search karo data dekhne ke liye</td></tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>Total</td>
+                <td id="ft_sale">–</td>
+                <td id="ft_bal">–</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL (divGameHisabHistory) — ASPX uses a real Bootstrap modal here -->
+<!-- ASPX: BindGridUserID → SP ShowDateWiseHisabSummaryUserID -->
+<!-- Shows: TotalSale, DaraSale, AkharSale, Comm, SaleBalance, DaraOpen, AkharOpen, WinAmount, Hissa, NetBalance -->
+<div class="modal fade" id="histModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="histTitle" style="text-transform:capitalize;font-weight:bold;"></h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive" style="text-transform:capitalize;">
+          <table id="histTable">
+            <tr><th>Detail</th><th>Amount</th></tr>
+            <tr><td>Total Sale</td><td id="h_totalSale">0</td></tr>
+            <tr><td>Dara Sale</td><td id="h_daraSale">0</td></tr>
+            <tr><td>Akhar Sale</td><td id="h_akharSale">0</td></tr>
+            <tr><td>Comm</td><td id="h_comm">0</td></tr>
+            <tr><td>Balance</td><td id="h_balance">0</td></tr>
+            <tr><td>Dara Open</td><td id="h_daraOpen">0</td></tr>
+            <tr><td>Akhar Open</td><td id="h_akharOpen">0</td></tr>
+            <tr><td>Win Amount</td><td id="h_winAmount">0</td></tr>
+            <tr><td>Hissa</td><td id="h_pati">0</td></tr>
+            <tr><td>Net Balance</td><td id="h_netBalance">0</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let myUID = null;
+let _currentStart = '';
+let _currentEnd = '';
+let _tableData = [];
+
+async function init() {
+  const u = await initPage('date-wise');
+  if (!u) return;
+  myUID = u.UID;
+
+  // ASPX: BindLastedDate() — auto set latest date
+  await setLatestDate();
+
+  window.__escPageHandler = function() {
+    if ($('#histModal').hasClass('show')) { closeHist(); return true; }
+    return false;
+  };
+}
+
+async function setLatestDate() {
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    if (r?.success && r.data) {
+      document.getElementById('txtStartDate').value = r.data;
+      document.getElementById('txtEndDate').value   = r.data;
+      _currentStart = r.data;
+      _currentEnd   = r.data;
+    } else {
+      const d = fmtDate(new Date(Date.now() + 5.5*3600000));
+      document.getElementById('txtStartDate').value = d;
+      document.getElementById('txtEndDate').value   = d;
+      _currentStart = d; _currentEnd = d;
+    }
+  } catch(e) {}
+
+  // Flatpickr calendar for date inputs (page-specific enhancement, no Atlantis equivalent)
+  ["txtStartDate", "txtEndDate"].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (!el || el._flatpickr) return;
+    flatpickr(el, {
+      dateFormat: 'd/M/Y',
+      allowInput: false,
+      disableMobile: true
+    });
+  });
+}
+
+// ── btnSearch_Click → BindGrid() ──
+async function bindGrid() {
+  _currentStart = document.getElementById('txtStartDate').value;
+  _currentEnd   = document.getElementById('txtEndDate').value;
+
+  const tbody = document.getElementById('bodyHisab');
+  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+
+  try {
+    // SP: ShowDateWiseHisabSummary(@UID, @FromDate, @ToDate)
+    const r = await API.get(
+      `/api/hisab/date-wise-summary?fromDate=${encodeURIComponent(_currentStart)}&toDate=${encodeURIComponent(_currentEnd)}`
+    );
+
+    if (!r?.success || !r.data?.length) {
+      tbody.innerHTML = '<tr><td colspan="3">No Data Found!</td></tr>';
+      setText('ft_sale','–'); setText('ft_bal','–');
+      _tableData = [];
+      return;
+    }
+
+    _tableData = r.data;
+    renderTable(_tableData);
+
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="3">Error loading</td></tr>';
+  }
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('bodyHisab');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td style="color:var(--green2);font-weight:600;cursor:pointer;" onclick="showHistory('${r.fSenderID}','${r.Self||0}')">${r.Mobile||r.fSenderID}</td>
+      <td>${r.Total_Amount||0}</td>
+      <td>${r.Balance||0}</td>
+    </tr>`).join('');
+
+  // ASPX Footer: [0]=Total,[1]=Sum(Total_Amount),[2]=Sum(Balance)
+  const totSale = rows.reduce((s,r)=>s+(parseFloat(r.Total_Amount)||0),0);
+  const totBal  = rows.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0);
+  setText('ft_sale', totSale.toString());
+  setText('ft_bal',  totBal.toString());
+}
+
+// ── grvGameHisab_RowCommand "History" → BindGridUserID ──
+// ASPX: SP ShowDateWiseHisabSummaryUserID(@CID, @UID, @FromDate, @ToDate)
+// TypeSelf = row.Cells[3].Text → determines which row to show (0 or 1) from result
+async function showHistory(uid, typeSelf) {
+  document.getElementById('histTitle').textContent = 'Loading...';
+  $('#histModal').modal('show');
+
+  try {
+    const r = await API.get(
+      `/api/hisab/date-wise-user?uid=${uid}&fromDate=${encodeURIComponent(_currentStart)}&toDate=${encodeURIComponent(_currentEnd)}`
+    );
+
+    if (!r?.success || !r.data?.length) {
+      document.getElementById('histTitle').textContent = 'No Data Found!';
+      return;
+    }
+
+    const data = r.data;
+    // ASPX: if dt.Rows.Count==2 → use TypeSelf row index
+    const rowIdx = (data.length === 2) ? parseInt(typeSelf||0) : 0;
+    const d = data[rowIdx] || data[0];
+
+    // ASPX: h4Title = Mobile + date range + "Hisab History"
+    document.getElementById('histTitle').textContent =
+      `${d.Mobile||''} ${_currentStart} To ${_currentEnd} Hisab History`;
+
+    setText('h_totalSale',  d.Total_Amount||0);
+    setText('h_daraSale',   d.D_Sale||0);
+    setText('h_akharSale',  d.A_Sale||0);
+    setText('h_comm',       d.Commision||0);
+    setText('h_balance',    d.SaleBalance||d.Balance||0);
+    setText('h_daraOpen',   d.O_Dara||0);
+    setText('h_akharOpen',  d.O_Akhar||0);
+    setText('h_winAmount',  d.WinAmount||0);
+    setText('h_pati',       d.Pati||0);
+    setText('h_netBalance', d.Balance||0);
+
+  } catch(e) {
+    document.getElementById('histTitle').textContent = 'Error loading';
+  }
+}
+
+function closeHist() {
+  $('#histModal').modal('hide');
+}
+
+function fmtDate(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2,'0')}/${months[d.getMonth()]}/${d.getFullYear()}`;
+}
+function setText(id,val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+init();
+</script>
+</body>
+</html>

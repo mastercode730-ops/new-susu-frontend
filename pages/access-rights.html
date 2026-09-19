@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Rights - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.hideGridColumn { display:none; }
+thead th.assign-hd { background-color:#1572e8!important; color:White!important; font-weight:800!important; }
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+.content .form-group input[type=checkbox]{width:16px;height:16px;vertical-align:middle;}
+.content .form-group label[for^="chk"]{display:inline!important;margin:0 0 0 4px!important;vertical-align:middle;}
+/* Compact cards — smaller fields/spacing, less scroll to get through them */
+.content .card{margin-bottom:14px!important;}
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:8px 16px!important;}
+.content .card-action{padding:8px 16px!important;}
+.content .form-group{margin-bottom:8px!important;}
+/* Data grids: bold bordered header instead of the faint Bootstrap table look,
+   and scroll internally past a height instead of growing the whole page. */
+.content table{border-collapse:collapse!important;width:100%!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 12px!important;font-size:.85rem!important;position:sticky;top:0;}
+.content table td{border:1px solid #ccc!important;padding:6px 12px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+#subUsersList,#accessRightsList{max-height:360px;overflow-y:auto;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Access Right</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="ddlSubUsers">User</label>
+                <select id="ddlSubUsers" class="form-control" onchange="loadAccessRights()">
+                  <option value="">Select User</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDContacts"> <label for="chkADDContacts">Contacts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDGames"> <label for="chkADDGames">Games</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkResult"> <label for="chkResult">Result</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisab"> <label for="chkHisab">Hisab</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisabSummary"> <label for="chkHisabSummary">Hisab Summary</label></div></div>
+            <div class="col-md-2" style="display:none;"><div class="form-group"><input type="checkbox" id="chkDateWiseHisab"> <label>Date Wise Hisab</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkAccounts"> <label for="chkAccounts">Accounts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkShowAllAccounts"> <label for="chkShowAllAccounts">Show All Accounts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkBalance"> <label for="chkBalance">Balance</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkLC"> <label for="chkLC">LC</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkYantri"> <label for="chkYantri">Yantri</label></div></div>
+          </div>
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" onclick="saveAccessRights()">Save Access Rights</button>
+          <button class="btn btn-danger" onclick="resetAccess()">Reset</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Add / Edit Sub User</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="subName">Name</label>
+                <input type="text" id="subName" class="form-control" placeholder="Staff name">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="subMobile">Mobile</label>
+                <input type="text" id="subMobile" class="form-control" placeholder="Mobile">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="subPassword">Password</label>
+                <input type="text" id="subPassword" class="form-control" placeholder="Password">
+                <input type="hidden" id="editSubID">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" onclick="saveSubUser()">Save Staff</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Staff / Sub Users</div>
+        </div>
+        <div class="table-responsive" id="subUsersList">
+          <div class="loading"><span class="spinner"></span>Loading...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Access Rights Summary</div>
+        </div>
+        <div class="table-responsive" id="accessRightsList">
+          <div class="loading"><span class="spinner"></span>Loading...</div>
+        </div>
+      </div>
+
+      <!-- Assign Customer — merged onto this page (was its own "Assign
+           Customer" menu item) so both Sub User setup screens live under
+           one "Access Rights" menu entry instead of two. -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Assign Customers</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="ddlSrchCustomers">User</label>
+                <select class="form-control" id="ddlSrchCustomers" style="text-transform:capitalize;" onchange="loadClients()">
+                  <option value="">Select User</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="txtFilter">Filter</label>
+                <input type="text" id="txtFilter" class="form-control" onkeyup="filterGrid()"
+                  placeholder="Filter by Name...">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="table-responsive" style="height:350px;width:100%;">
+                <table class="table-bordered-bd-primary table-hover" id="clientTable" cellpadding="4"
+                  style="text-align:center;font-weight:normal;text-transform:capitalize;width:100%;">
+                  <thead>
+                    <tr>
+                      <th class="assign-hd" style="width:100px;">SR</th>
+                      <th class="assign-hd" style="width:100px;">
+                        <input type="checkbox" id="chkAll" onclick="checkAll(this)">
+                      </th>
+                      <th class="assign-hd hideGridColumn">ID</th>
+                      <th class="assign-hd" style="width:500px;">Name</th>
+                    </tr>
+                  </thead>
+                  <tbody id="clientBody">
+                    <tr><td colspan="4">Select a user to load clients</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-action">
+          <button class="btn btn-grd-success" id="MyButton" onclick="saveAssignments()"
+            style="background-color:#1572e8!important;border:#1572e8!important;color:White;">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let _allClients = []; // for client-side filter (ASPX: filterGrid) — Assign Customers panel
+
+async function init() {
+  const user = await initPage('access');
+  if (!user) return;
+  if (user.SubUID) { window.location.href = '/pages/home.html'; return; }
+
+  await Promise.all([loadSubUsers(), loadAccessRightsList(), loadAssignUserDropdown()]);
+}
+
+async function loadSubUsers() {
+  const res = await API.get('/api/admin/subusers');
+  const el = document.getElementById('subUsersList');
+  const ddl = document.getElementById('ddlSubUsers');
+
+  ddl.innerHTML = '<option value="">Select User</option>';
+
+  if (!res || !res.success || !res.data.length) {
+    el.innerHTML = '<div class="empty-state">No sub users</div>';
+    return;
+  }
+
+  res.data.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.SubUserID;
+    opt.textContent = `${u.subusername} (${u.Mobile})`;
+    ddl.appendChild(opt);
+  });
+
+  el.innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead>
+        <tr style="background-color:LightGray;"><th>Name</th><th>Mobile</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        ${res.data.map(u => `
+          <tr>
+            <td style="text-transform:capitalize">${u.subusername}</td>
+            <td>${u.Mobile}</td>
+            <td><span style="padding:4px 10px;border-radius:2px;font-weight:bold;color:#fff;background-color:${u.IsActive === 'True' || u.IsActive === true ? '#31ce36' : '#f25961'};">${u.IsActive === 'True' || u.IsActive === true ? 'Active' : 'Inactive'}</span></td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="editSubUser('${u.SubUserID}','${u.subusername}','${u.Mobile}','${u.Password}')">Edit</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function loadAccessRights() {
+  const subUserID = document.getElementById('ddlSubUsers').value;
+  if (!subUserID) return;
+
+  const res = await API.get(`/api/admin/access-rights/${subUserID}`);
+  if (!res || !res.success || !res.data) {
+    resetAccess();
+    return;
+  }
+
+  const ar = res.data;
+  document.getElementById('chkADDContacts').checked = ar.ADDContacts === true || ar.ADDContacts === 'True';
+  document.getElementById('chkADDGames').checked = ar.ADDGames === true || ar.ADDGames === 'True';
+  document.getElementById('chkResult').checked = ar.Result === true || ar.Result === 'True';
+  document.getElementById('chkHisab').checked = ar.Hisab === true || ar.Hisab === 'True';
+  document.getElementById('chkHisabSummary').checked = ar.HisabSummary === true || ar.HisabSummary === 'True';
+  document.getElementById('chkDateWiseHisab').checked = ar.DateWiseHisab === true || ar.DateWiseHisab === 'True';
+  document.getElementById('chkAccounts').checked = ar.Accounts === true || ar.Accounts === 'True';
+  document.getElementById('chkShowAllAccounts').checked = ar.ShowAllAccounts === true || ar.ShowAllAccounts === 'True';
+  document.getElementById('chkBalance').checked = ar.Balance === true || ar.Balance === 'True';
+  document.getElementById('chkLC').checked = ar.LC === true || ar.LC === 'True';
+  document.getElementById('chkYantri').checked = ar.Yantri === true || ar.Yantri === 'True';
+}
+
+async function loadAccessRightsList() {
+  const res = await API.get('/api/admin/access-rights');
+  const el = document.getElementById('accessRightsList');
+
+  if (!res || !res.success || !res.data.length) {
+    el.innerHTML = '<div class="empty-state">No access rights set</div>';
+    return;
+  }
+
+  const yn = v => (v === true || v === 'True')
+    ? `<span style="padding:4px 10px;border-radius:2px;font-weight:bold;color:#fff;background-color:#31ce36;">Yes</span>`
+    : `<span style="padding:4px 10px;border-radius:2px;font-weight:bold;color:#fff;background-color:#f25961;">No</span>`;
+
+  el.innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead>
+        <tr style="background-color:LightGray;"><th>User</th><th>Contacts</th><th>Games</th><th>Hisab</th><th>Accounts</th></tr>
+      </thead>
+      <tbody>
+        ${res.data.map(r => `
+          <tr>
+            <td style="text-transform:capitalize">${r.StaffName || r.ARfSatffID}</td>
+            <td>${yn(r.ADDContacts)}</td>
+            <td>${yn(r.ADDGames)}</td>
+            <td>${yn(r.Hisab)}</td>
+            <td>${yn(r.Accounts)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function saveAccessRights() {
+  const subUserID = document.getElementById('ddlSubUsers').value;
+  if (!subUserID) {
+    showToast('Select a user first', 'error');
+    return;
+  }
+
+  const body = {
+    subUserID,
+    addContacts: document.getElementById('chkADDContacts').checked,
+    addGames: document.getElementById('chkADDGames').checked,
+    result: document.getElementById('chkResult').checked,
+    hisab: document.getElementById('chkHisab').checked,
+    hisabSummary: document.getElementById('chkHisabSummary').checked,
+    dateWiseHisab: document.getElementById('chkDateWiseHisab').checked,
+    accounts: document.getElementById('chkAccounts').checked,
+    showAllAccounts: document.getElementById('chkShowAllAccounts').checked,
+    balance: document.getElementById('chkBalance').checked,
+    lc: document.getElementById('chkLC').checked,
+    yantri: document.getElementById('chkYantri').checked
+  };
+
+  const res = await API.post('/api/admin/access-rights', body);
+  if (res && res.success) {
+    showToast('Access rights saved!');
+    await loadAccessRightsList();
+  } else {
+    showToast(res?.message || 'Error', 'error');
+  }
+}
+
+async function saveSubUser() {
+  const name = document.getElementById('subName').value.trim();
+  const mobile = document.getElementById('subMobile').value.trim();
+  const password = document.getElementById('subPassword').value.trim();
+  const id = document.getElementById('editSubID').value;
+
+  if (!name || !mobile) {
+    showToast('Name and mobile required', 'error');
+    return;
+  }
+
+  let res;
+  if (id) {
+    res = await API.put(`/api/admin/subusers/${id}`, { subUsername: name, mobile, password, isActive: 'True' });
+  } else {
+    res = await API.post('/api/admin/subusers', { subUsername: name, mobile, password });
+  }
+
+  if (res && res.success) {
+    showToast('Staff saved!');
+    document.getElementById('subName').value = '';
+    document.getElementById('subMobile').value = '';
+    document.getElementById('subPassword').value = '';
+    document.getElementById('editSubID').value = '';
+    await loadSubUsers();
+  } else {
+    showToast(res?.message || 'Error', 'error');
+  }
+}
+
+function editSubUser(id, name, mobile, password) {
+  document.getElementById('editSubID').value = id;
+  document.getElementById('subName').value = name;
+  document.getElementById('subMobile').value = mobile;
+  document.getElementById('subPassword').value = password || '';
+}
+
+function resetAccess() {
+  ['chkADDContacts','chkADDGames','chkResult','chkHisab','chkHisabSummary',
+   'chkDateWiseHisab','chkAccounts','chkShowAllAccounts','chkBalance','chkLC','chkYantri']
+    .forEach(id => document.getElementById(id).checked = false);
+}
+
+// ── ASSIGN CUSTOMERS (merged from the former Assign Customer page) ──
+
+// ── ShowAllSubUsers() — populate the Assign panel's User dropdown ──
+async function loadAssignUserDropdown() {
+  const r = await API.get('/api/admin/subusers');
+  const sel = document.getElementById('ddlSrchCustomers');
+  sel.innerHTML = '<option value="">Select User</option>';
+  (r?.data||[]).forEach(u => {
+    sel.innerHTML += `<option value="${u.SubUserID}">${u.subusername||u.SubUserID}</option>`;
+  });
+}
+
+// ── ddlSrchCustomers_SelectedIndexChanged → BindCustomerGrid() ──
+// ASPX: SP SelectClientForAssign(@fSenderID, @fStaffID)
+// Returns: CID, CustomerName, IsAssigned
+async function loadClients() {
+  const staffID = document.getElementById('ddlSrchCustomers').value;
+  const tbody = document.getElementById('clientBody');
+  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+  _allClients = [];
+
+  if (!staffID) {
+    tbody.innerHTML = '<tr><td colspan="4">Select a user</td></tr>';
+    return;
+  }
+
+  const r = await API.get(`/api/admin/assigned-clients?staffID=${staffID}`);
+  if (!r?.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="4">No clients found</td></tr>';
+    return;
+  }
+
+  _allClients = r.data;
+  renderClients(_allClients);
+
+  // Uncheck "Select All" header
+  document.getElementById('chkAll').checked = false;
+}
+
+function renderClients(data) {
+  const tbody = document.getElementById('clientBody');
+  tbody.innerHTML = data.map((c, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>
+        <!-- ASPX: ShiftCheck Checked=IsAssigned -->
+        <input type="checkbox" ${c.IsAssigned ? 'checked' : ''}>
+      </td>
+      <td class="hideGridColumn">${c.CID}</td>
+      <td>${c.CustomerName || c.CID}</td>
+    </tr>`).join('');
+}
+
+// ── filterGrid() — ASPX: filter by CustomerName column (index 3) ──
+function filterGrid() {
+  const filter = document.getElementById('txtFilter').value.toUpperCase();
+  const rows = document.querySelectorAll('#clientBody tr');
+  rows.forEach(tr => {
+    const td = tr.cells[3]; // CustomerName col index 3
+    if (td) {
+      const val = td.textContent || td.innerText;
+      tr.style.display = val.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+    }
+  });
+}
+
+// ── checkAll() — ASPX: header checkbox → check/uncheck all ──
+function checkAll(headerChk) {
+  const inputs = document.querySelectorAll('#clientBody input[type=checkbox]');
+  inputs.forEach(chk => { chk.checked = headerChk.checked; });
+}
+
+// ── GetSelectedRowValue → SaveCopyMessage → POST /api/admin/assign-clients ──
+// ASPX: reads checked rows → AllID = comma separated CIDs → AJAX call
+async function saveAssignments() {
+  const staffID = document.getElementById('ddlSrchCustomers').value;
+  if (!staffID) { showToast('User select karo!', 'error'); return; }
+
+  // ASPX: collect checked CIDs from hidden column (index 2)
+  const checkedRows = document.querySelectorAll('#clientBody tr');
+  const customerIDs = [];
+  checkedRows.forEach(tr => {
+    const chk = tr.querySelector('input[type=checkbox]');
+    if (chk?.checked && tr.cells[2]) {
+      const cid = tr.cells[2].textContent.trim();
+      if (cid) customerIDs.push(cid);
+    }
+  });
+
+  try {
+    const r = await API.post('/api/admin/assign-clients', { staffID, customerIDs });
+    if (r?.success) {
+      showToast('Data Update Successfully!');
+      // Reload to show updated IsAssigned
+      await loadClients();
+    } else {
+      showToast('Something Wrong', 'error');
+    }
+  } catch(e) {
+    showToast('Something Wrong', 'error');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

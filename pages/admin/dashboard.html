@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.stat-card { cursor:default; }
+.stat-meta { font-size:.68rem; color:var(--muted); margin-top:6px; }
+.users-table-wrap { overflow-x:auto; }
+.srch-bar { display:flex; gap:10px; margin-bottom:16px; }
+.srch-bar .form-control { flex:1; }
+.badge-active   { background:rgba(25,135,84,.1);  color:#0d5c32; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:600; }
+.badge-inactive { background:rgba(220,53,69,.1);  color:#8b1a24; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:600; }
+.page-sub { font-size:.8rem; color:var(--muted); margin-bottom:14px; }
+</style>
+</head>
+<body>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+
+      <!-- Stats / Overview -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Admin Dashboard
+            <button class="btn btn-secondary btn-sm" style="float:right;margin-left:8px;" onclick="refresh()">&#8635; Refresh</button>
+            <button class="btn btn-success btn-sm" style="float:right;" onclick="goToApp()">Admin &#8594; Go to App</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="page-sub" id="dashDate">Loading...</div>
+          <div class="stats-grid" id="statsGrid">
+            <a href="/pages/admin/users.html" style="display:block;text-decoration:none;color:inherit;">
+              <div class="stat-card">
+                <span class="stat-icon">&#128101;</span>
+                <div class="stat-value" id="totalUsers">-</div>
+                <div class="stat-label">Total Users</div>
+              </div>
+            </a>
+            <a href="/pages/admin/user-sales.html" style="display:block;text-decoration:none;color:inherit;">
+              <div class="stat-card blue">
+                <span class="stat-icon">&#128176;</span>
+                <div class="stat-value" id="todaySale">-</div>
+                <div class="stat-label">Today's Sale</div>
+              </div>
+            </a>
+            <div class="stat-card orange">
+              <span class="stat-icon">&#10024;</span>
+              <div class="stat-value" id="newUsers">-</div>
+              <div class="stat-label">New Users (Month)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Switch to User -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="ctitle-icon">&#128260;</span>
+            Switch to User Account
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="srch-bar">
+            <input type="text" id="srchUser" class="form-control" placeholder="&#128269; Search by UID or mobile..." oninput="filterUsers()">
+          </div>
+          <div class="table-responsive">
+            <div id="usersList" class="loading"><span class="spinner"></span>Loading...</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let allUsers = [];
+
+async function init() {
+  const u = await initAdminPage('dashboard');
+  if (!u) return;
+
+  const now = new Date();
+  document.getElementById('dashDate').textContent = now.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  await Promise.all([loadDashboard(), loadUsers()]);
+}
+
+async function loadDashboard() {
+  const res = await API.get('/api/admin/dashboard');
+  if (res && res.success && res.data) {
+    document.getElementById('totalUsers').textContent = res.data.TotalUsers || '0';
+    document.getElementById('todaySale').textContent = parseFloat(res.data.TotalAmount || 0).toLocaleString('en-IN');
+    document.getElementById('newUsers').textContent = res.data.NewUsers || '0';
+  }
+}
+
+async function loadUsers() {
+  const res = await API.get('/api/admin/users');
+  if (!res || !res.success) {
+    document.getElementById('usersList').innerHTML = '<div class="empty-state">Failed to load users</div>';
+    return;
+  }
+  allUsers = res.data;
+  renderUsers(allUsers);
+}
+
+function filterUsers() {
+  const q = document.getElementById('srchUser').value.toLowerCase();
+  renderUsers(allUsers.filter(u =>
+    (u.UID || '').toLowerCase().includes(q) ||
+    (u.Mobile || '').toLowerCase().includes(q)
+  ));
+}
+
+function renderUsers(users) {
+  const el = document.getElementById('usersList');
+  if (!users.length) {
+    el.innerHTML = '<div class="empty-state">No users found</div>';
+    return;
+  }
+  el.innerHTML = `<table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+    <thead><tr style="background-color:LightGray;">
+      <th>#</th><th>UID</th><th>Mobile</th><th>Validity</th>
+      <th>Status</th><th>Registered</th><th>Action</th>
+    </tr></thead>
+    <tbody>${users.map((u, i) => `
+      <tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td><strong>${u.UID}</strong></td>
+        <td>${u.Mobile}</td>
+        <td style="font-size:.82rem">${u.ValidityDate ? new Date(u.ValidityDate).toLocaleDateString('en-IN') : '-'}</td>
+        <td><span class="${u.IsActive==='True'||u.IsActive===true?'badge-active':'badge-inactive'}">${u.IsActive==='True'||u.IsActive===true?'Active':'Inactive'}</span></td>
+        <td style="font-size:.8rem;color:var(--muted)">${u.RegisteredOn ? new Date(u.RegisteredOn).toLocaleDateString('en-IN') : '-'}</td>
+        <td><button class="btn btn-primary btn-xs" onclick="switchToUser('${u.UID}')">&#8594; Switch</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+async function switchToUser(uid) {
+  const res = await API.get(`/api/admin/switch-user/${uid}`);
+  if (res && res.success) window.location.href = '/app/home.html';
+  else alert('Error switching user');
+}
+
+async function goToApp() {
+  await API.get('/api/admin/back-to-admin');
+  window.location.href = '/app/home.html';
+}
+
+function refresh() { loadDashboard(); loadUsers(); }
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Susu9 - All Transactions</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content label{font-weight:800!important;color:var(--text)!important;display:block;font-size:.78rem!important;margin-bottom:3px!important;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+/* Compact, well-aligned filter box */
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:10px 16px!important;}
+.content .row{margin-left:-6px;margin-right:-6px;}
+.content .row>.col{padding-left:6px;padding-right:6px;}
+/* Data grid: bold bordered header instead of the faint Bootstrap table look */
+.content table{border-collapse:collapse!important;width:100%!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
+.content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
+.content table tfoot td{background:#eee!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+.table-responsive{overflow-x:auto;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Transaction</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <label>From Date</label>
+              <input type="date" class="form-control" id="txFrom">
+            </div>
+            <div class="col">
+              <label>To Date</label>
+              <input type="date" class="form-control" id="txTo">
+            </div>
+            <div class="col">
+              <label>Customer Name</label>
+              <select class="form-control" id="txCust" style="text-transform:capitalize;"><option value="">All Customers</option></select>
+            </div>
+            <div class="col">
+              <label>Sub User</label>
+              <select class="form-control" id="txStaff" style="text-transform:capitalize;"><option value="">All Staff</option></select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
+              <br>
+              <button class="btn btn-primary" onclick="loadTx()">Search</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+            <thead>
+              <tr>
+                <th>Customer</th><th>Date</th><th>Paid</th><th>Received</th><th>Type</th><th>Narration</th><th>SubUser</th>
+              </tr>
+            </thead>
+            <tbody id="txTbody"><tr><td colspan="7">Search to load</td></tr></tbody>
+            <tfoot id="txFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+async function init() {
+  await initPage('show-transactions');
+  const cr = await API.get('/api/accounts/customers');
+  const sr = await API.get('/api/accounts/subusers');
+  document.getElementById('txCust').innerHTML = '<option value="">All Customers</option>' + (cr?.data||[]).map(c => `<option value="${c.UID||c.CID}">${c.Name||c.CustomerName}</option>`).join('');
+  document.getElementById('txStaff').innerHTML = '<option value="">All Staff</option>' + (sr?.data||[]).map(s => `<option value="${s.SubUserID}">${s.subusername}</option>`).join('');
+  const dr = await API.get('/api/accounts/latest-date');
+  const today = dr?.date ? new Date(dr.date).toISOString().split('T')[0] : new Date(new Date().getTime()+5.5*3600000).toISOString().split('T')[0];
+  document.getElementById('txFrom').value = today;
+  document.getElementById('txTo').value = today;
+
+  const p = new URLSearchParams(location.search);
+  if (p.get('SUID')) { document.getElementById('txStaff').value = p.get('SUID'); loadTx(); }
+}
+
+async function loadTx() {
+  const from = document.getElementById('txFrom').value;
+  const to = document.getElementById('txTo').value;
+  const cust = document.getElementById('txCust').value;
+  const staff = document.getElementById('txStaff').value;
+  const r = await API.get(`/api/accounts/list?fromDate=${from}&toDate=${to}&customerUID=${cust}&staffID=${staff}`);
+  const data = r?.data || [];
+  let paid=0, recv=0;
+  document.getElementById('txTbody').innerHTML = data.length ? data.map(d => {
+    paid += parseFloat(d.Paid||0); recv += parseFloat(d.Received||0);
+    return `<tr>
+      <td>${d.CustomerName||''}</td>
+      <td>${d.Date ? new Date(d.Date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
+      <td>${d.Paid||0}</td>
+      <td>${d.Received||0}</td>
+      <td>${d.Type||''}</td>
+      <td>${d.Narration||''}</td>
+      <td>${d.StaffName||''}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7">No transactions</td></tr>';
+  const net = paid - recv;
+  document.getElementById('txFoot').innerHTML = `<tr><td colspan="2">Total (${data.length})</td><td>₹${paid.toFixed(0)}</td><td>₹${recv.toFixed(0)}</td><td colspan="3">Net: ₹${net.toFixed(0)}</td></tr>`;
+}
+
+init();
+</script>
+</body>
+</html>

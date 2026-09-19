@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Susu9 - Agent Yantri</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+/* Mega Able-style number grid (see vendor/assets-view/css/style.css for
+   reference colors/spacing) — scoped to this page's own grid, the site-wide
+   sidebar/header still comes from the shared Atlantis shell via nav.js. */
+.ay-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;background:#f0f4f8;padding:8px;border-radius:5px;}
+.ay-cell{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.ay-lbl{font-size:.65rem;color:#075e54;font-weight:800;}
+.ay-val{width:100%;text-align:center;padding:6px 2px;font-size:.82rem;background:#fff;border:1px solid #dee2e6;border-radius:4px;font-weight:600;color:#222;min-height:30px;display:flex;align-items:center;justify-content:center;}
+.ay-val.has{background:#e8f0fe;border-color:#1572e8;color:#1572e8;}
+.subt-box{background:#e8f0fe;border:1px solid #1572e8;border-radius:6px;padding:4px 10px;font-size:.78rem;font-weight:700;color:#1572e8;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Agent Yantri
+            <div style="float:right;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <input type="date" class="form-control" id="ayDate" style="width:140px;display:inline-block;">
+              <select class="form-control" id="ayGame" style="width:180px;display:inline-block;"><option value="">Select Game</option></select>
+              <select class="form-control" id="ayCust" style="width:180px;display:inline-block;"><option value="">All Customers</option></select>
+              <button class="btn btn-primary" onclick="loadAgentYantri()">Load</button>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="stats-grid" style="margin-bottom:12px;">
+            <div class="stat-card"><div class="stat-val" id="ayTotal">0</div><div class="stat-lbl">Grand Total</div></div>
+          </div>
+          <div class="ay-grid" id="ayGrid"></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;" id="aySubRow"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+function toast(msg, type) {
+  swal(type === 'err' ? 'Wrong Inputs!' : 'Sucess!', msg, { icon: type === 'err' ? 'error' : 'success', timer: 900, buttons: false });
+}
+
+const NUMS = Array.from({length:100},(_,i)=>String(i).padStart(2,'0'));
+
+function buildGrid(data) {
+  let grand = 0;
+  const subtotals = Array(10).fill(0);
+
+  const html = NUMS.map((n,i) => {
+    const v = data[i] || data[parseInt(n)] || 0;
+    if (v > 0) { subtotals[Math.floor(i/10)] += v; grand += v; }
+    return `<div class="ay-cell"><div class="ay-lbl">${n}</div><div class="ay-val ${v>0?'has':''}">${v||''}</div></div>`;
+  }).join('');
+
+  document.getElementById('ayGrid').innerHTML = html;
+  document.getElementById('ayTotal').textContent = grand;
+  document.getElementById('aySubRow').innerHTML = subtotals.map((s,i) => `<div class="subt-box">${i}x: ${s}</div>`).join('');
+}
+
+async function init() {
+  await initPage('yantri');
+  const r = await API.get('/api/game/list');
+  document.getElementById('ayGame').innerHTML = '<option value="">Select Game</option>' + (r?.data||[]).map(g => `<option value="${g.GID}">${g.GameName}</option>`).join('');
+  const cr = await API.get('/api/customer/list');
+  document.getElementById('ayCust').innerHTML = '<option value="">All Customers</option>' + (cr?.data||[]).map(c => `<option value="${c.UID}">${c.CustomerName}</option>`).join('');
+  const dr = await API.get('/api/hisab/latest-date');
+  document.getElementById('ayDate').value = dr?.date ? new Date(dr.date).toISOString().split('T')[0] : new Date(new Date().getTime()+5.5*3600000).toISOString().split('T')[0];
+
+  const p = new URLSearchParams(location.search);
+  if (p.get('GameID')) { document.getElementById('ayGame').value = p.get('GameID'); loadAgentYantri(); }
+  buildGrid({});
+}
+
+async function loadAgentYantri() {
+  const gid = document.getElementById('ayGame').value;
+  const date = document.getElementById('ayDate').value;
+  const uid = document.getElementById('ayCust').value;
+  if (!gid || !date) { toast('Select game and date', 'err'); return; }
+
+  const r = await API.get(`/api/home/yantri/${gid}?date=${date}&senderUID=${uid}`);
+  if (r?.success) buildGrid(r.data || {});
+  else toast(r?.message || 'Error loading', 'err');
+}
+
+init();
+</script>
+</body>
+</html>

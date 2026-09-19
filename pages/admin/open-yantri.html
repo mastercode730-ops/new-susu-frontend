@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Yantri - Admin</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<script src="/js/api.js"></script><script src="/js/nav.js"></script>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            &#128202; Open Yantri
+            <a href="/pages/admin/dashboard.html" class="btn btn-secondary btn-sm" style="float:right;">&#8592; Dashboard</a>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+            <div class="form-group" style="max-width:200px;">
+              <label class="form-label">User</label>
+              <select class="form-control" id="ddUser" onchange="loadGames()">
+                <option value="">--- Select User ---</option>
+              </select>
+            </div>
+            <div class="form-group" style="max-width:180px;">
+              <label class="form-label">Game</label>
+              <select class="form-control" id="ddGame">
+                <option value="">--- Select Game ---</option>
+              </select>
+            </div>
+            <div class="form-group" style="max-width:160px;">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" id="txtDate">
+            </div>
+            <button class="btn btn-success" onclick="loadYantri()">Load Yantri</button>
+          </div>
+
+          <div id="yantriWrap">
+            <div class="emsg">Select user, game and date to load yantri</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const p = new URLSearchParams(location.search);
+
+async function init() {
+  const u = await initAdminPage('open-yantri');
+  if (!u) return;
+
+  const ist = new Date(new Date().getTime() + 5.5*3600000);
+  document.getElementById('txtDate').value = ist.toISOString().split('T')[0];
+
+  await loadUsers();
+
+  // URL params: ?GameID=X&UID=Y&Date=Z
+  if (p.get('UID')) {
+    document.getElementById('ddUser').value = p.get('UID');
+    await loadGames();
+  }
+  if (p.get('GameID')) {
+    document.getElementById('ddGame').value = p.get('GameID');
+  }
+  if (p.get('Date')) {
+    const d = new Date(p.get('Date'));
+    if (!isNaN(d)) document.getElementById('txtDate').value = d.toISOString().split('T')[0];
+  }
+  if (p.get('UID') && p.get('GameID')) loadYantri();
+}
+
+async function loadUsers() {
+  const r = await API.get('/api/admin/users');
+  const sel = document.getElementById('ddUser');
+  sel.innerHTML = '<option value="">--- Select User ---</option>';
+  (r?.data || []).forEach(u => {
+    sel.innerHTML += `<option value="${u.UID}">${u.Mobile}</option>`;
+  });
+}
+
+async function loadGames() {
+  const uid = document.getElementById('ddUser').value;
+  if (!uid) return;
+  const r = await API.get(`/api/admin/all-user-games?uid=${uid}`);
+  const sel = document.getElementById('ddGame');
+  sel.innerHTML = '<option value="">--- Select Game ---</option>';
+  (r?.data || []).forEach(g => {
+    sel.innerHTML += `<option value="${g.GID}">${g.GameName}</option>`;
+  });
+}
+
+async function loadYantri() {
+  const uid    = document.getElementById('ddUser').value;
+  const gameID = document.getElementById('ddGame').value;
+  const date   = document.getElementById('txtDate').value;
+  if (!uid || !gameID) { alert('Select user and game'); return; }
+
+  // Format date as dd/MMM/yyyy
+  const d   = new Date(date + 'T00:00:00');
+  const fmt = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+               .replace(/ /g, '/');
+
+  document.getElementById('yantriWrap').innerHTML = '<div class="emsg"><span class="spin"></span> Loading...</div>';
+
+  const r = await API.get(`/api/admin/open-yantri?uid=${uid}&gameID=${gameID}&date=${encodeURIComponent(fmt)}`);
+  const data = r?.data || [];
+
+  if (!data.length) {
+    document.getElementById('yantriWrap').innerHTML = '<div class="emsg">No data found</div>';
+    return;
+  }
+
+  // Parse messages same as yantri.html FillData logic
+  // SP returns Message field, build number grid
+  const numData = {};
+  data.forEach(row => {
+    if (!row.Message) return;
+    row.Message.split(',').forEach(part => {
+      const kv = part.split('=');
+      if (kv.length === 2) {
+        const num = parseInt(kv[0]);
+        const amt = Math.trunc(parseFloat(kv[1]) || 0);
+        if (!isNaN(num)) numData[num] = (numData[num] || 0) + amt;
+      }
+    });
+  });
+
+  // Render grid: numbers 1-100, 111-1000, 1111-10000
+  const DARA   = Array.from({length:100}, (_,i) => i+1);
+  const AKHAR1 = [111,222,333,444,555,666,777,888,999,1000];
+  const AKHAR2 = [1111,2222,3333,4444,5555,6666,7777,8888,9999,10000];
+
+  let html = '<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px;font-size:.75rem">';
+  const cell = n => {
+    const v = numData[n] || 0;
+    return `<div style="border:1px solid var(--border);border-radius:4px;padding:3px;text-align:center;background:${v ? 'rgba(37,211,102,.1)' : 'var(--panel)'}">
+      <div style="color:var(--muted);font-size:.6rem">${n < 10 ? '0'+n : n}</div>
+      <div style="color:${v ? 'var(--green)' : 'var(--muted)'};font-weight:700">${v || ''}</div>
+    </div>`;
+  };
+  DARA.forEach(n => html += cell(n));
+  html += '</div>';
+  html += '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;font-size:.75rem">';
+  [...AKHAR1,...AKHAR2].forEach(n => html += cell(n));
+  html += '</div>';
+
+  const grandTotal = Object.values(numData).reduce((a,b) => a+b, 0);
+  html += `<div style="margin-top:10px;font-weight:700;color:var(--green)">Grand Total: ${grandTotal}</div>`;
+  document.getElementById('yantriWrap').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>

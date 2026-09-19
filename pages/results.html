@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="/css/main.css">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+
+<!-- Flatpickr calendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+
+<style>
+/* Flatpickr custom - no Atlantis equivalent */
+.flatpickr-input{cursor:pointer;}
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;}
+/* Compact form — smaller fields/spacing, text stays bold/clear */
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:8px 16px!important;}
+.content .form-group{margin-bottom:4px!important;}
+.content .form-group label{font-size:.76rem!important;margin-bottom:2px!important;display:block;}
+.content .form-control{padding:.25rem .5rem!important;height:auto!important;font-size:.82rem!important;}
+.content .row{margin-left:-6px;margin-right:-6px;}
+.content .row>[class*="col-"]{padding-left:6px;padding-right:6px;}
+/* Results grid: proper bordered columns + horizontal scroll instead of squeezing */
+#resultsTable{overflow-x:auto;padding:0 16px 16px;}
+#resultsTable table{width:100%!important;min-width:700px;border-collapse:collapse!important;}
+#resultsTable th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 16px!important;white-space:nowrap;font-size:.85rem!important;}
+#resultsTable td{border:1px solid #ccc!important;padding:6px 16px!important;white-space:nowrap;font-weight:700!important;color:var(--text)!important;font-size:.85rem!important;}
+#resultsTable tbody tr:hover td{background:#eef3ff!important;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Results</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtDate">Date</label>
+                <!-- ASPX: txtDate TabIndex=1, CalendarExtender, AutoPostBack→GetResult -->
+                <input type="text" class="form-control" id="txtDate" placeholder="Enter Date (dd/MMM/yyyy)"
+                  tabindex="1" readonly style="cursor:pointer;"
+                  onkeydown="onDateKey(event)">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="gameSelection">Game</label>
+                <!-- ASPX: GameSelection TabIndex=2, AutoPostBack→GetResult -->
+                <select class="form-control" id="gameSelection" tabindex="2" style="text-transform:capitalize;"
+                  onfocus="this.select();" onchange="getResult()" onkeydown="onGameKey(event)">
+                  <option value="">Select Game</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtResult">Result</label>
+                <!-- ASPX: txtResult TabIndex=3, MaxLength=2, process(oninput) -->
+                <input type="tel" class="form-control" id="txtResult" placeholder="Enter Result"
+                  maxlength="2" tabindex="3"
+                  onfocus="this.select()"
+                  oninput="processNum(this)"
+                  onkeydown="onResultKey(event)">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>&nbsp;</label><br>
+                <!-- ASPX: BtnSubmit TabIndex=4 -->
+                <button class="btn btn-success" id="btnSubmit" tabindex="4" onclick="btnSubmitClick()">Submit</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="txtStartDate">Start Date</label>
+                <!-- ASPX: txtStartDate TabIndex=5, CalendarExtender -->
+                <input type="text" class="form-control" id="txtStartDate" placeholder="Enter Start Date"
+                  tabindex="5" readonly style="cursor:pointer;"
+                  onkeydown="onStartDateKey(event)">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="txtEndDate">End Date</label>
+                <!-- ASPX: txtEndDate TabIndex=6, CalendarExtender -->
+                <input type="text" class="form-control" id="txtEndDate" placeholder="Enter End Date"
+                  tabindex="6" readonly style="cursor:pointer;"
+                  onkeydown="onEndDateKey(event)">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label>&nbsp;</label><br>
+                <!-- ASPX: btnSearch TabIndex=7 → BindGrid → txtStartDate.Focus -->
+                <button class="btn btn-success" id="btnSearch" tabindex="7" onclick="btnSearchClick()">Search</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASPX: GridView2 — dynamic columns from ShowResult SP -->
+        <div class="table-responsive" id="resultsTable">
+          <table cellpadding="4" style="text-align:center;">
+            <thead id="tblHead">
+              <tr><td colspan="20" class="emsg"><span class="spinner"></span> Loading...</td></tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let myUID = null;
+let fpDate, fpStart, fpEnd;
+
+// ── HELPERS ──────────────────────────────────────────────
+// IST current date as "dd/MMM/yyyy"
+function getIST() {
+  const now = new Date(Date.now() + 5.5*3600000);
+  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(now.getUTCDate()).padStart(2,'0')}/${M[now.getUTCMonth()]}/${now.getUTCFullYear()}`;
+}
+
+// Format any date value to "dd/MMM/yyyy"
+function fmtDate(v) {
+  if (!v) return '';
+  if (typeof v==='string' && /^\d{2}\/[A-Za-z]{3}\/\d{4}$/.test(v)) return v;
+  const d = new Date(v);
+  if (isNaN(d)) return String(v);
+  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getUTCDate()).padStart(2,'0')}/${M[d.getUTCMonth()]}/${d.getUTCFullYear()}`;
+}
+
+// ASPX SweetAlert replicas (auto-close 1.5s) — now call the globally-loaded swal (nav.js)
+function SucessMessage()        { showSwal(true,  'Sucess!',       'Data Saved Sucessfully!'); }
+function ErrorMessage()         { showSwal(false, 'Wrong Inputs!', 'Something Went Wrong!'); }
+function ErrorMessageOneMonths(){ showSwal(false, 'Select One Month!', 'Please Select one Month Result !'); }
+function showSwal(isOk, title, msg) {
+  swal(title, msg, { icon: isOk ? 'success' : 'error', timer: 900, buttons: false });
+}
+
+// ── INIT (ASPX: Page_Load order) ─────────────────────────
+async function init() {
+  const u = await initPage('results');
+  if (!u) return;
+  myUID = u.UID;
+
+  // Init flatpickr calendars (replaces ASPX CalendarExtender, format dd/MMM/yyyy)
+  const fpCfg = {
+    dateFormat: 'd/M/Y',      // dd/MMM/yyyy → flatpickr "d/M/Y" = 04/Apr/2026
+    allowInput: false,         // readonly - click to open
+    disableMobile: true,
+  };
+
+  try {
+    fpDate  = flatpickr('#txtDate',      { ...fpCfg, onChange: (selectedDates, dateStr) => { onDateChange(dateStr); } });
+    fpStart = flatpickr('#txtStartDate', { ...fpCfg });
+    fpEnd   = flatpickr('#txtEndDate',   { ...fpCfg });
+    // Make inputs editable when flatpickr loads
+    ['txtDate','txtStartDate','txtEndDate'].forEach(id => {
+      const inp = document.getElementById(id);
+      if(inp) inp.readOnly = false; // flatpickr handles it
+    });
+  } catch(fpErr) {
+    console.warn('Flatpickr failed, using text input:', fpErr);
+    // Fallback: allow manual typing
+    ['txtDate','txtStartDate','txtEndDate'].forEach(id => {
+      const inp = document.getElementById(id);
+      if(inp) { inp.readOnly=false; inp.removeAttribute('readonly'); }
+    });
+  }
+
+  // ASPX Page_Load Step 1: Set IST date
+  const ist = getIST();
+  setDateVal('txtDate',      ist);
+  setDateVal('txtStartDate', ist);
+  setDateVal('txtEndDate',   ist);
+
+  // ASPX Step 2: BindDropDown → GetAllGames SP
+  await bindDropDown();
+
+  // ASPX Step 3: GetResult
+  await getResult();
+
+  // ASPX Step 4: BindLastedDate → overrides date with MAX(MsgDate)
+  await bindLastedDate();
+
+  // ASPX Step 5: BindGrid → ShowResult SP
+  await bindGrid();
+
+  // ASPX Step 6: GameSelection.Focus
+  document.getElementById('gameSelection').focus();
+}
+
+// Set date value - "dd/MMM/yyyy" format
+function setDateVal(id, dateStr) {
+  if (!dateStr) return;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return;
+  const M = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const d = new Date(parseInt(parts[2]), M[parts[1]], parseInt(parts[0]));
+  if (isNaN(d)) return;
+  const fp = id==='txtDate'?fpDate : id==='txtStartDate'?fpStart : fpEnd;
+  if (fp) {
+    fp.setDate(d, false);  // false = no onChange trigger
+    // Ensure the input shows dd/MMM/yyyy format
+    document.getElementById(id).value = dateStr;
+  }
+}
+
+// ── BIND DROPDOWN (ASPX: BindDropDown → GetAllGames SP) ──
+async function bindDropDown() {
+  // ASPX: BindDropDown → GetAllGames(@UID, @IsActive="True")
+  const sel = document.getElementById('gameSelection');
+  sel.innerHTML = '<option value="">Select Game</option>';
+  try {
+    const r = await API.get('/api/game');
+    const games = r?.data || [];
+    games.forEach(g => {
+      const o = document.createElement('option');
+      o.value = g.GID;
+      o.textContent = g.GameName;
+      sel.appendChild(o);
+    });
+    console.log('[bindDropDown] loaded:', games.length, 'games');
+  } catch(e) {
+    console.error('bindDropDown error:', e);
+  }
+}
+
+// ── BIND LASTED DATE (ASPX: BindLastedDate) ───────────────
+// MAX(MsgDate) FROM Chat WHERE fReceiverID=UID AND Accepted AND TextChat AND YantriStyle
+async function bindLastedDate() {
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    if (r?.success && r.data) {
+      setDateVal('txtDate',      r.data);
+      setDateVal('txtStartDate', r.data);
+      setDateVal('txtEndDate',   r.data);
+      await getResult(); // refresh result for new date
+    }
+  } catch(e) { console.error('bindLastedDate:', e); }
+}
+
+// ── GET RESULT (ASPX: GetResult) ──────────────────────────
+// ASPX: if(GameSelection.SelectedIndex > 0) → SELECT Result FROM Result WHERE fGameID=X AND CAST(Date AS date)=...
+async function getResult() {
+  const gid  = document.getElementById('gameSelection').value;
+  const date = document.getElementById('txtDate').value;
+  const inp  = document.getElementById('txtResult');
+  if (!gid || !date) { inp.value=''; return; }
+  try {
+    const r = await API.get(`/api/game/result?gid=${encodeURIComponent(gid)}&date=${encodeURIComponent(date)}`);
+    inp.value = r?.data?.Result || '';
+  } catch(e) { inp.value=''; }
+}
+
+// ── BIND GRID (ASPX: BindGrid → ShowResult SP) ────────────
+async function bindGrid() {
+  const startDate = document.getElementById('txtStartDate').value;
+  const endDate   = document.getElementById('txtEndDate').value;
+  const head = document.getElementById('tblHead');
+  const body = document.getElementById('tblBody');
+
+  if (!startDate || !endDate) return;
+
+  // ASPX: parse month, check Endmonth == month
+  const MONTHS = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+  const sp = startDate.split('/');
+  const ep = endDate.split('/');
+  const year     = parseInt(sp[2]);
+  const month    = MONTHS[sp[1]] || 1;
+  const endMonth = MONTHS[ep[1]] || 1;
+
+  if (!year) return;
+
+  // ASPX: if(Endmonth == month) else ErrorMessageOneMonths
+  if (endMonth !== month) {
+    ErrorMessageOneMonths();
+    head.innerHTML='<tr><td colspan="20" class="emsg">Please select same month dates!</td></tr>';
+    body.innerHTML='';
+    return;
+  }
+
+  head.innerHTML='<tr><td colspan="20" class="emsg"><span class="spinner"></span> Loading...</td></tr>';
+  body.innerHTML='';
+
+  try {
+    const r = await API.get(
+      `/api/hisab/show-results?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+    );
+    const data = r?.data || [];
+
+    if (!data.length) {
+      head.innerHTML=`<tr><td colspan="20" class="emsg">No results found for ${startDate}</td></tr>`;
+      return;
+    }
+
+    // Sort by Date ascending — SP doesn't guarantee row order, so results
+    // were coming back scrambled (14/Jul, 05/Jul, 08/Jul... in whatever
+    // order the query happened to return them).
+    data.sort((a, b) => {
+      const pa = String(a.Date||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      const pb = String(b.Date||'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!pa || !pb) return 0;
+      // Date is dd/mm/yyyy — build a sortable yyyymmdd number
+      const na = parseInt(pa[3]+pa[2].padStart(2,'0')+pa[1].padStart(2,'0'));
+      const nb = parseInt(pb[3]+pb[2].padStart(2,'0')+pb[1].padStart(2,'0'));
+      return na - nb;
+    });
+
+    // ASPX: GridView2 AutoGenerateColumns — keys = column names from SP
+    const cols = Object.keys(data[0]);
+    head.innerHTML = `<tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>`;
+    body.innerHTML = data.map(row =>
+      `<tr>${cols.map(c => {
+        const v = row[c];
+        if (c==='Date'&&v) {
+          // SP returns dd/mm/yyyy (style 103) e.g. "06/04/2026" = 6 April
+          // new Date("06/04/2026") in JS = June 4 (MM/DD/YYYY) — WRONG
+          // Parse manually: dd=06, mm=04, yyyy=2026 → 06/Apr/2026
+          const MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const dm = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if(dm){ const d=dm[1].padStart(2,'0'),m=MNAMES[parseInt(dm[2])-1],y=dm[3]; return `<td>${d}/${m}/${y}</td>`; }
+          return `<td>${v}</td>`;
+        }
+        return `<td>${(v===null||v===undefined)?'':v}</td>`;
+      }).join('')}</tr>`
+    ).join('');
+
+  } catch(e) {
+    console.error('bindGrid:', e);
+    head.innerHTML=`<tr><td colspan="20" class="emsg">Error: ${e.message}</td></tr>`;
+  }
+}
+
+// ── SAVE RESULT (ASPX: BtnSubmit_Click) ───────────────────
+// ASPX: SaveResult(txtResult, GameSelection.SelectedValue, txtDate, User.Identity.Name)
+async function btnSubmitClick() {
+  const gid    = document.getElementById('gameSelection').value;
+  const date   = document.getElementById('txtDate').value;
+  let   result = document.getElementById('txtResult').value.trim();
+
+  if (!gid) { ErrorMessage(); document.getElementById('gameSelection').focus(); return; }
+  if (!result || !date || !/^\d+$/.test(result)) {
+    ErrorMessage();
+    document.getElementById('txtResult').focus();
+    return;
+  }
+
+  try {
+    const r = await API.post('/api/game/save-result', { result, gameID: gid, date });
+    if (r?.success) {
+      SucessMessage();
+      document.getElementById('txtResult').value = '';
+      // ASPX: txtStartDate = txtDate, txtEndDate = txtDate → BindGrid
+      setDateVal('txtStartDate', date);
+      setDateVal('txtEndDate',   date);
+      await bindGrid();
+      document.getElementById('gameSelection').focus();
+    } else {
+      ErrorMessage();
+      document.getElementById('txtResult').focus();
+    }
+  } catch(e) { ErrorMessage(); }
+}
+
+// ── SEARCH (ASPX: btnSearch_Click → BindGrid → txtStartDate.Focus) ──
+async function btnSearchClick() {
+  await bindGrid();
+  document.getElementById('txtStartDate').focus();
+}
+
+// ── DATE CHANGE (ASPX: txtDate_TextChanged → GetResult) ───
+function onDateChange(dateStr) {
+  getResult();
+}
+
+// ── KEYBOARD NAV (ASPX: pageLoad keydown handlers) ────────
+// txtDate Enter → gameSelection.focus
+function onDateKey(e) {
+  if(e.key==='Enter'){e.preventDefault();getResult();document.getElementById('gameSelection').focus();}
+}
+// gameSelection Enter → txtResult.focus+select
+function onGameKey(e) {
+  if(e.key==='Enter'){e.preventDefault();const i=document.getElementById('txtResult');i.focus();i.select();}
+}
+// txtResult Enter → btnSubmit.focus
+function onResultKey(e) {
+  if(e.key==='Enter'){e.preventDefault();document.getElementById('btnSubmit').focus();}
+}
+// txtStartDate Enter → txtEndDate.focus+select
+function onStartDateKey(e) {
+  if(e.key==='Enter'){e.preventDefault();const i=document.getElementById('txtEndDate');i.focus();}
+}
+// txtEndDate Enter → btnSearch.focus
+function onEndDateKey(e) {
+  if(e.key==='Enter'){e.preventDefault();document.getElementById('btnSearch').focus();}
+}
+
+// ASPX: process(input) — only digits
+function processNum(el){el.value=el.value.replace(/[^0-9]/g,'');}
+
+init();
+</script>
+</body>
+</html>

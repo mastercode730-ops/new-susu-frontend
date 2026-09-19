@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/css/main.css">
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hisab Summary - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<style>
+.selected-row{background-color:#d3d3d3;}
+tbody tr{cursor:pointer;}
+.emsg{padding:24px;text-align:center;color:var(--muted);font-size:.85rem;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.flatpickr-input{cursor:pointer;background:#F8F9FA;}
+
+/* Customer inline search — page-specific autocomplete widget, no Atlantis equivalent */
+.cust-wrap{position:relative;}
+.cust-box{display:flex;align-items:center;gap:6px;}
+.cust-box .cust-inp{flex:1;}
+.cust-clear{cursor:pointer;color:var(--muted);font-size:.8rem;display:none;padding:2px 6px;}
+.cust-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:999;display:none;}
+.cust-drop.open{display:block;}
+.cust-item{padding:8px 12px;cursor:pointer;font-size:.86rem;border-bottom:1px solid #f3f3f3;}
+.cust-item:last-child{border-bottom:none;}
+.cust-item:hover,.cust-item.focused{background:#f0fdf4;}
+.cust-none{padding:10px 12px;color:var(--muted);font-size:.84rem;}
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;}
+/* Compact, well-aligned filter box — smaller fields, tighter spacing */
+.content .card-header{padding:8px 16px!important;}
+.content .card-action{border-bottom:1px solid #999;}
+.content .card-body{padding:10px 16px!important;}
+.content .card-action{padding:8px 16px!important;}
+.content .form-group{margin-bottom:8px!important;}
+.content .form-group label{font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .form-control{padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+.content .form-control::placeholder{font-weight:700!important;color:#555!important;opacity:1!important;}
+.content select.form-control,.content select.form-control option{font-weight:800!important;color:#000!important;font-size:.88rem!important;}
+.cust-item{font-weight:800!important;color:#000!important;font-size:.9rem!important;}
+.cust-none{font-weight:700!important;color:#000!important;}
+/* Flatpickr calendar popup — bold, clear text throughout */
+.flatpickr-weekday{font-weight:800!important;color:#000!important;}
+.flatpickr-day{font-weight:800!important;color:#000!important;}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay,.flatpickr-day.notAllowed{color:#999!important;font-weight:700!important;}
+.flatpickr-day.today{font-weight:900!important;}
+.flatpickr-current-month .cur-month,.flatpickr-current-month input.cur-year{font-weight:800!important;color:#000!important;}
+.flatpickr-months .flatpickr-month,.flatpickr-current-month{font-weight:800!important;}
+/* Data grid: bold bordered header instead of the faint Bootstrap table look */
+.content table{border-collapse:collapse!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
+.content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
+.content table tfoot td{background:#eee!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+.table-responsive{overflow-x:auto;}
+.content table{width:100%!important;min-width:1150px;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtStartDate">From Date</label>
+                <input type="text" class="form-control" id="txtStartDate" readonly placeholder="dd/MMM/yyyy"
+                  onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('gameSelection').focus();}">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtEndDate">To Date</label>
+                <input type="text" class="form-control" id="txtEndDate" readonly placeholder="dd/MMM/yyyy" onfocus="this.select()">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="gameSelection">Game</label>
+                <select class="form-control" id="gameSelection" onchange="document.getElementById('customerSelection').focus()">
+                  <option value="">All Game</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="custSearch">Customer</label>
+                <div class="cust-wrap" id="custWrap">
+                  <div class="cust-box">
+                    <input type="text" class="form-control cust-inp" id="custSearch"
+                      placeholder="All Customer"
+                      autocomplete="off"
+                      oninput="onCustInput()"
+                      onfocus="onCustFocus()"
+                      onkeydown="onCustKey(event)">
+                    <span class="cust-clear" id="custClear" onclick="clearCust()">&times;</span>
+                  </div>
+                  <div class="cust-drop" id="custDrop"></div>
+                </div>
+                <input type="hidden" id="customerSelection" value="">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" id="btnSearch" onclick="bindGrid()">Search</button>
+          <button class="btn btn-success" onclick="exportExcel()">Export To Excel</button>
+        </div>
+        <div class="card-header">
+          <div class="card-title">Summary</div>
+        </div>
+        <div class="table-responsive">
+          <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+            <thead>
+              <tr>
+                <th>Customer</th><th>Game</th><th>Rates</th>
+                <th>T_Sale</th><th>D_Sale</th><th>A_Sale</th><th>Comm</th>
+                <th>O_Dara</th><th>O_Akhar</th><th>Win_Amt</th>
+                <th>Hissa</th><th>Balance</th><th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="summaryBody">
+              <tr><td colspan="13" class="emsg">Search karo data dekhne ke liye</td></tr>
+            </tbody>
+            <tfoot id="summaryFoot" style="display:none;">
+              <tr>
+                <td></td><td></td><td>Total</td>
+                <td id="ftTotal"></td><td id="ftDSale"></td><td id="ftASale"></td><td id="ftComm"></td>
+                <td id="ftODara"></td><td id="ftOAkhar"></td><td id="ftWin"></td>
+                <td id="ftPati"></td><td id="ftBalance"></td><td>Result</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let myUID = null, tableData = [], allCustomers = [], custFocusIdx = -1, lastQuery = null;
+
+async function init() {
+  const u = await initPage('hisab-summary');
+  if (!u) return;
+  myUID = u.UID;
+
+  await Promise.all([loadGames(), loadCustomers()]);
+  await setLatestDate();
+
+  const p = new URLSearchParams(location.search);
+  if (p.get('UID') && p.get('Date')) {
+    const d = new Date(p.get('Date'));
+    const fmtd = fmtDate(d);
+    document.getElementById('txtStartDate').value = fmtd;
+    document.getElementById('txtEndDate').value   = fmtd;
+    // URL se customer pre-select karo
+    const uid = p.get('UID');
+    document.getElementById('customerSelection').value = uid;
+    const cust = allCustomers.find(c => String(c.UID) === String(uid));
+    if (cust) {
+      document.getElementById('custSearch').value = cust.CustomerName;
+      document.getElementById('custClear').style.display = '';
+    }
+    await bindGrid();
+  }
+}
+
+async function setLatestDate() {
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    if (r?.success && r.data) {
+      document.getElementById('txtStartDate').value = r.data;
+      document.getElementById('txtEndDate').value   = r.data;
+    } else { setToday(); }
+  } catch(e) { setToday(); }
+}
+
+function setToday() {
+  const d = fmtDate(new Date(Date.now()+5.5*3600000));
+  document.getElementById('txtStartDate').value = d;
+  document.getElementById('txtEndDate').value   = d;
+}
+
+async function loadGames() {
+  try {
+    const r = await API.get('/api/game');
+    const sel = document.getElementById('gameSelection');
+    sel.innerHTML = '<option value="">All Game</option>';
+    (r?.data||[]).forEach(g => sel.innerHTML += `<option value="${g.GID}">${g.GameName}</option>`);
+    const p = new URLSearchParams(location.search);
+    if (p.get('GID')) sel.value = p.get('GID');
+  } catch(e) {}
+}
+
+async function loadCustomers() {
+  try {
+    const r = await API.get('/api/hisab/customers');
+    allCustomers = (r?.data || []).sort((a, b) =>
+      (a.CustomerName || '').localeCompare(b.CustomerName || '')
+    );
+  } catch(e) { allCustomers = []; }
+}
+
+// ── Customer inline search ──────────────────────────
+function onCustFocus() {
+  showCustDrop(document.getElementById('custSearch').value);
+}
+function onCustInput() {
+  document.getElementById('customerSelection').value = '';
+  document.getElementById('custClear').style.display = document.getElementById('custSearch').value ? '' : 'none';
+  custFocusIdx = -1;
+  showCustDrop(document.getElementById('custSearch').value);
+}
+function showCustDrop(q) {
+  const drop = document.getElementById('custDrop');
+  const list = q
+    ? allCustomers.filter(c => (c.CustomerName||'').toLowerCase().includes(q.toLowerCase()))
+    : allCustomers;
+  if (!list.length) {
+    drop.innerHTML = '<div class="cust-none">No customer found</div>';
+  } else {
+    const items = [{ UID: '', CustomerName: 'All Customer' }, ...list].slice(0, 20);
+    drop.innerHTML = items.map((c, i) =>
+      `<div class="cust-item" data-uid="${c.UID}" data-name="${(c.CustomerName||'').replace(/"/g,'&quot;')}" data-idx="${i}"
+        onmousedown="selectCust('${c.UID}','${(c.CustomerName||'').replace(/'/g,"\\'")}')">
+        ${c.CustomerName || 'All Customer'}
+      </div>`
+    ).join('');
+  }
+  drop.classList.add('open');
+}
+function selectCust(uid, name) {
+  document.getElementById('custSearch').value = uid ? name : '';
+  document.getElementById('customerSelection').value = uid;
+  document.getElementById('custClear').style.display = uid ? '' : 'none';
+  document.getElementById('custDrop').classList.remove('open');
+  custFocusIdx = -1;
+  if (uid) document.getElementById('btnSearch').focus();
+}
+function clearCust() {
+  document.getElementById('custSearch').value = '';
+  document.getElementById('customerSelection').value = '';
+  document.getElementById('custClear').style.display = 'none';
+  document.getElementById('custDrop').classList.remove('open');
+  document.getElementById('custSearch').focus();
+}
+function onCustKey(e) {
+  const drop = document.getElementById('custDrop');
+  const items = drop.querySelectorAll('.cust-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    custFocusIdx = Math.min(custFocusIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === custFocusIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    custFocusIdx = Math.max(custFocusIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === custFocusIdx));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (custFocusIdx >= 0 && items[custFocusIdx]) {
+      const el = items[custFocusIdx];
+      selectCust(el.dataset.uid, el.dataset.name);
+    } else if (items.length === 1) {
+      const el = items[0];
+      selectCust(el.dataset.uid, el.dataset.name);
+    } else {
+      document.getElementById('custDrop').classList.remove('open');
+      bindGrid();
+    }
+  } else if (e.key === 'Escape') {
+    document.getElementById('custDrop').classList.remove('open');
+  }
+}
+document.addEventListener('click', e => {
+  if (!document.getElementById('custWrap')?.contains(e.target))
+    document.getElementById('custDrop')?.classList.remove('open');
+});
+
+async function bindGrid() {
+  const tbody = document.getElementById('summaryBody');
+  tbody.innerHTML = `<tr><td colspan="13" class="emsg"><span class="spin"></span> Loading...</td></tr>`;
+  document.getElementById('summaryFoot').style.display = 'none';
+
+  const startDate = document.getElementById('txtStartDate').value;
+  const endDate   = document.getElementById('txtEndDate').value;
+  const gid       = document.getElementById('gameSelection').value;
+  const cid       = document.getElementById('customerSelection').value;
+  lastQuery = { startDate, endDate, gid, cid };
+
+  try {
+    const r = await API.get(
+      `/api/hisab/summary?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&gid=${gid}&cid=${cid}`
+    );
+    if (!r?.success || !r.data?.length) {
+      tbody.innerHTML = '<tr><td colspan="13" class="emsg">No Data Found!</td></tr>';
+      tableData = [];
+    } else {
+      tableData = r.data;
+      renderTable(tableData);
+    }
+    resetCustSearchReady();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="13" class="emsg">Error loading</td></tr>';
+  }
+}
+
+// Search complete hote hi customer box khaali karke agla naam type karne ke liye ready kar do
+function resetCustSearchReady() {
+  document.getElementById('custSearch').value = '';
+  document.getElementById('customerSelection').value = '';
+  document.getElementById('custClear').style.display = 'none';
+  document.getElementById('custDrop').classList.remove('open');
+}
+
+function renderTable(data) {
+  document.getElementById('summaryBody').innerHTML = data.map((row,i) => `
+    <tr onclick="selectRow(this)" tabindex="0" onkeydown="arrowNav(event,this,${i})">
+      <td>${row.Mobile||''}</td><td>${row.GameName||''}</td><td>${row.Rates||''}</td>
+      <td>${row.Total_Amount||0}</td><td>${row.D_Sale||0}</td><td>${row.A_Sale||0}</td>
+      <td>${row.Commision||0}</td><td>${row.O_Dara||0}</td><td>${row.O_Akhar||0}</td>
+      <td>${row.WinAmount||0}</td><td>${row.Pati||0}</td><td>${row.Balance||0}</td>
+      <td>${row.Result||''}</td>
+    </tr>`).join('');
+
+  const s = f => Math.round(data.reduce((a,r)=>a+(parseFloat(r[f])||0),0));
+  document.getElementById('ftTotal').textContent   = s('Total_Amount');
+  document.getElementById('ftDSale').textContent   = s('D_Sale');
+  document.getElementById('ftASale').textContent   = s('A_Sale');
+  document.getElementById('ftComm').textContent    = s('Commision');
+  document.getElementById('ftODara').textContent   = s('O_Dara');
+  document.getElementById('ftOAkhar').textContent  = s('O_Akhar');
+  document.getElementById('ftWin').textContent     = s('WinAmount');
+  document.getElementById('ftPati').textContent    = s('Pati');
+  document.getElementById('ftBalance').textContent = s('Balance');
+  document.getElementById('summaryFoot').style.display = '';
+}
+
+function selectRow(row) {
+  document.querySelectorAll('#summaryBody tr').forEach(r=>r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+}
+function arrowNav(e,row,idx) {
+  const rows = document.querySelectorAll('#summaryBody tr');
+  if(e.key==='ArrowUp'&&idx>0){e.preventDefault();rows[idx-1].focus();selectRow(rows[idx-1]);}
+  else if(e.key==='ArrowDown'&&idx<rows.length-1){e.preventDefault();rows[idx+1].focus();selectRow(rows[idx+1]);}
+}
+
+async function exportExcel() {
+  if (!tableData.length || !lastQuery) { showToast('Pehle search karo',true); return; }
+  const custSel  = document.getElementById('customerSelection');
+  const gameSel  = document.getElementById('gameSelection');
+  const { startDate, endDate, gid, cid } = lastQuery;
+  let fileName = 'AllSummary';
+  if (custSel.selectedIndex>0 && gameSel.selectedIndex>0)
+    fileName = gameSel.options[gameSel.selectedIndex].text + custSel.options[custSel.selectedIndex].text;
+  else if (custSel.selectedIndex>0) fileName = custSel.options[custSel.selectedIndex].text;
+  else if (gameSel.selectedIndex>0) fileName = gameSel.options[gameSel.selectedIndex].text;
+  fileName += startDate.replace(/\//g,'');
+
+  const url = `/api/hisab/summary/export?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&gid=${gid}&cid=${cid}&fileName=${encodeURIComponent(fileName)}`;
+  const a = document.createElement('a'); a.href=url; a.download=fileName+'.xlsx'; a.click();
+}
+
+function fmtDate(d) {
+  const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2,'0')}/${m[d.getMonth()]}/${d.getFullYear()}`;
+}
+// ── SweetAlert-based feedback (matches original ASPX SucessMessage/ErrorMessage) ──
+function showToast(msg,err=false) {
+  swal(err ? 'Wrong Inputs!' : 'Sucess!', msg, {
+    icon: err ? 'error' : 'success',
+    timer: 900,
+    buttons: false
+  });
+}
+init();
+</script>
+
+<script>
+// Flatpickr calendar for date inputs
+document.addEventListener('DOMContentLoaded', function() {
+  ["txtStartDate", "txtEndDate"].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    flatpickr(el, {
+      dateFormat: 'd/M/Y',
+      allowInput: false,
+      disableMobile: true,
+      onChange: function(selectedDates, dateStr, instance) {
+        // Trigger change event for any onchange handlers
+        el.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

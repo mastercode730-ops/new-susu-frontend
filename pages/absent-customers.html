@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/css/main.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Absent Customers - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<style>
+.selected-row { background-color:#d3d3d3; }
+.flatpickr-input{cursor:pointer;background:#fff;}
+/* Searchable Game dropdown — same reliable custom widget already used for
+   Customer search on hisab-summary.html (no jQuery/Select2 involved, so
+   none of that old plugin's positioning bugs). */
+.game-wrap{position:relative;}
+.game-box{display:flex;align-items:center;gap:6px;}
+.game-box .game-inp{flex:1;}
+.game-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #888;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.15);max-height:240px;overflow-y:auto;z-index:999;display:none;}
+.game-drop.open{display:block;}
+.game-item{padding:9px 12px;cursor:pointer;font-size:.85rem;font-weight:700;color:var(--text);text-transform:capitalize;border-bottom:1px solid #eee;}
+.game-item:last-child{border-bottom:none;}
+.game-item:hover,.game-item.focused{background:#eef3ff;}
+.game-none{padding:10px 12px;color:var(--muted);font-size:.84rem;}
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label,.content>.row label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+/* Compact filter row — smaller fields/spacing, less scroll to get through it */
+.content .card-body{padding:10px 16px!important;}
+.content .row{margin-left:-6px;margin-right:-6px;}
+.content .row>[class*="col"]{padding-left:6px;padding-right:6px;}
+/* Data grid: bold bordered header, scroll internally instead of the whole page */
+#gridWrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 260px);}
+#gridWrap table{border-collapse:collapse!important;width:100%!important;}
+#gridWrap th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;position:sticky;top:0;}
+#gridWrap td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
+#gridWrap tbody tr:hover td{background:#eef3ff!important;}
+#gridWrap tbody tr.selected-row td{background:#d3d3d3!important;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12" style="margin-top:0px;">
+      <div class="card">
+        <div class="card-body">
+          <div class="row" style="align-items:flex-end;">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtStartDate">Date</label>
+                <input type="text" class="form-control" id="txtStartDate" placeholder="Enter Start Date (dd/MMM/yyyy)"
+                  onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('gameSearch').focus();}">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="gameSearch">Game</label>
+                <div class="game-wrap" id="gameWrap">
+                  <div class="game-box">
+                    <input type="text" class="form-control game-inp" id="gameSearch"
+                      placeholder="Select Game" autocomplete="off"
+                      oninput="onGameInput()" onfocus="onGameFocus()" onkeydown="onGameKey(event)">
+                  </div>
+                  <div class="game-drop" id="gameDrop"></div>
+                </div>
+                <input type="hidden" id="gameSelection" value="">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <button class="btn btn-success" id="btnSearch" onclick="bindGrid()">Search</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive" id="gridWrap">
+          <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+            <thead>
+              <tr>
+                <th>SRNo</th>
+                <th>Customer</th>
+                <th>Mobile</th>
+              </tr>
+            </thead>
+            <tbody id="bodyGrid">
+              <tr><td colspan="3">Date aur Game select karke Search karo</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+async function init() {
+  const u = await initPage('absent-customers');
+  if (!u) return;
+  if (u.SubUID) { window.location.href = '/pages/home.html'; return; }
+
+  // ASPX: BindDropDown → GetAllGames SP
+  await loadGames();
+  // ASPX: BindLastedDate()
+  await setLatestDate();
+
+  // Flatpickr calendar for the date input (page previously had no calendar
+  // widget at all — plain text entry only).
+  flatpickr('#txtStartDate', {
+    dateFormat: 'd/M/Y',
+    allowInput: true,
+    disableMobile: true
+  });
+}
+
+async function setLatestDate() {
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    if (r?.success && r.data) {
+      document.getElementById('txtStartDate').value = r.data;
+    } else { setToday(); }
+  } catch(e) { setToday(); }
+}
+function setToday() {
+  const d = new Date(Date.now()+5.5*3600000);
+  const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('txtStartDate').value =
+    `${String(d.getDate()).padStart(2,'0')}/${m[d.getMonth()]}/${d.getFullYear()}`;
+}
+
+let allGames = [];
+let gameFocusIdx = -1;
+
+async function loadGames() {
+  const r = await API.get('/api/game');
+  allGames = r?.data || [];
+}
+
+// ── Searchable Game dropdown (same pattern as hisab-summary.html's
+//    Customer search — plain JS, no jQuery/Select2) ──
+function onGameFocus() { showGameDrop(document.getElementById('gameSearch').value); }
+function onGameInput() {
+  document.getElementById('gameSelection').value = '';
+  gameFocusIdx = -1;
+  showGameDrop(document.getElementById('gameSearch').value);
+}
+function showGameDrop(q) {
+  const drop = document.getElementById('gameDrop');
+  const list = q
+    ? allGames.filter(g => (g.GameName||'').toLowerCase().includes(q.toLowerCase()))
+    : allGames;
+  if (!list.length) {
+    drop.innerHTML = '<div class="game-none">No game found</div>';
+  } else {
+    drop.innerHTML = list.map((g, i) =>
+      `<div class="game-item" data-gid="${g.GID}" data-name="${(g.GameName||'').replace(/"/g,'&quot;')}" data-idx="${i}"
+        onmousedown="selectGame('${g.GID}','${(g.GameName||'').replace(/'/g,"\\'")}')">
+        ${g.GameName || g.GID}
+      </div>`
+    ).join('');
+  }
+  drop.classList.add('open');
+}
+function selectGame(gid, name) {
+  document.getElementById('gameSearch').value = name;
+  document.getElementById('gameSelection').value = gid;
+  document.getElementById('gameDrop').classList.remove('open');
+  gameFocusIdx = -1;
+  document.getElementById('btnSearch').focus();
+}
+function onGameKey(e) {
+  const drop = document.getElementById('gameDrop');
+  const items = drop.querySelectorAll('.game-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    gameFocusIdx = Math.min(gameFocusIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === gameFocusIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    gameFocusIdx = Math.max(gameFocusIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === gameFocusIdx));
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (gameFocusIdx >= 0 && items[gameFocusIdx]) {
+      const el = items[gameFocusIdx];
+      selectGame(el.dataset.gid, el.dataset.name);
+    } else if (items.length === 1) {
+      const el = items[0];
+      selectGame(el.dataset.gid, el.dataset.name);
+    }
+  } else if (e.key === 'Escape') {
+    document.getElementById('gameDrop').classList.remove('open');
+  }
+}
+document.addEventListener('click', e => {
+  if (!document.getElementById('gameWrap')?.contains(e.target))
+    document.getElementById('gameDrop')?.classList.remove('open');
+});
+
+// ── btnSearch_Click → BindGrid() ──
+// ASPX: only if txtStartDate.Text != "" AND GameSelection.SelectedIndex > 0
+async function bindGrid() {
+  const date   = document.getElementById('txtStartDate').value;
+  const gameID = document.getElementById('gameSelection').value;
+  const tbody  = document.getElementById('bodyGrid');
+
+  if (!date || !gameID) {
+    tbody.innerHTML = '<tr><td colspan="3">Date aur Game dono select karo</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+
+  const r = await API.get(`/api/home/absent-customers?date=${encodeURIComponent(date)}&gameID=${gameID}`);
+  if (!r?.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="3">No Data Found!</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = r.data.map((row,i) => `
+    <tr onclick="selectRow(this)" tabindex="0" onkeydown="arrowNav(event,this,${i})">
+      <td>${i+1}</td>
+      <td>${row.CustomerName||''}</td>
+      <td>${row.Mobile||''}</td>
+    </tr>`).join('');
+}
+
+function selectRow(row) {
+  document.querySelectorAll('#bodyGrid tr').forEach(r=>r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+}
+function arrowNav(e,row,idx) {
+  const rows=document.querySelectorAll('#bodyGrid tr');
+  if(e.key==='ArrowUp'&&idx>0){e.preventDefault();rows[idx-1].focus();selectRow(rows[idx-1]);}
+  else if(e.key==='ArrowDown'&&idx<rows.length-1){e.preventDefault();rows[idx+1].focus();selectRow(rows[idx+1]);}
+}
+
+init();
+</script>
+</body>
+</html>

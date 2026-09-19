@@ -1,0 +1,804 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Balance - Susu9</title>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root {
+    --green: #25D366;
+    --green2: #128C7E;
+    --green3: #E9F7EF;
+    --bg: #F4F7F9;
+    --panel: #FFFFFF;
+    --panel2: #F8F9FA;
+    --border: #E0E0E0;
+    --text: #212529;
+    --text2: #495057;
+    --muted: #6C757D;
+    --red: #dc3545;
+    --yellow: #ffc107;
+}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+.navbar{background:var(--green2);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:56px;flex-shrink:0;}
+.nav-left{display:flex;align-items:center;gap:10px;}
+.back-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.9rem;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:3px;}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.nav-uid{color:rgba(255,255,255,.65);font-size:.78rem;}
+.btn-logout{background:rgba(255,82,82,.2);color:#fff;border:1px solid rgba(255,82,82,.4);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.78rem;}
+
+.content{padding:12px;display:flex;flex-direction:column;gap:10px;}
+
+/* CARD */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.card-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.95rem;color:var(--green);letter-spacing:.5px;padding:9px 14px;border-bottom:1px solid var(--border);}
+
+/* FORM */
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:12px 14px;}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fg label{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.inp{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.84rem;outline:none;}
+.inp:focus{border-color:var(--green);}
+.sel{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.84rem;outline:none;cursor:pointer;}
+.btn{padding:6px 14px;border-radius:7px;border:none;cursor:pointer;font-size:.8rem;font-weight:700;transition:all .15s;}
+.btn-green{background:var(--green);color:#111;}
+.btn-green:hover{background:#1db954;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-red{background:rgba(241,92,109,.15);color:var(--red);border:1px solid rgba(241,92,109,.3);}
+.btn-sm{padding:5px 10px;font-size:.76rem;}
+
+/* STAFF NET BAL LABEL */
+.staff-label{padding:6px 14px;font-size:.82rem;color:var(--yellow);font-weight:600;border-bottom:1px solid var(--border);}
+
+/* FILTER BAR */
+.filter-bar{padding:8px 14px;border-bottom:1px solid var(--border);}
+.filter-inp{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:.84rem;outline:none;}
+.filter-inp:focus{border-color:var(--green);}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.8rem;}
+thead th{background:var(--panel2);color:var(--muted);font-size:.65rem;letter-spacing:.8px;text-transform:uppercase;font-weight:600;padding:7px 9px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .1s;}
+tbody tr:hover{background:var(--panel2);}
+tbody tr.selected-row{background:rgba(244,233,175,.08);}
+td{padding:7px 9px;color:var(--text2);text-align:center;white-space:nowrap;}
+td.link-cell{color:var(--green);font-weight:600;cursor:pointer;}
+td.link-cell:hover{text-decoration:underline;}
+tfoot td{background:var(--panel2);font-weight:700;color:var(--text);padding:7px 9px;text-align:center;}
+.btn-add{background:#31CE36;color:#fff;border:none;border-radius:4px;font-size:.72rem;height:26px;width:44px;cursor:pointer;font-weight:700;}
+.total-net{text-align:right;padding:6px 14px;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;color:var(--text);}
+.emsg{padding:18px;text-align:center;color:var(--muted);font-size:.82rem;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.78);z-index:300;align-items:center;justify-content:center;padding:10px;}
+.modal-bg.show{display:flex;}
+.modal-box{background:var(--panel);border-radius:14px;width:100%;max-width:860px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.modal-box.wide{max-width:1050px;}
+.modal-hd{background:var(--green3);padding:11px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-hd h3{font-family:'Rajdhani',sans-serif;font-size:1rem;color:#fff;}
+.modal-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:1.3rem;cursor:pointer;line-height:1;}
+.modal-body{padding:12px;overflow-y:auto;flex:1;}
+
+/* RADIO TABS */
+.radio-tabs{display:flex;gap:0;background:var(--panel2);border-radius:7px;overflow:hidden;border:1px solid var(--border);width:fit-content;margin-bottom:10px;}
+.rtab{padding:5px 14px;border:none;background:transparent;color:var(--muted);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.rtab.active{background:var(--green);color:#111;}
+
+/* SPINNER */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--panel2);border:1px solid var(--green);color:var(--text);padding:9px 16px;border-radius:10px;font-size:.82rem;z-index:9999;display:none;}
+.toast.err{border-color:var(--red);}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <div class="nav-logo">MY BALANCE</div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-uid" id="navUID"></span>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+</nav>
+
+<div class="content">
+
+  <!-- DATE + FIND + PAYMENT HISTORY -->
+  <div class="card">
+    <div class="form-row">
+      <div class="fg">
+        <label>Date</label>
+        <input type="text" class="inp" id="txtStartDate" placeholder="dd/MMM/yyyy"
+          onfocus="this.select()" style="width:145px;" onchange="onDateChange()">
+      </div>
+      <button class="btn btn-green" onclick="bindGrid()">Find</button>
+      <!-- ASPX: Payment History → ShowAllTransactionsAccounts.aspx -->
+      <button class="btn btn-blue btn-sm" onclick="window.open('/pages/accounts.html','_blank')" style="margin-left:auto;">
+        Payment History
+      </button>
+    </div>
+  </div>
+
+  <!-- MY GAME BALANCE (grvGameHisab) -->
+  <!-- ASPX: SP GetMyGameBalance → CMobile(OpenAllBalanceSheet UID,1), Opening, Today, WinAmount(Balance), [ADD SubUser] -->
+  <!-- Footer: SRNo | Total | Sum(Opening) | Sum(Today) | Sum(WinAmount) -->
+  <div class="card">
+    <!-- ASPX: lblStaffNetbalance — SubUID net balance only -->
+    <div class="staff-label" id="lblStaffNetbalance" style="display:none;"></div>
+    <div class="card-title">My Game Balance</div>
+    <div class="filter-bar">
+      <input type="text" class="filter-inp" id="txtsearch"
+        placeholder="Filter Name / Mobile"
+        oninput="filterGameBalance(this.value)"
+        onfocus="this.select()">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>SRNo</th>
+            <th>Customer</th>
+            <th>Opening</th>
+            <th>Today</th>
+            <th>Balance</th>
+            <th id="thAdd" style="display:none;">ADD</th>
+          </tr>
+        </thead>
+        <tbody id="bodyGameBal">
+          <tr><td colspan="6" class="emsg"><span class="spin"></span> Loading...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>SRNo</td><td>Total</td>
+            <td id="ft_gb_open">–</td>
+            <td id="ft_gb_today">–</td>
+            <td id="ft_gb_bal">–</td>
+            <td id="ft_gb_add" style="display:none;">ADD</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- UTTAR BALANCE (GridViewUttar) -->
+  <!-- ASPX: SP GetMyGameBalance IsUttar=true → same columns as Game Balance -->
+  <div class="card">
+    <div class="card-title">Uttar Balance</div>
+    <div class="filter-bar">
+      <input type="text" class="filter-inp" id="txtSearchuttar"
+        placeholder="Filter Name / Mobile"
+        oninput="filterUttarBal(this.value)"
+        onfocus="this.select()">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>SRNo</th><th>Customer</th>
+            <th>Opening</th><th>Today</th><th>Balance</th>
+            <th id="thAddU" style="display:none;">ADD</th>
+          </tr>
+        </thead>
+        <tbody id="bodyUttarBal">
+          <tr><td colspan="6" class="emsg"><span class="spin"></span> Loading...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>SRNo</td><td>Total</td>
+            <td id="ft_ub_open">–</td>
+            <td id="ft_ub_today">–</td>
+            <td id="ft_ub_bal">–</td>
+            <td id="ft_ub_add" style="display:none;">ADD</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- STAFF GRID (GridViewStaffHissab) — SubUID==null only -->
+  <!-- ASPX: SP StaffBalanceSheet → subusername(OpenAllStaffBalanceSheet), Balance -->
+  <!-- Footer: Sum(Balance) | lblTotalNetBalance -->
+  <div class="card" id="staffCard" style="display:none;">
+    <div class="card-title">Sub User Balance</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>SRNo</th><th>Sub User</th><th>Balance</th></tr>
+        </thead>
+        <tbody id="bodyStaff">
+          <tr><td colspan="3" class="emsg">No Data Found!</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>SRNo</td><td>Sub User</td><td id="ft_staff_bal">–</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <!-- ASPX: lblTotalNetBalance = StaffTotal + FalseUttarTotal + TrueUttarTotal -->
+    <div class="total-net" id="lblTotalNetBalance"></div>
+  </div>
+
+  <!-- MY BALANCE (grvgames) -->
+  <!-- ASPX: SP GetMYBalance → CMobile(OpenAllBalanceSheet UID,2), Opening, Today, WinAmount -->
+  <!-- Footer: SRNo | Total | Sum(Opening) | Sum(Today) | Sum(WinAmount) -->
+  <div class="card">
+    <div class="card-title">My Balance</div>
+    <div class="filter-bar">
+      <input type="text" class="filter-inp" id="txtSearchMyUttar"
+        placeholder="Filter Name / Mobile"
+        oninput="filterMyBalance(this.value)"
+        onfocus="this.select()">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>SRNo</th><th>Name</th>
+            <th>Opening</th><th>Today</th><th>Balance</th>
+          </tr>
+        </thead>
+        <tbody id="bodyMyBal">
+          <tr><td colspan="5" class="emsg"><span class="spin"></span> Loading...</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>SRNo</td><td>Total</td>
+            <td id="ft_mb_open">–</td>
+            <td id="ft_mb_today">–</td>
+            <td id="ft_mb_bal">–</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     divGameHisabHistory Modal
+     grvGameHisabHistory: Date | Amount | Type
+     Radio: All | Sale | Account
+     Footer: Total | Sum(WinAmount)
+     Click Sale/Self Hissa row → Summary Modal
+═══════════════════════════════════════════ -->
+<div class="modal-bg" id="histModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3 id="histTitle">Balance History</h3>
+      <button class="modal-close" onclick="closeHistModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <!-- Radio: All | Sale | Account -->
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <div class="radio-tabs">
+          <button class="rtab active" id="rtAll"  onclick="setHistType('all')">All</button>
+          <button class="rtab" id="rtSale" onclick="setHistType('sale')">Sale</button>
+          <button class="rtab" id="rtAcc"  onclick="setHistType('accounts')">Account</button>
+        </div>
+        <!-- ASPX: txtFromDate, txtToDate -->
+        <div class="fg">
+          <label>From</label>
+          <input type="date" class="inp" id="txtFromDate" onchange="reloadHistory()" style="width:145px;">
+        </div>
+        <div class="fg">
+          <label>To</label>
+          <input type="date" class="inp" id="txtToDate" onchange="reloadHistory()" style="width:145px;">
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>  <!-- WinAmount -->
+              <th>Type</th>
+            </tr>
+          </thead>
+          <tbody id="bodyHist">
+            <tr><td colspan="3" class="emsg">Loading...</td></tr>
+          </tbody>
+          <tfoot id="footHist" style="display:none;">
+            <tr>
+              <td>Total</td>
+              <td id="ft_hist_amt">–</td>
+              <td>Type</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     divGameHisabHistorySummary Modal
+     GridViewSummary: Game|Rates|T_Sale|D_Sale|A_Sale|Comm|O_Dara|O_Akhar|WinAmt|Hissa|Balance
+     Same footer structure as hisab-summary
+═══════════════════════════════════════════ -->
+<div class="modal-bg" id="summaryModal">
+  <div class="modal-box wide">
+    <div class="modal-hd">
+      <h3 id="summaryTitle">Game Hisab History</h3>
+      <button class="modal-close" onclick="closeSummaryModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Game</th><th>Rates</th>
+              <th>T_Sale</th><th>D_Sale</th><th>A_Sale</th>
+              <th>Comm</th><th>O_Dara</th><th>O_Akhar</th>
+              <th>WinAmt</th><th>Hissa</th><th>Balance</th>
+            </tr>
+          </thead>
+          <tbody id="bodySummary">
+            <tr><td colspan="11" class="emsg">Loading...</td></tr>
+          </tbody>
+          <tfoot id="footSummary" style="display:none;">
+            <tr>
+              <td>–</td><td>Total</td>
+              <td id="ft_s_tsale">–</td><td id="ft_s_dsale">–</td><td id="ft_s_asale">–</td>
+              <td id="ft_s_comm">–</td><td id="ft_s_odara">–</td><td id="ft_s_oakhar">–</td>
+              <td id="ft_s_win">–</td><td id="ft_s_pati">–</td><td id="ft_s_bal">–</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     divMyTransaction Modal — ADD Transaction
+     SubUser only → SP CreateTransaction
+═══════════════════════════════════════════ -->
+<div class="modal-bg" id="txnModal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-hd">
+      <h3>Transaction</h3>
+      <button class="modal-close" onclick="closeTxnModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:1rem;font-weight:700;color:var(--green);margin-bottom:12px;" id="txnCustName"></div>
+      <input type="hidden" id="lblCID">
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <div class="fg" style="flex:1;">
+          <label>Amount</label>
+          <input type="number" class="inp" id="txtAmount" style="width:100%;"
+            placeholder="Enter Amount"
+            onkeydown="if(event.keyCode==13)document.getElementById('ddlType').focus()">
+        </div>
+        <div class="fg" style="flex:1;">
+          <label>Type</label>
+          <select class="sel" id="ddlType" style="width:100%;"
+            onkeydown="if(event.keyCode==13)document.getElementById('btnAddTxn').focus()">
+            <option>Paid</option>
+            <option>Received</option>
+          </select>
+        </div>
+      </div>
+      <button id="btnAddTxn" class="btn btn-green" onclick="addTransaction()">ADD</button>
+      <div id="txnMsg" style="color:var(--red);margin-top:8px;font-size:.82rem;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/api.js"></script>
+<script>
+// ─── State ───
+let _uid = null, _subUID = null;
+let _currentDate = '';
+let _histType = 'all';      // all | sale | accounts
+let _histMode = '';         // '1'=game, '2'=mybal
+let _histUID  = '';
+let _histMobile = '';
+let _showPopupSide = '';    // ASPX: lblShowPoupSide
+
+// ViewState equivalents
+let _vsGameBal  = [];  // myViewState
+let _vsUttarBal = [];  // myViewState2
+let _vsMyBal    = [];  // myViewState1
+
+// Net balance totals
+let _staffTotal = 0, _falseUttar = 0, _trueUttar = 0;
+
+// ─── Init ───
+async function init() {
+  try {
+    const u = await getCurrentUser();
+    _uid    = u.UID;
+    _subUID = u.SubUID || null;
+    document.getElementById('navUID').textContent = 'UID: ' + _uid;
+  } catch(e) { window.location.href='/login.html'; return; }
+
+  // ASPX: txtFromDate = 01/Jan/2022, txtToDate = today IST
+  const ist = getIST();
+  document.getElementById('txtFromDate').value = '2022-01-01';
+  document.getElementById('txtToDate').value   = ist;
+
+  // ASPX: BindLastedDate()
+  const dr = await API.get('/api/balance/latest-date');
+  _currentDate = (dr?.success && dr.date) ? dr.date : ist;
+  document.getElementById('txtStartDate').value = _currentDate;
+
+  // SubUser specific
+  if (_subUID) {
+    const sr = await API.get('/api/balance/staff-balance');
+    if (sr?.success) {
+      const lbl = document.getElementById('lblStaffNetbalance');
+      lbl.textContent = `Net Bal of SubUser ${_subUID} : ${sr.balance}`;
+      lbl.style.display = 'block';
+    }
+    // ADD columns show karo
+    document.getElementById('thAdd').style.display   = '';
+    document.getElementById('ft_gb_add').style.display = '';
+    document.getElementById('thAddU').style.display   = '';
+    document.getElementById('ft_ub_add').style.display = '';
+  }
+
+  await bindGrid();
+  document.getElementById('txtsearch').focus();
+
+  // ESC handler (ASPX: lblShowPopup logic)
+  document.addEventListener('keyup', e => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('summaryModal').classList.contains('show')) { closeSummaryModal(); return; }
+    if (document.getElementById('histModal').classList.contains('show'))    { closeHistModal();    return; }
+    if (document.getElementById('txnModal').classList.contains('show'))     { closeTxnModal();     return; }
+    history.back();
+  });
+}
+
+// ─── BindGrid() — all 4 grids ───
+async function bindGrid() {
+  _currentDate = document.getElementById('txtStartDate').value || _currentDate;
+  // Reset filters
+  document.getElementById('txtsearch').value = '';
+  document.getElementById('txtSearchuttar').value = '';
+  document.getElementById('txtSearchMyUttar').value = '';
+
+  setLoading();
+
+  const [r1, r2, r3, r4] = await Promise.all([
+    API.get(`/api/balance/my-balance?date=${_currentDate}&filter=`),
+    API.get(`/api/balance/game-balance?date=${_currentDate}&filter=`),
+    API.get(`/api/balance/uttar-balance?date=${_currentDate}&filter=`),
+    _subUID ? null : API.get(`/api/balance/staff-grid?date=${_currentDate}`)
+  ]);
+
+  // grvgames — My Balance
+  _vsMyBal = r1?.success ? (r1.data||[]) : [];
+  renderMyBal(_vsMyBal);
+
+  // grvGameHisab — My Game Balance
+  _vsGameBal = r2?.success ? (r2.data||[]) : [];
+  renderGameBal(_vsGameBal);
+
+  // GridViewUttar — Uttar Balance
+  _vsUttarBal = r3?.success ? (r3.data||[]) : [];
+  renderUttarBal(_vsUttarBal);
+
+  // GridViewStaffHissab — only main user
+  if (!_subUID) {
+    document.getElementById('staffCard').style.display = 'block';
+    if (r4?.success && r4.data?.length) {
+      _staffTotal = r4.totalBalance || 0;
+      renderStaff(r4.data);
+      setText('ft_staff_bal', _staffTotal.toString());
+    } else {
+      _staffTotal = 0;
+      document.getElementById('bodyStaff').innerHTML = '<tr><td colspan="3" class="emsg">No Data Found!</td></tr>';
+    }
+    calcNetBalance();
+  }
+}
+
+function onDateChange() {
+  _currentDate = document.getElementById('txtStartDate').value;
+  bindGrid();
+}
+
+// ─── Render My Balance (grvgames) ───
+// CMobile onclick → OpenAllBalanceSheet(UID,2)
+// Sorted CMobile ASC
+function renderMyBal(rows) {
+  const tbody = document.getElementById('bodyMyBal');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="emsg">No Data Found!</td></tr>';
+    ['ft_mb_open','ft_mb_today','ft_mb_bal'].forEach(id=>setText(id,'–')); return;
+  }
+  const sorted = [...rows].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+  tbody.innerHTML = sorted.map((r,i)=>`
+    <tr onclick="selectRow(this,'bodyMyBal')">
+      <td>${i+1}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',2)">${r.CMobile||r.UID}</td>
+      <td>${nv(r.Opening)}</td><td>${nv(r.Today)}</td><td>${nv(r.WinAmount)}</td>
+    </tr>`).join('');
+  setText('ft_mb_open',  sumStr(rows,'Opening'));
+  setText('ft_mb_today', sumStr(rows,'Today'));
+  setText('ft_mb_bal',   sumStr(rows,'WinAmount'));
+}
+
+// ─── Render Game Balance (grvGameHisab) ───
+// CMobile onclick → OpenAllBalanceSheet(UID,1)
+// ADD button → SubUser only
+function renderGameBal(rows) {
+  const tbody = document.getElementById('bodyGameBal');
+  const cols = _subUID ? 6 : 5;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="${cols}" class="emsg">No Data Found!</td></tr>`;
+    ['ft_gb_open','ft_gb_today','ft_gb_bal'].forEach(id=>setText(id,'–'));
+    _falseUttar = 0; if(!_subUID) calcNetBalance(); return;
+  }
+  const sorted = [...rows].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+  tbody.innerHTML = sorted.map((r,i)=>`
+    <tr onclick="selectRow(this,'bodyGameBal')">
+      <td>${i+1}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',1)">${r.CMobile||r.UID}</td>
+      <td>${nv(r.Opening)}</td><td>${nv(r.Today)}</td><td>${nv(r.WinAmount)}</td>
+      ${_subUID?`<td><button class="btn-add" onclick="event.stopPropagation();openTxn('${r.CID}','${esc(r.CMobile||r.UID)}')">ADD</button></td>`:''}
+    </tr>`).join('');
+  const totWin = sumRaw(rows,'WinAmount');
+  setText('ft_gb_open',  sumStr(rows,'Opening'));
+  setText('ft_gb_today', sumStr(rows,'Today'));
+  setText('ft_gb_bal',   totWin.toString());
+  _falseUttar = totWin;
+  if(!_subUID) calcNetBalance();
+}
+
+// ─── Render Uttar Balance (GridViewUttar) ───
+function renderUttarBal(rows) {
+  const tbody = document.getElementById('bodyUttarBal');
+  const cols = _subUID ? 6 : 5;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="${cols}" class="emsg">No Data Found!</td></tr>`;
+    ['ft_ub_open','ft_ub_today','ft_ub_bal'].forEach(id=>setText(id,'–'));
+    _trueUttar = 0; if(!_subUID) calcNetBalance(); return;
+  }
+  const sorted = [...rows].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+  tbody.innerHTML = sorted.map((r,i)=>`
+    <tr onclick="selectRow(this,'bodyUttarBal')">
+      <td>${i+1}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',1)">${r.CMobile||r.UID}</td>
+      <td>${nv(r.Opening)}</td><td>${nv(r.Today)}</td><td>${nv(r.WinAmount)}</td>
+      ${_subUID?`<td><button class="btn-add" onclick="event.stopPropagation();openTxn('${r.CID}','${esc(r.CMobile||r.UID)}')">ADD</button></td>`:''}
+    </tr>`).join('');
+  const totWin = sumRaw(rows,'WinAmount');
+  setText('ft_ub_open',  sumStr(rows,'Opening'));
+  setText('ft_ub_today', sumStr(rows,'Today'));
+  setText('ft_ub_bal',   totWin.toString());
+  _trueUttar = totWin;
+  if(!_subUID) calcNetBalance();
+}
+
+// ─── Render Staff (GridViewStaffHissab) ───
+// subusername onclick → OpenAllStaffBalanceSheet(SubUserID)
+// Sort subusername ASC
+function renderStaff(rows) {
+  const sorted = [...rows].sort((a,b)=>(a.subusername||'').localeCompare(b.subusername||''));
+  document.getElementById('bodyStaff').innerHTML = sorted.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td class="link-cell" onclick="window.open('/pages/accounts.html?SUID=${r.SubUserID}','_blank')">${r.subusername||r.SubUserID}</td>
+      <td>${nv(r.Balance)}</td>
+    </tr>`).join('');
+}
+
+// ─── CalculateTotalNetBalance ───
+// ASPX: Staff + FalseUttar + TrueUttar
+function calcNetBalance() {
+  if (_subUID) return;
+  const total = Math.round(_staffTotal + _falseUttar + _trueUttar);
+  setText('lblTotalNetBalance', 'Total Net Balance : ' + total);
+}
+
+// ─── Client-side Filters ───
+function filterGameBalance(term) {
+  const t = term.toLowerCase();
+  renderGameBal(!t ? _vsGameBal : _vsGameBal.filter(r=>(r.CMobile||'').toLowerCase().includes(t)));
+  document.getElementById('txtsearch').focus();
+}
+function filterUttarBal(term) {
+  const t = term.toLowerCase();
+  renderUttarBal(!t ? _vsUttarBal : _vsUttarBal.filter(r=>(r.CMobile||'').toLowerCase().includes(t)));
+  document.getElementById('txtSearchuttar').focus();
+}
+function filterMyBalance(term) {
+  const t = term.toLowerCase();
+  renderMyBal(!t ? _vsMyBal : _vsMyBal.filter(r=>(r.CMobile||'').toLowerCase().includes(t)));
+  document.getElementById('txtSearchMyUttar').focus();
+}
+
+// ─── Row click → History Modal ───
+// grvgames "History" → GetMYBalanceHistory (mode='2')
+// grvGameHisab label click → OpenAllBalanceSheet (new tab, ASPX ke same)
+function openAllBalance(uid, selectUID) {
+  window.open(`/pages/all-balance-sheet.html?UID=${uid}&SelectUID=${selectUID}`, '_blank');
+}
+
+// grvgames lnkMobile → History modal (mode='2')
+async function openHistModal(uid, mobile, mode) {
+  _histUID    = uid;
+  _histMobile = mobile;
+  _histMode   = mode; // '1'=game, '2'=mybal
+  _showPopupSide = mode;
+  document.getElementById('histModal').classList.add('show');
+  await reloadHistory();
+}
+
+async function reloadHistory() {
+  if (!_histUID) return;
+  const from = document.getElementById('txtFromDate').value;
+  const to   = document.getElementById('txtToDate').value;
+
+  document.getElementById('bodyHist').innerHTML =
+    '<tr><td colspan="3" class="emsg"><span class="spin"></span> Loading...</td></tr>';
+  document.getElementById('footHist').style.display = 'none';
+
+  const ep = _histMode === '1'
+    ? `/api/balance/game-balance-history?customerUID=${_histUID}&type=${_histType}&fromDate=${from}&toDate=${to}`
+    : `/api/balance/my-balance-history?customerUID=${_histUID}&type=${_histType}&fromDate=${from}&toDate=${to}`;
+
+  const r = await API.get(ep);
+  if (!r?.success || !r.data?.length) {
+    document.getElementById('bodyHist').innerHTML = '<tr><td colspan="3" class="emsg">No Data Found!</td></tr>';
+    return;
+  }
+
+  // ASPX: find Mobile from Type=Sale row → h4Title
+  let titleSet = false;
+  for (const d of r.data) {
+    if (d.Type === 'Sale' && !titleSet) {
+      setText('histTitle', (d.Mobile || _histMobile) + ' Balance History');
+      titleSet = true; break;
+    }
+  }
+  if (!titleSet) setText('histTitle', _histMobile + ' Balance History');
+
+  document.getElementById('bodyHist').innerHTML = r.data.map(d => {
+    const fmtDt = fmtDateTime(d.MessageDateTime);
+    const isSale = d.Type==='Sale' || d.Type==='Self Hissa';
+    return `<tr style="${isSale?'cursor:pointer;':''}"
+              ${isSale?`onclick="loadSummary('${fmtDt}','${d.Type}')"`:''}> 
+      <td>${fmtDt}</td>
+      <td>${nv(d.WinAmount)}</td>
+      <td>${d.Type||'–'}</td>
+    </tr>`;
+  }).join('');
+
+  const tot = r.data.reduce((s,d)=>s+(parseFloat(d.WinAmount)||0),0);
+  setText('ft_hist_amt', tot.toString());
+  document.getElementById('footHist').style.display = '';
+}
+
+// ─── Radio type change ───
+function setHistType(t) {
+  _histType = t;
+  ['rtAll','rtSale','rtAcc'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(t==='all'?'rtAll':t==='sale'?'rtSale':'rtAcc').classList.add('active');
+  reloadHistory();
+}
+
+// ─── Summary Modal ───
+// ASPX: grvGameHisabHistory_RowCommand "History" → click Sale/Self Hissa row
+// SP: GetDateWiseMyHisabHistory (mode=1) / GetDateWiseWinAmountHistory (mode=2)
+async function loadSummary(date, type) {
+  if (type !== 'Sale' && type !== 'Self Hissa') return;
+  setText('summaryTitle', date + ' Hisab History');
+  document.getElementById('bodySummary').innerHTML =
+    '<tr><td colspan="11" class="emsg"><span class="spin"></span> Loading...</td></tr>';
+  document.getElementById('footSummary').style.display = 'none';
+  document.getElementById('summaryModal').classList.add('show');
+
+  const r = await API.get(
+    `/api/balance/hisab-summary?customerUID=${_histUID}&date=${encodeURIComponent(date)}&mode=${_histMode}`
+  );
+
+  if (!r?.success || !r.data?.length) {
+    document.getElementById('bodySummary').innerHTML = '<tr><td colspan="11" class="emsg">No Data Found!</td></tr>';
+    return;
+  }
+
+  const data = r.data;
+  if (data[0]?.CustomerName) {
+    setText('summaryTitle', `${data[0].CustomerName}  ${date}  All Game History`);
+  } else if (_histMobile) {
+    setText('summaryTitle', `${_histMobile}  ${date}  All Game History`);
+  }
+
+  document.getElementById('bodySummary').innerHTML = data.map(d=>`
+    <tr>
+      <td>${d.GameName||'–'}</td><td>${d.Rates||'–'}</td>
+      <td>${nv(d.Total_Amount)}</td><td>${nv(d.D_Sale)}</td><td>${nv(d.A_Sale)}</td>
+      <td>${nv(d.Commision)}</td><td>${nv(d.O_Dara)}</td><td>${nv(d.O_Akhar)}</td>
+      <td>${nv(d.WinAmount)}</td><td>${nv(d.Pati)}</td><td>${nv(d.Balance)}</td>
+    </tr>`).join('');
+
+  const s = f => data.reduce((sum,d)=>sum+(parseFloat(d[f])||0),0).toString();
+  setText('ft_s_tsale', s('Total_Amount')); setText('ft_s_dsale', s('D_Sale'));
+  setText('ft_s_asale', s('A_Sale'));       setText('ft_s_comm',  s('Commision'));
+  setText('ft_s_odara', s('O_Dara'));       setText('ft_s_oakhar',s('O_Akhar'));
+  setText('ft_s_win',   s('WinAmount'));    setText('ft_s_pati',  s('Pati'));
+  setText('ft_s_bal',   s('Balance'));
+  document.getElementById('footSummary').style.display = '';
+}
+
+// ─── ADD Transaction Modal (SubUser only) ───
+function openTxn(cid, cname) {
+  document.getElementById('lblCID').value = cid;
+  document.getElementById('txnCustName').textContent = cname;
+  document.getElementById('txtAmount').value = '';
+  document.getElementById('txnMsg').textContent = '';
+  document.getElementById('txnModal').classList.add('show');
+  setTimeout(()=>document.getElementById('txtAmount').focus(), 300);
+}
+
+// ASPX: ButtonAddTansaction_Click → SP CreateTransaction → SucessMessage → GotoHistory (ShowAllTransactionsAccounts)
+async function addTransaction() {
+  const cid    = document.getElementById('lblCID').value;
+  const amount = document.getElementById('txtAmount').value;
+  const type   = document.getElementById('ddlType').value;
+  if (!cid || !amount) { document.getElementById('txnMsg').textContent = 'Amount bharo!'; return; }
+  const r = await API.post('/api/balance/add-transaction', {
+    customerCID: cid, date: _currentDate, type, amount
+  });
+  if (r?.success) {
+    closeTxnModal();
+    // ASPX: SucessMessage() → GotoHistory() → ShowAllTransactionsAccounts.aspx
+    window.location.href = '/pages/accounts.html';
+  } else {
+    document.getElementById('txnMsg').textContent = r?.message || 'Error!';
+  }
+}
+
+// ─── Modal helpers ───
+function closeHistModal()    { document.getElementById('histModal').classList.remove('show'); _histUID=''; _histMode=''; _showPopupSide=''; }
+function closeSummaryModal() { document.getElementById('summaryModal').classList.remove('show'); document.getElementById('histModal').classList.add('show'); }
+function closeTxnModal()     { document.getElementById('txnModal').classList.remove('show'); }
+
+// ─── Helpers ───
+function selectRow(row, tbodyId) {
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(r=>r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+}
+function setLoading() {
+  ['bodyGameBal','bodyUttarBal','bodyMyBal'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=`<tr><td colspan="6" class="emsg"><span class="spin"></span> Loading...</td></tr>`;
+  });
+}
+function getIST() { return new Date(Date.now()+5.5*3600000).toISOString().split('T')[0]; }
+function fmtDateTime(dt) {
+  if (!dt) return '';
+  try { return new Date(dt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch { return dt; }
+}
+function nv(v)  { if(v==null||v==='') return '–'; const n=Number(v); return isNaN(n)?v:n.toString(); }
+function sumStr(rows,f) { return rows.reduce((s,r)=>s+(Number(r[f])||0),0).toString(); }
+function sumRaw(rows,f) { return rows.reduce((s,r)=>s+(Number(r[f])||0),0); }
+function setText(id,val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+function esc(s) { return String(s||'').replace(/'/g,"\\'"); }
+function showToast(msg, err=false) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(err?' err':'');
+  t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',2500);
+}
+async function doLogout() { await API.post('/api/auth/logout',{}); window.location.href='/login.html'; }
+
+init();
+</script>
+</body>
+</html>

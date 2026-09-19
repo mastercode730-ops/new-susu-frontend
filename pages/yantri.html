@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yantri - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+  <link rel="stylesheet" href="/css/main.css">
+  <!-- Flatpickr calendar -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- Mega Able reference font (matches Yantri.aspx look) -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+    }
+
+    /* Card shell wrapping the whole Yantri workspace — mirrors the Mega Able
+       .card box-shadow/radius (see vendor/assets-view/css/style.css) so the
+       number-grid content matches that look while the standard Atlantis
+       sidebar (injected by nav.js) still provides site-wide navigation. */
+    .yantri-card {
+      background: #fff;
+      border-radius: 5px;
+      box-shadow: 0 1px 20px 0 rgba(69, 90, 100, 0.08);
+      overflow: hidden;
+      margin-bottom: 16px;
+      /* Fill the viewport below the Atlantis header (62px margin-top on
+         .content) so the whole workspace fits on one screen with no page
+         scroll — left grid + right controls split the remaining height.
+         Extra buffer beyond the theoretical 78px (62 header + 16 margin)
+         because a couple of stray px there was still triggering a page
+         scrollbar. */
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 100px);
+    }
+
+    /* Two-column workspace: grid (75%) | controls (25%) */
+    .yantri-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .yantri-left {
+      width: 75%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      border-right: 2px solid #dee2e6;
+    }
+
+    .yantri-right {
+      width: 25%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* TOP BAR */
+    .ytop {
+      background: #075e54;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .ytop .back-btn {
+      background: rgba(255, 255, 255, .2);
+      border: none;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: .82rem;
+    }
+
+    .ytop .back-btn:hover {
+      background: rgba(255, 255, 255, .35);
+    }
+
+    .ytop .title {
+      color: #fff;
+      font-weight: bold;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      margin-right: 6px;
+    }
+
+    .ytop select,
+    .ytop input[type=text] {
+      height: 28px;
+      border: 1px solid rgba(255, 255, 255, .4);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, .15);
+      color: #fff;
+      padding: 0 8px;
+      font-size: .8rem;
+      outline: none;
+    }
+
+    .ytop select option {
+      background: #075e54;
+      color: #fff;
+    }
+
+    .ytop input[type=text]::placeholder {
+      color: rgba(255, 255, 255, .6);
+    }
+
+    .ytop .cal-icon {
+      cursor: pointer;
+      color: #fff;
+      font-size: 1.1rem;
+      margin-left: -4px;
+    }
+
+    /* MODE BAR */
+    .modebar {
+      background: #fff;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #dee2e6;
+      flex-shrink: 0;
+    }
+
+    .rb-lbl {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .84rem;
+      color: #555;
+      cursor: pointer;
+      padding: 4px 9px;
+      border-radius: 5px;
+      border: 1px solid #dee2e6;
+    }
+
+    .rb-lbl input {
+      accent-color: #25d366;
+    }
+
+    .rb-lbl.active {
+      background: #e8fdf1;
+      border-color: #25d366;
+      color: #128c7e;
+      font-weight: bold;
+    }
+
+    .cb-lbl {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .78rem;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .cb-lbl input {
+      accent-color: #25d366;
+    }
+
+    .mode-sep {
+      margin-left: auto;
+    }
+
+    /* GRID — fills the entire left column height. grid-auto-rows:1fr makes
+       all 12 rows (10 dara + 2 akhar) stretch evenly to the bottom instead
+       of packing at the top with empty space left over below. */
+    .num-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      grid-auto-rows: 1fr;
+      background: #f0f4f8;
+      gap: 1px;
+      padding: 6px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .ncell {
+      background: #fff;
+      border: 1px solid #dee2e6;
+      padding: 2px 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      cursor: default;
+      overflow: hidden;
+    }
+
+    .ncell.total-col {
+      background: #f0fdf4;
+      border-color: #c3e6cb;
+    }
+
+    .ncell.akhar-row {
+      background: #eff6ff;
+    }
+
+    .ncell.akhar-row.total-col {
+      background: #dbeafe;
+    }
+
+    .ncell .nl {
+      font-size: min(.92rem, 2.4vh);
+      color: #075e54;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .ncell .nv {
+      font-size: min(1rem, 2.6vh);
+      font-weight: bold;
+      color: #222;
+      line-height: 1.3;
+    }
+
+    /* Akhar rows ke labels (111, 222... 1111, 2222...) — same green/black
+       combination as the main dara grid (no blue), extra bold */
+    .ncell.akhar-row .nl {
+      font-size: min(.8rem, 1.6vh);
+      color: #075e54;
+      font-weight: 900;
+    }
+
+    .ncell.total-col .nv {
+      color: #25d366;
+    }
+
+    .ncell.akhar-row .nv {
+      color: #222;
+      font-weight: 900;
+    }
+
+    /* SUMMARY BAR — right column is narrow (25%), so stack the three totals
+       instead of the old wide horizontal row */
+    .sumbar {
+      background: #fff;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-bottom: 2px solid #dee2e6;
+      font-size: .92rem;
+      flex-shrink: 0;
+    }
+
+    .sum-item {
+      color: #555;
+    }
+
+    .sum-val {
+      font-weight: bold;
+      color: #25d366;
+      font-size: 1.1rem;
+    }
+
+    /* CONTROLS — fills the rest of the right column */
+    .ctrl-wrap {
+      background: #fff;
+      padding: 8px 10px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* 3-per-row grid instead of 6-across — right column is only 25% wide,
+       so a single row of 6 tabs squeezed labels unreadably */
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .tab {
+      padding: 8px 4px;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      background: none;
+      color: #999;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: bold;
+    }
+
+    .tab.active {
+      color: #fff;
+      background: #25d366;
+      border-color: #25d366;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.show {
+      display: block;
+    }
+
+    .inp-row {
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .inp-grp label {
+      display: block;
+      font-size: .72rem;
+      color: #888;
+      margin-bottom: 3px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .inp-grp input,
+    .inp-grp select {
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: .92rem;
+      outline: none;
+      height: 34px;
+    }
+
+    .inp-grp input:focus,
+    .inp-grp select:focus {
+      border-color: #25d366;
+    }
+
+    .inp-sm {
+      width: 65px;
+    }
+
+    .inp-md {
+      width: 110px;
+    }
+
+    .inp-full {
+      width: 100%;
+    }
+
+    .btn-g {
+      background: #25d366;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: .86rem;
+      font-weight: bold;
+      cursor: pointer;
+      height: 34px;
+    }
+
+    .btn-g:hover {
+      background: #1db954;
+    }
+
+    .btn-r {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: .86rem;
+      font-weight: bold;
+      cursor: pointer;
+      height: 34px;
+    }
+
+    .btn-b {
+      background: #1572e8;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: .86rem;
+      font-weight: bold;
+      cursor: pointer;
+      height: 34px;
+    }
+
+    .btn-o {
+      background: #fd7e14;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: .86rem;
+      font-weight: bold;
+      cursor: pointer;
+      height: 34px;
+    }
+
+    .hist-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    /* COPY BTNS */
+    .copy-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #dee2e6;
+    }
+
+    /* FORWARD / NEG SALE */
+    .fwd-section {
+      padding: 8px 0;
+      border-top: 1px solid #dee2e6;
+      margin-top: 6px;
+    }
+
+    .fwd-section h6 {
+      font-size: .72rem;
+      color: #888;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* MANAGE MODAL */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-bg.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 8px;
+      width: 96%;
+      max-width: 480px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-hd {
+      background: #1572e8;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-hd h4 {
+      color: #fff;
+      font-size: .95rem;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, .8);
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-footer {
+      padding: 8px 12px;
+      border-top: 1px solid #dee2e6;
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .client-list {
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      overflow: hidden;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .client-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #f0f4f8;
+      cursor: pointer;
+    }
+
+    .client-item:last-child {
+      border-bottom: none;
+    }
+
+    .client-item:hover {
+      background: #f8f9fa;
+    }
+
+    .client-item input[type=checkbox] {
+      accent-color: #25d366;
+      width: 15px;
+      height: 15px;
+    }
+
+    .ci-name {
+      font-size: .82rem;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .ci-mob {
+      font-size: .7rem;
+      color: #888;
+    }
+
+    /* LOADING */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .5);
+      z-index: 900;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spin {
+      width: 35px;
+      height: 35px;
+      border: 4px solid rgba(255, 255, 255, .3);
+      border-top-color: #25d366;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #333;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: .8rem;
+      z-index: 9999;
+      display: none;
+    }
+
+    .toast.err {
+      background: #dc3545;
+    }
+
+    .toast.ok {
+      background: #25d366;
+    }
+
+    /* Parts */
+    .parts-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Flatpickr override */
+    .flatpickr-input {
+      background: #fff !important;
+      color: #333 !important;
+    }
+
+    /* ══ MOBILE ══ — the desktop layout crams 11 grid columns into 75% of
+       the width, which is fine on a wide screen but on a phone leaves each
+       cell only ~26px wide — too narrow for the 4/5-digit akhar labels
+       (1111...10000), so they were getting clipped by the cell's
+       overflow:hidden and visually looked like duplicates of the 111-1000
+       row above them. Stack left/right full-width instead of side-by-side,
+       and let the page scroll naturally (fitting everything with zero
+       scroll only really works on a tall desktop viewport anyway). */
+    @media (max-width:768px) {
+      .yantri-card {
+        height: auto;
+      }
+
+      .yantri-body {
+        flex-direction: column;
+      }
+
+      .yantri-left {
+        width: 100%;
+        height: 62vh;
+        border-right: none;
+        border-bottom: 2px solid #dee2e6;
+      }
+
+      .yantri-right {
+        width: 100%;
+        height: auto;
+      }
+
+      .ncell .nl {
+        font-size: .68rem;
+      }
+
+      .ncell .nv {
+        font-size: .74rem;
+      }
+
+      .ncell.akhar-row .nl {
+        font-size: .58rem;
+      }
+
+      .ncell.akhar-row .nv {
+        font-size: .68rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="loading-overlay" id="loadingOv">
+    <div class="spin"></div>
+    <div style="color:#fff;font-size:.8rem;">Loading...</div>
+  </div>
+
+  <div class="content">
+  <div class="yantri-card">
+  <!-- TOP BAR -->
+  <div class="ytop">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <span class="title">YANTRI</span>
+    <!-- Date picker with calendar -->
+    <div style="display:flex;align-items:center;gap:2px;">
+      <input type="text" id="datePicker" style="width:110px;" placeholder="dd/MMM/yyyy" readonly>
+      <span class="cal-icon" onclick="document.getElementById('datePicker')._flatpickr.open()">📅</span>
+    </div>
+    <!-- Games dropdown -->
+    <select id="gamesDropdown" onchange="onGameChange()" style="width:120px;">
+      <option value="">Loading...</option>
+    </select>
+    <!-- Agent dropdown (hidden by default) -->
+    <select id="agentDropdown" style="display:none;width:130px;" onchange="onAgentChange()">
+      <option value="">-- Choose Agent --</option>
+    </select>
+    <!-- Rates label (shown in agent mode from URL) -->
+    <span id="lblRates" style="color:#fff;font-weight:bold;font-size:.8rem;"></span>
+  </div>
+
+  <!-- MODE BAR -->
+  <div class="modebar">
+    <label class="rb-lbl active" id="rbActualLbl">
+      <input type="radio" name="yMode" value="actual" checked onchange="onModeChange(this)"> Actual
+    </label>
+    <label class="rb-lbl" id="rbDailyLbl">
+      <input type="radio" name="yMode" value="daily" onchange="onModeChange(this)"> Daily
+    </label>
+    <label class="rb-lbl" id="rbAgentLbl">
+      <input type="radio" name="yMode" value="agent" onchange="onModeChange(this)"> Agent
+    </label>
+    <label class="rb-lbl" id="rbSpecialLbl">
+      <input type="radio" name="yMode" value="special" onchange="onModeChange(this)"> Special
+    </label>
+    <button id="btnManage" onclick="openManage()"
+      style="display:none;padding:3px 8px;border:1px solid #1572e8;background:#e8f0fe;color:#1572e8;border-radius:4px;font-size:.72rem;cursor:pointer;">Manage</button>
+    <span class="mode-sep"></span>
+    <label class="cb-lbl">
+      <input type="checkbox" id="cbNegSale" onchange="loadData()"> Negative Sale
+    </label>
+    <label class="cb-lbl" style="margin-left:8px;">
+      <input type="checkbox" id="cbShiftAtoD" checked onchange="loadData()"> A→D
+    </label>
+  </div>
+
+  <!-- WORKSPACE — left 75% = number grid, right 25% = summary + controls,
+       both fill the viewport height (see .yantri-card) so nothing scrolls -->
+  <div class="yantri-body">
+    <div class="yantri-left">
+      <!-- NUMBER GRID -->
+      <div class="num-grid" id="numGrid"></div>
+    </div>
+
+    <div class="yantri-right">
+      <!-- SUMMARY -->
+      <div class="sumbar">
+        <div class="sum-item">Dara Sale: <span class="sum-val" id="sumDara">0</span></div>
+        <div class="sum-item">Akhar Sale: <span class="sum-val" id="sumAkhar">0</span></div>
+        <div class="sum-item">Grand Total: <span class="sum-val" id="sumTotal">0</span></div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="ctrl-wrap">
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('cutting',this)">✂ Cutting</button>
+          <button class="tab" onclick="switchTab('add',this)">+ Add</button>
+          <button class="tab" onclick="switchTab('adjust',this)">⚡ Adjust</button>
+          <button class="tab" onclick="switchTab('parts',this)">⚙ Parts</button>
+          <button class="tab" onclick="switchTab('forward',this)">⬆ Forward</button>
+          <button class="tab" onclick="switchTab('negsale',this)">↓ Neg Sale</button>
+    </div>
+
+    <!-- CUTTING TAB -->
+    <div class="tab-panel show" id="tab-cutting">
+      <div class="inp-row">
+        <label class="rb-lbl active" id="rbAmtLbl" style="font-size:.8rem;">
+          <input type="radio" name="cutMode" value="amount" checked onchange="onCutModeChange(this)"> Amount
+        </label>
+        <label class="rb-lbl" id="rbPctLbl" style="font-size:.8rem;">
+          <input type="radio" name="cutMode" value="percent" onchange="onCutModeChange(this)"> %Age
+        </label>
+        <div class="inp-grp">
+          <label>Round Off</label>
+          <select id="roundoffSel" class="inp-sm">
+            <option value="0">0</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+      <div class="inp-row">
+        <div class="inp-grp">
+          <label>D Cutting</label>
+          <input type="tel" id="txtCuttingD" class="inp-sm" placeholder="0" tabindex="1" oninput="numOnly(this)"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('txtCuttingA').focus();}">
+        </div>
+        <div class="inp-grp">
+          <label>A Cutting</label>
+          <input type="tel" id="txtCuttingA" class="inp-sm" placeholder="0" tabindex="2" oninput="numOnly(this)"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();applyCutting();}">
+        </div>
+        <button class="btn-g" onclick="applyCutting()" tabindex="3">Cut</button>
+      </div>
+      <div class="hist-row" id="histWrap" style="display:none;">
+        <span style="font-size:.78rem;color:#888;">History:</span>
+        <select id="histSel" onchange="showHistory()"
+          style="flex:1;height:32px;font-size:.82rem;border:1px solid #ced4da;border-radius:4px;">
+          <option value="">-- Select --</option>
+        </select>
+      </div>
+      <div class="copy-row">
+        <button class="btn-g" onclick="copyMsg('equals')">= Copy</button>
+        <button class="btn-g" onclick="copyMsg('brackets')">) Copy</button>
+        <button class="btn-b" onclick="copyMsg('numbers')">Nums Only</button>
+        <button class="btn-o" onclick="shareMsg()">Share</button>
+      </div>
+    </div>
+
+    <!-- ADD TAB -->
+    <div class="tab-panel" id="tab-add">
+      <div class="inp-row">
+        <div class="inp-grp">
+          <label>Number</label>
+          <input type="tel" id="addNum" class="inp-sm" maxlength="5" tabindex="7" oninput="numOnly(this)"
+            onkeydown="if(event.key==='Enter'){document.getElementById('addAmt').focus();}">
+        </div>
+        <div class="inp-grp">
+          <label>Amount</label>
+          <input type="tel" id="addAmt" class="inp-md" tabindex="8" oninput="negNum(this)"
+            onkeydown="if(event.key==='Enter'){addNumber();}">
+        </div>
+        <button class="btn-g" onclick="addNumber()" tabindex="9">Add</button>
+      </div>
+    </div>
+
+    <!-- ADJUST TAB -->
+    <div class="tab-panel" id="tab-adjust">
+      <div class="inp-row" style="flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+        <label class="rb-lbl"><input type="radio" name="adjMode" value="limit" checked> Limit</label>
+        <label class="rb-lbl"><input type="radio" name="adjMode" value="remaining"> Remaining</label>
+        <label class="rb-lbl"><input type="radio" name="adjMode" value="multiply"> Multiply</label>
+        <label class="rb-lbl"><input type="radio" name="adjMode" value="increase"> Incr%</label>
+        <label class="rb-lbl"><input type="radio" name="adjMode" value="decrease"> Decr%</label>
+      </div>
+      <div class="inp-row">
+        <div class="inp-grp">
+          <label>Value</label>
+          <input type="tel" id="adjVal" class="inp-md" oninput="numOnly(this)"
+            onkeydown="if(event.key==='Enter'){applyAdjust();}">
+        </div>
+        <button class="btn-g" onclick="applyAdjust()">Apply</button>
+      </div>
+    </div>
+
+    <!-- PARTS TAB -->
+    <div class="tab-panel" id="tab-parts">
+      <div class="inp-row">
+        <div class="inp-grp">
+          <label>Max Amount</label>
+          <input type="tel" id="partsMax" class="inp-sm" oninput="numOnly(this)">
+        </div>
+        <div class="inp-grp">
+          <label>Max Ghar</label>
+          <input type="tel" id="partsGhar" class="inp-sm" oninput="numOnly(this)">
+        </div>
+        <div class="inp-grp">
+          <label>Parts</label>
+          <select id="partsCnt" class="inp-sm">
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+          </select>
+        </div>
+        <select id="showPart"
+          style="display:none;height:34px;border:1px solid #ced4da;border-radius:4px;font-size:.85rem;"
+          onchange="showPartData()"></select>
+        <button class="btn-g" id="btnStart" onclick="startParts()">Start</button>
+        <button class="btn-r" id="btnReset" style="display:none;" onclick="resetParts()">Reset</button>
+      </div>
+    </div>
+
+    <!-- FORWARD TAB -->
+    <div class="tab-panel" id="tab-forward">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button onclick="openManage()" style="padding:5px 12px;border:1px solid #1572e8;background:#e8f0fe;color:#1572e8;border-radius:4px;font-size:.8rem;cursor:pointer;">⚙ Manage Clients</button>
+      </div>
+      <div class="inp-row" style="flex-wrap:wrap;">
+        <div class="inp-grp" style="flex:1;min-width:120px;">
+          <label>Client</label>
+          <select id="fwdClient"
+            style="width:100%;height:34px;font-size:.85rem;border:1px solid #ced4da;border-radius:4px;"
+            onchange="onFwdClientChange()">
+            <option value="">Select Client</option>
+          </select>
+        </div>
+        <div class="inp-grp" style="flex:1;min-width:120px;">
+          <label>Rate</label>
+          <select id="fwdRate"
+            style="width:100%;height:34px;font-size:.85rem;border:1px solid #ced4da;border-radius:4px;">
+            <option value="">Select Rate</option>
+          </select>
+        </div>
+        <div class="inp-grp" style="flex:1;min-width:120px;">
+          <label>Game</label>
+          <select id="fwdGame"
+            style="width:100%;height:34px;font-size:.85rem;border:1px solid #ced4da;border-radius:4px;">
+            <option value="">Select Game</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-g" onclick="doForward()" style="width:100%;margin-top:4px;">Forward →</button>
+    </div>
+
+    <!-- NEG SALE TAB -->
+    <div class="tab-panel" id="tab-negsale">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button onclick="openManage()" style="padding:5px 12px;border:1px solid #1572e8;background:#e8f0fe;color:#1572e8;border-radius:4px;font-size:.8rem;cursor:pointer;">⚙ Manage Clients</button>
+      </div>
+      <div class="inp-row" style="flex-wrap:wrap;">
+        <div class="inp-grp" style="flex:1;min-width:120px;">
+          <label>Client</label>
+          <select id="negClient"
+            style="width:100%;height:34px;font-size:.85rem;border:1px solid #ced4da;border-radius:4px;"
+            onchange="onNegClientChange()">
+            <option value="">Select Client</option>
+          </select>
+        </div>
+        <div class="inp-grp" style="flex:1;min-width:120px;">
+          <label>Rate</label>
+          <select id="negRate"
+            style="width:100%;height:34px;font-size:.85rem;border:1px solid #ced4da;border-radius:4px;">
+            <option value="">Select Rate</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-r" onclick="doNegSale()" style="width:100%;margin-top:4px;">Save Negative Sale</button>
+    </div>
+      </div><!-- /ctrl-wrap -->
+    </div><!-- /yantri-right -->
+  </div><!-- /yantri-body -->
+  </div><!-- /yantri-card -->
+  </div><!-- /content -->
+
+  <!-- MANAGE CLIENTS MODAL -->
+  <div class="modal-bg" id="manageModal">
+    <div class="modal-box">
+      <div class="modal-hd">
+        <h4>Manage Special Clients</h4>
+        <button class="modal-close" onclick="closeManage()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="clientFilter" placeholder="Filter by name..." oninput="filterClients()"
+          style="width:100%;border:1px solid #ced4da;border-radius:4px;padding:6px 10px;font-size:.82rem;margin-bottom:8px;">
+        <div class="client-list" id="clientList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-g" onclick="saveClients()">Save</button>
+        <button style="padding:5px 14px;border:1px solid #dee2e6;background:#fff;border-radius:4px;cursor:pointer;"
+          onclick="closeManage()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <textarea id="copyTA" style="position:fixed;bottom:-100px;opacity:0;width:1px;height:1px;"></textarea>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/nav.js"></script>
+  <script>
+    const QS = new URLSearchParams(location.search);
+    const GAME_ID_PARAM = QS.get('GameID') || '';
+    const RATES_PARAM = QS.get('Rates') || '';
+    const SEL_UID_PARAM = QS.get('SelectedUID') || '';
+    const DATE_PARAM = QS.get('Date') || '';
+
+    const DARA_NUMS = Array.from({ length: 100 }, (_, i) => i + 1);
+    const AKHAR_AADAR = [111, 222, 333, 444, 555, 666, 777, 888, 999, 1000];
+    const AKHAR_ANDER = [1111, 2222, 3333, 4444, 5555, 6666, 7777, 8888, 9999, 10000];
+    const ALL_NUMS = [...DARA_NUMS, ...AKHAR_AADAR, ...AKHAR_ANDER];
+
+    // ✅ ASPX: ShiftAToD mein Math.Round(decimal) ko bina MidpointRounding diya call kiya
+    // hai, jo decimal ke liye DEFAULT MidpointRounding.ToEven (banker's rounding) use karta
+    // hai. Plain Math.round() .5 ko hamesha upar round karta hai - isliye yahan
+    // banker's rounding (round-half-to-even) replicate karte hain.
+    function bankersRound(x) {
+      const floor = Math.floor(x);
+      const diff = x - floor;
+      if (diff < 0.5) return floor;
+      if (diff > 0.5) return floor + 1;
+      return (Math.abs(floor % 2) === 0) ? floor : floor + 1;
+    }
+
+    // ✅ FIX: numData mein FLOAT values store karo - truncate sirf render ke waqt
+    let numData = {};
+    ALL_NUMS.forEach(n => numData[n] = 0);
+
+    let myUID = null;
+    let myMobile = null;
+    let currentMode = 'actual';
+    let cutMode = 'amount';
+    let dataParts = [];
+    let cuttingHistory = [];
+    let allClients = [];
+
+    // ─── INIT ───────────────────────────────────────
+    async function init() {
+      try {
+        const u = await initPage('yantri');
+        if (!u) return;
+        myUID = u.UID;
+        myMobile = u.Mobile;
+      } catch (e) { window.location.href = '/login.html'; return; }
+
+      flatpickr('#datePicker', {
+        dateFormat: 'd/M/Y',
+        allowInput: false,
+        onChange: function (sel, dateStr) {
+          if (sel[0]) {
+            const d = sel[0];
+            const mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            document.getElementById('datePicker').value =
+              String(d.getDate()).padStart(2, '0') + '/' + mo[d.getMonth()] + '/' + d.getFullYear();
+            onDateChange();
+          }
+        }
+      });
+
+      buildGrid();
+      await loadGames();
+      await loadForwardClients();
+      await loadNegClients();
+
+      if (GAME_ID_PARAM && SEL_UID_PARAM && DATE_PARAM && RATES_PARAM) {
+        document.querySelector('input[name=yMode][value=agent]').checked = true;
+        currentMode = 'agent';
+        setModeUI('agent');
+        document.getElementById('lblRates').textContent = RATES_PARAM;
+        setDate(DATE_PARAM);
+        await loadAgents();
+        document.getElementById('agentDropdown').value = SEL_UID_PARAM;
+        await loadData();
+      } else {
+        await loadLatestDate();
+        await loadData();
+      }
+
+      document.getElementById('txtCuttingD').focus();
+    }
+
+    // ─── DATE HELPERS ───────────────────────────────
+    function fmtDate(d) {
+      const mo = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${String(d.getDate()).padStart(2, '0')}/${mo[d.getMonth()]}/${d.getFullYear()}`;
+    }
+
+    function setDate(str) {
+      try {
+        const p = str.split('/');
+        const moNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const moIdx = moNames.indexOf(p[1]);
+        if (moIdx !== -1) {
+          const dt = new Date(parseInt(p[2]), moIdx, parseInt(p[0]));
+          document.getElementById('datePicker')._flatpickr.setDate(dt, false);
+        }
+      } catch (e) { }
+      document.getElementById('datePicker').value = str;
+    }
+
+    function getDate() { return document.getElementById('datePicker').value; }
+
+    async function loadLatestDate() {
+      try {
+        const gid = document.getElementById('gamesDropdown').value;
+        if (!gid) {
+          const now = new Date();
+          const istOffset = 5.5 * 60 * 60000;
+          const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+          const ist = new Date(utcMs + istOffset);
+          setDate(fmtDate(ist));
+          return;
+        }
+        const r = await API.get(`/api/yantri/latest-date?gid=${gid}`);
+        if (r?.success && r.date) {
+          setDate(r.date);
+        } else {
+          const now = new Date();
+          const istOffset = 5.5 * 60 * 60000;
+          const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+          const ist = new Date(utcMs + istOffset);
+          setDate(fmtDate(ist));
+        }
+      } catch (e) {
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60000;
+        const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const ist = new Date(utcMs + istOffset);
+        setDate(fmtDate(ist));
+      }
+    }
+
+    // ─── GAMES ──────────────────────────────────────
+    async function loadGames() {
+      try {
+        const r = await API.get('/api/yantri/games');
+        const sel = document.getElementById('gamesDropdown');
+        sel.innerHTML = '';
+        (r?.data || []).forEach(g => {
+          const o = document.createElement('option');
+          o.value = g.GID; o.textContent = g.GameName;
+          sel.appendChild(o);
+        });
+        if (GAME_ID_PARAM) sel.value = GAME_ID_PARAM;
+      } catch (e) { }
+    }
+
+    async function onGameChange() {
+      if (currentMode === 'agent') await loadAgents();
+      await loadLatestDate();
+      await loadData();
+    }
+
+    // ─── DATE CHANGE ────────────────────────────────
+    async function onDateChange() {
+      if (currentMode === 'agent') await loadAgents();
+      await loadData();
+    }
+
+    // ─── AGENTS ─────────────────────────────────────
+    async function loadAgents() {
+      try {
+        const gid = document.getElementById('gamesDropdown').value;
+        const date = getDate();
+        const r = await API.get(`/api/yantri/agents?gid=${gid}&date=${encodeURIComponent(date)}`);
+        const sel = document.getElementById('agentDropdown');
+        const prev = sel.value;
+        sel.innerHTML = '<option value="">-- Choose Agent --</option>';
+        (r?.data || []).forEach(a => {
+          const o = document.createElement('option');
+          o.value = a.fSenderID; o.textContent = a.CustomerName;
+          sel.appendChild(o);
+        });
+        if (prev) sel.value = prev;
+      } catch (e) { console.error(e); }
+    }
+
+    async function onAgentChange() { await loadData(); }
+
+    // ─── MODE ────────────────────────────────────────
+    function onModeChange(el) {
+      currentMode = el.value;
+      setModeUI(currentMode);
+      loadData();
+    }
+
+    function setModeUI(mode) {
+      document.querySelectorAll('.rb-lbl').forEach(l => l.classList.remove('active'));
+      const map = { actual: 'rbActualLbl', daily: 'rbDailyLbl', agent: 'rbAgentLbl', special: 'rbSpecialLbl' };
+      if (map[mode]) document.getElementById(map[mode])?.classList.add('active');
+      document.getElementById('agentDropdown').style.display = (mode === 'agent') ? '' : 'none';
+      document.getElementById('btnManage').style.display = (mode === 'special') ? '' : 'none';
+    }
+
+    function onCutModeChange(el) {
+      cutMode = el.value;
+      document.querySelectorAll('[name=cutMode]').forEach(r => r.parentElement.classList.remove('active'));
+      el.parentElement.classList.add('active');
+    }
+
+    // ─── BUILD GRID ───────────────────────────────────
+    function buildGrid() {
+      const grid = document.getElementById('numGrid');
+      let html = '';
+
+      for (let row = 0; row < 10; row++) {
+        const start = row * 10 + 1, end = row * 10 + 10;
+        for (let n = start; n <= end; n++) {
+          html += `<div class="ncell" id="nc${n}">
+                 <div class="nl">${String(n).padStart(2, '0')}</div>
+                 <div class="nv" id="lbl${n}"></div>
+               </div>`;
+        }
+        html += `<div class="ncell total-col">
+               <div class="nl">TOT</div>
+               <div class="nv" id="tot${row}"></div>
+             </div>`;
+      }
+
+      AKHAR_AADAR.forEach(n => {
+        html += `<div class="ncell akhar-row" id="nc${n}">
+               <div class="nl">${n}</div>
+               <div class="nv" id="lbl${n}"></div>
+             </div>`;
+      });
+      html += `<div class="ncell akhar-row total-col">
+             <div class="nl">TOT</div>
+             <div class="nv" id="totAadar"></div>
+           </div>`;
+
+      AKHAR_ANDER.forEach(n => {
+        html += `<div class="ncell akhar-row" id="nc${n}">
+               <div class="nl">${n}</div>
+               <div class="nv" id="lbl${n}"></div>
+             </div>`;
+      });
+      html += `<div class="ncell akhar-row total-col">
+             <div class="nl">TOT</div>
+             <div class="nv" id="totAnder"></div>
+           </div>`;
+
+      grid.innerHTML = html;
+    }
+
+    // ─── RENDER ──────────────────────────────────────
+    // ✅ FIX: Sirf render ke waqt Math.trunc karo
+    // ASPX bhi GroupBy ke baad ek baar Truncate karta hai
+    function renderData() {
+      ALL_NUMS.forEach(n => {
+        const el = document.getElementById('lbl' + n);
+        // ✅ Yahan truncate - float numData ko integer mein convert karke dikhao
+        const displayVal = Math.trunc(numData[n] || 0);
+        if (el) el.textContent = displayVal !== 0 ? displayVal : '';
+      });
+      calcSubtotals();
+    }
+
+    // ✅ FIX: calcSubtotals mein bhi Math.trunc use karo
+    function calcSubtotals() {
+      let grand = 0, dSale = 0, aSale = 0;
+
+      for (let row = 0; row < 10; row++) {
+        let rowTot = 0;
+        for (let i = row * 10 + 1; i <= row * 10 + 10; i++) {
+          // ✅ Truncated value use karo sum mein - ASPX ki tarah
+          rowTot += Math.trunc(numData[i] || 0);
+        }
+        const el = document.getElementById('tot' + row);
+        if (el) el.textContent = rowTot || '';
+        dSale += rowTot;
+        grand += rowTot;
+      }
+
+      let aadarTot = 0;
+      AKHAR_AADAR.forEach(n => { aadarTot += Math.trunc(numData[n] || 0); });
+      document.getElementById('totAadar').textContent = aadarTot || '';
+
+      let anderTot = 0;
+      AKHAR_ANDER.forEach(n => { anderTot += Math.trunc(numData[n] || 0); });
+      document.getElementById('totAnder').textContent = anderTot || '';
+
+      aSale = aadarTot + anderTot;
+      grand = dSale + aSale;
+
+      document.getElementById('sumDara').textContent = dSale;
+      document.getElementById('sumAkhar').textContent = aSale;
+      document.getElementById('sumTotal').textContent = grand;
+    }
+
+    // ─── LOAD DATA ────────────────────────────────────
+    async function loadData() {
+      showLoading(true);
+
+      // ✅ FIX: Float 0 se reset karo
+      ALL_NUMS.forEach(n => numData[n] = 0);
+      renderData();
+
+      try {
+        const gid = document.getElementById('gamesDropdown').value;
+        const date = getDate();
+        const negSale = document.getElementById('cbNegSale').checked;
+        const agentUID = document.getElementById('agentDropdown').value || '';
+        const rates = document.getElementById('lblRates').textContent || '';
+
+        if (!gid || !date) { showLoading(false); return; }
+
+        const r = await API.get(
+          `/api/yantri/data?gid=${gid}&date=${encodeURIComponent(date)}&mode=${currentMode}` +
+          `&negSale=${negSale}&agentUID=${agentUID}&rates=${encodeURIComponent(rates)}`
+        );
+
+        if (!r?.success || !r.data?.length) { showLoading(false); renderData(); return; }
+
+        // ✅ FIX: Float mein accumulate karo - bilkul ASPX ki tarah
+        // ASPX: pehle sab float mein sum karta hai, phir GroupBy ke baad ek baar Truncate
+        r.data.forEach(row => {
+          const entries = (row.Message || '').split(',');
+          entries.forEach(entry => {
+            const parts = entry.split('=');
+            if (parts.length < 2) return;
+            let numStr = parts[0].trim();
+            let val = parseFloat(parts[1]) || 0;
+
+            if (numStr === '000') numStr = '1000';
+            if (numStr === '0000') numStr = '10000';
+            const num = parseInt(numStr);
+            if (!num || isNaN(num)) return;
+
+            if (currentMode === 'actual') {
+              // ✅ ASPX formula exactly:
+              // DComm = 100 - D_Amt
+              // AComm = 100 - (A_Amt * 10)
+              const dAmt = parseFloat(row.D_Amt) || 100;
+              const aAmt = parseFloat(row.A_Amt) || 10;
+              const dComm = 100 - dAmt;         // = D_PComm
+              const aComm = 100 - (aAmt * 10);  // = A_PComm
+              const pati = parseFloat(row.Pati_PComm) || 0;
+              const hissa = parseFloat(row.HissaPerc) || 0;
+
+              // ✅ ASPX condition: length <= 2 OR == "100" → Dara
+              const numStrPadded = String(num);
+              if (numStrPadded.length <= 2 || num === 100) {
+                // Dara numbers (1-100)
+                val = val * ((100 - dComm) / 100);
+              } else {
+                // Akhar numbers (111-10000)
+                val = val * ((100 - aComm) / 100);
+              }
+              // Pati commission
+              val = val * ((100 - pati) / 100);
+              // Hissa commission
+              val = val * ((100 - hissa) / 100);
+            }
+            // ✅ FIX: Float mein add karo - TRUNC MAT KARO YAHAN
+            // ASPX: Table1 mein float add karta hai, GroupBy ke baad SUM, phir ek baar Truncate
+            numData[num] = (numData[num] || 0) + val;
+          });
+        });
+
+        // ✅ FIX: YE BLOCK HATA DIYA - pehle truncate nahi karna
+        // Pehle:
+        // ALL_NUMS.forEach(n => {
+        //   numData[n] = numData[n] ? Math.trunc(numData[n]) : 0;
+        // });
+        // Truncate sirf renderData() aur calcSubtotals() mein hoga
+
+        if (document.getElementById('cbShiftAtoD').checked) applyShiftAtoD();
+
+        renderData();
+      } catch (e) {
+        console.error('loadData error:', e);
+      }
+      showLoading(false);
+    }
+
+    // ─── SHIFT A TO D ────────────────────────────────
+    // ✅ FIX: ShiftAtoD mein bhi float values use karo
+    function applyShiftAtoD() {
+      const ANDER_MAP = {
+        1111: ['11', '12', '13', '14', '15', '16', '17', '18', '19', '10'],
+        2222: ['21', '22', '23', '24', '25', '26', '27', '28', '29', '20'],
+        3333: ['31', '32', '33', '34', '35', '36', '37', '38', '39', '30'],
+        4444: ['41', '42', '43', '44', '45', '46', '47', '48', '49', '40'],
+        5555: ['51', '52', '53', '54', '55', '56', '57', '58', '59', '50'],
+        6666: ['61', '62', '63', '64', '65', '66', '67', '68', '69', '60'],
+        7777: ['71', '72', '73', '74', '75', '76', '77', '78', '79', '70'],
+        8888: ['81', '82', '83', '84', '85', '86', '87', '88', '89', '80'],
+        9999: ['91', '92', '93', '94', '95', '96', '97', '98', '99', '90'],
+        10000: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '100']
+      };
+      const AADAR_MAP = {
+        111: ['1', '11', '21', '31', '41', '51', '61', '71', '81', '91'],
+        222: ['2', '12', '22', '32', '42', '52', '62', '72', '82', '92'],
+        333: ['3', '13', '23', '33', '43', '53', '63', '73', '83', '93'],
+        444: ['4', '14', '24', '34', '44', '54', '64', '74', '84', '94'],
+        555: ['5', '15', '25', '35', '45', '55', '65', '75', '85', '95'],
+        666: ['6', '16', '26', '36', '46', '56', '66', '76', '86', '96'],
+        777: ['7', '17', '27', '37', '47', '57', '67', '77', '87', '97'],
+        888: ['8', '18', '28', '38', '48', '58', '68', '78', '88', '98'],
+        999: ['9', '19', '29', '39', '49', '59', '69', '79', '89', '99'],
+        1000: ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
+      };
+
+      // ✅ ASPX mein Math.Round use hota hai - isliye yahan bhi Math.round
+      AKHAR_ANDER.forEach(n => {
+        if (!numData[n]) return;
+        // ✅ ASPX: Decimal.Truncate se integer nikalta hai phir /10 karta hai, Math.Round karta hai
+        const adj = bankersRound(Math.trunc(numData[n]) / 10);
+        (ANDER_MAP[n] || []).forEach(dn => {
+          const d = parseInt(dn);
+          if (!numData[d]) numData[d] = 0;
+          numData[d] += adj;
+        });
+        numData[n] = 0;
+      });
+
+      AKHAR_AADAR.forEach(n => {
+        if (!numData[n]) return;
+        const adj = bankersRound(Math.trunc(numData[n]) / 10);
+        (AADAR_MAP[n] || []).forEach(dn => {
+          const d = parseInt(dn);
+          if (!numData[d]) numData[d] = 0;
+          numData[d] += adj;
+        });
+        numData[n] = 0;
+      });
+    }
+
+    // ─── CUTTING ─────────────────────────────────────
+    function applyCutting() {
+      const dCut = parseFloat(document.getElementById('txtCuttingD').value) || 0;
+      const aCut = parseFloat(document.getElementById('txtCuttingA').value) || 0;
+      const roundoff = parseFloat(document.getElementById('roundoffSel').value) || 0;
+      const isPct = cutMode === 'percent';
+
+      if (dCut || aCut) saveCuttingHistory(dCut, aCut, isPct);
+
+      if (dCut) {
+        DARA_NUMS.forEach(n => {
+          if (!numData[n]) return;
+          let v = isPct ? numData[n] * (100 - dCut) / 100 : numData[n] - dCut;
+          v = Math.max(0, doRoundoff(v, roundoff));
+          numData[n] = Math.trunc(v);
+        });
+      }
+
+      if (aCut) {
+        [...AKHAR_AADAR, ...AKHAR_ANDER].forEach(n => {
+          if (!numData[n]) return;
+          let v = isPct ? numData[n] * (100 - aCut) / 100 : numData[n] - aCut;
+          v = Math.max(0, doRoundoff(v, roundoff));
+          numData[n] = Math.trunc(v);
+        });
+      }
+
+      document.getElementById('txtCuttingD').value = '';
+      document.getElementById('txtCuttingA').value = '';
+      renderData();
+      document.getElementById('txtCuttingD').focus();
+    }
+
+    function doRoundoff(v, r) {
+      if (!r) return Math.trunc(v);
+      return Math.round(Math.trunc(v) / r) * r;
+    }
+
+    function saveCuttingHistory(dCut, aCut, isPct) {
+      let parts = [];
+      if (aCut) {
+        [...AKHAR_AADAR, ...AKHAR_ANDER].forEach(n => {
+          if (!numData[n]) return;
+          let before = isPct ? numData[n] * aCut / 100 : Math.min(aCut, numData[n]);
+          before = Math.max(0, Math.trunc(before));
+          if (before) parts.push(`${n}=${before}`);
+        });
+      }
+      if (dCut) {
+        DARA_NUMS.forEach(n => {
+          if (!numData[n]) return;
+          let before = isPct ? numData[n] * dCut / 100 : Math.min(dCut, numData[n]);
+          before = Math.max(0, Math.trunc(before));
+          if (before) parts.push(`${n}=${before}`);
+        });
+      }
+      if (!parts.length) return;
+      const idx = cuttingHistory.length + 1;
+      cuttingHistory.push({ label: String(idx), values: parts.join(',') });
+      rebuildHistDropdown();
+    }
+
+    function rebuildHistDropdown() {
+      const sel = document.getElementById('histSel');
+      const wrap = document.getElementById('histWrap');
+      if (!cuttingHistory.length) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'flex';
+      sel.innerHTML = '<option value="">-- Select History --</option>' +
+        cuttingHistory.map((h, i) => `<option value="${i}">${h.label}</option>`).join('');
+    }
+
+    function showHistory() {
+      const idx = parseInt(document.getElementById('histSel').value);
+      if (isNaN(idx)) { loadData(); return; }
+      const h = cuttingHistory[idx];
+      if (!h) return;
+      ALL_NUMS.forEach(n => numData[n] = 0);
+      h.values.split(',').forEach(e => {
+        const [ns, vs] = e.split('=');
+        if (ns && vs) { const n = parseInt(ns); numData[n] = (numData[n] || 0) + Math.trunc(parseFloat(vs) || 0); }
+      });
+      renderData();
+    }
+
+    // ─── ADD NUMBER ──────────────────────────────────
+    function addNumber() {
+      let num = (document.getElementById('addNum').value || '').trim();
+      const amt = parseFloat(document.getElementById('addAmt').value) || 0;
+      if (!num) return;
+
+      if (num.length === 1 && parseInt(num) < 10) num = '0' + num;
+      if (num === '00') num = '100';
+      if (num === '000') num = '1000';
+      if (num === '0000') num = '10000';
+
+      const n = parseInt(num);
+      if (!n || isNaN(n)) { showToast('Invalid number', true); return; }
+      numData[n] = Math.trunc((numData[n] || 0) + amt);
+      if (numData[n] < 0) numData[n] = 0;
+      renderData();
+      document.getElementById('addNum').value = '';
+      document.getElementById('addAmt').value = '';
+      document.getElementById('addNum').focus();
+      showToast(`${n} → ${numData[n]}`);
+    }
+
+    // ─── ADJUSTMENT ──────────────────────────────────
+    function applyAdjust() {
+      const type = document.querySelector('input[name=adjMode]:checked').value;
+      const adj = parseFloat(document.getElementById('adjVal').value) || 0;
+      ALL_NUMS.forEach(n => {
+        if (!numData[n]) return;
+        numData[n] = Math.trunc(Math.max(0, computeAdj(numData[n], adj, type)));
+      });
+      renderData();
+    }
+    function computeAdj(old, adj, type) {
+      if (type === 'limit') return Math.min(old, adj);
+      if (type === 'multiply') return old * adj;
+      if (type === 'remaining') return Math.max(0, adj - old);
+      if (type === 'increase') return old + (old * adj / 100);
+      if (type === 'decrease') return (old * (100 - adj)) / 100;
+      return old;
+    }
+
+    // ─── PARTS ───────────────────────────────────────
+    function startParts() {
+      const totalParts = parseInt(document.getElementById('partsCnt').value) || 2;
+      const maxAmt = parseInt(document.getElementById('partsMax').value) || 0;
+
+      const snap = {}; ALL_NUMS.forEach(n => snap[n] = numData[n] || 0);
+      dataParts = [];
+
+      for (let j = 0; j < totalParts; j++) {
+        const part = {};
+        ALL_NUMS.forEach(n => {
+          if (!snap[n]) { part[n] = 0; return; }
+          let r1;
+          if (j === totalParts - 1) {
+            r1 = snap[n];
+          } else {
+            let max = Math.floor(snap[n] * 120 / 100 / totalParts);
+            let min = Math.floor(snap[n] * 80 / 100 / (totalParts - j));
+            if (maxAmt && max > maxAmt) max = maxAmt;
+            if (min > max) [min, max] = [max, min];
+            if (min < 0) min = 0;
+            r1 = Math.floor(Math.random() * (max - min + 1)) + min;
+            r1 = Math.min(r1, snap[n]);
+            snap[n] -= r1;
+          }
+          part[n] = r1;
+        });
+        dataParts.push(part);
+      }
+
+      const sel = document.getElementById('showPart');
+      sel.innerHTML = '';
+      for (let i = 1; i <= totalParts; i++) sel.innerHTML += `<option value="${i - 1}">${i}</option>`;
+      sel.value = totalParts - 1;
+      sel.style.display = '';
+      document.getElementById('btnStart').style.display = 'none';
+      document.getElementById('btnReset').style.display = '';
+      showPartData();
+    }
+
+    function showPartData() {
+      const idx = parseInt(document.getElementById('showPart').value) || 0;
+      if (!dataParts[idx]) return;
+      ALL_NUMS.forEach(n => numData[n] = dataParts[idx][n] || 0);
+      renderData();
+    }
+
+    function resetParts() {
+      dataParts = [];
+      document.getElementById('showPart').style.display = 'none';
+      document.getElementById('showPart').innerHTML = '';
+      document.getElementById('btnStart').style.display = '';
+      document.getElementById('btnReset').style.display = 'none';
+      loadData();
+    }
+
+    // ─── COPY / SHARE ─────────────────────────────────
+    function buildMsgEquals() {
+      let parts = [];
+      // ✅ Truncated value use karo message mein
+      DARA_NUMS.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(`${String(n).padStart(2, '0')}=${v}`);
+      });
+      [...AKHAR_AADAR, ...AKHAR_ANDER].forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(`${n}=${v}`);
+      });
+      return parts.join(',');
+    }
+    function buildMsgBrackets() {
+      let parts = [];
+      DARA_NUMS.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(`${String(n).padStart(2, '0')}(${v})`);
+      });
+      [...AKHAR_AADAR, ...AKHAR_ANDER].forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(`${n}(${v})`);
+      });
+      return parts.join(' ');
+    }
+    function buildMsgNumbers() {
+      let parts = [];
+      DARA_NUMS.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(n === 100 ? '00' : String(n).padStart(2, '0'));
+      });
+      AKHAR_AADAR.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(n === 1000 ? '000' : String(n));
+      });
+      AKHAR_ANDER.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) parts.push(n === 10000 ? '0000' : String(n));
+      });
+      return parts.join(',');
+    }
+
+    async function copyMsg(type) {
+      const total = document.getElementById('sumTotal').textContent;
+      let text = '';
+      if (type === 'equals') text = buildMsgEquals() + ' Grand Total: ' + total;
+      if (type === 'brackets') text = buildMsgBrackets() + '\n\nGrand Total: ' + total;
+      if (type === 'numbers') text = buildMsgNumbers();
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Copied!');
+      } catch (e) {
+        const ta = document.getElementById('copyTA');
+        ta.value = text; ta.select(); document.execCommand('copy');
+        showToast('Copied!');
+      }
+    }
+
+    async function shareMsg() {
+      const text = buildMsgBrackets() + '\n\nGrand Total: ' + document.getElementById('sumTotal').textContent;
+      if (navigator.share) { try { await navigator.share({ text }); } catch (e) { } }
+      else copyMsg('brackets');
+    }
+
+    // ─── FORWARD CLIENTS ──────────────────────────────
+    async function loadForwardClients() {
+      try {
+        const r = await API.get('/api/yantri/uttar-clients');
+        const sel = document.getElementById('fwdClient');
+        sel.innerHTML = '<option value="">Select Client</option>';
+        (r?.data || []).forEach(c => {
+          const o = document.createElement('option');
+          o.value = c.CID;
+          o.textContent = c.CustomerName || c.Name || c.Mobile || 'Unknown';
+          o.dataset.uid = c.UID || '';
+          sel.appendChild(o);
+        });
+      } catch (e) { }
+    }
+
+    async function onFwdClientChange() {
+      const cid = document.getElementById('fwdClient').value;
+      if (!cid) return;
+      try {
+        const r = await API.get(`/api/yantri/uttar-rates?cid=${cid}`);
+        const rateSel = document.getElementById('fwdRate');
+        rateSel.innerHTML = '<option value="">Select Rate</option>';
+        (r?.data || []).forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.RateID; o.textContent = d.Rate;
+          o.dataset.json = JSON.stringify(d);
+          rateSel.appendChild(o);
+        });
+
+        const gameSel = document.getElementById('fwdGame');
+        gameSel.innerHTML = '<option value="">Select Game</option>';
+        const myGameName = document.getElementById('gamesDropdown').options[document.getElementById('gamesDropdown').selectedIndex]?.text || '';
+        (r?.games || []).forEach(g => {
+          const o = document.createElement('option');
+          o.value = g.GID; o.textContent = g.GameName;
+          gameSel.appendChild(o);
+          if (g.GameName === myGameName) gameSel.value = g.GID;
+        });
+      } catch (e) { console.error(e); }
+    }
+
+    async function doForward() {
+      const rateOpt = document.getElementById('fwdRate').options[document.getElementById('fwdRate').selectedIndex];
+      const gameID = document.getElementById('fwdGame').value;
+      if (!rateOpt?.value || !gameID) { showToast('Select client, rate & game', true); return; }
+
+      const d = JSON.parse(rateOpt.dataset.json || '{}');
+      let parts = [], total = 0;
+      DARA_NUMS.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) { parts.push(`${String(n).padStart(2, '0')}=${v}`); total += v; }
+      });
+      [...AKHAR_AADAR, ...AKHAR_ANDER].forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) { parts.push(`${n}=${v}`); total += v; }
+      });
+
+      if (!parts.length || total <= 0) { showToast('No data to forward', true); return; }
+
+      try {
+        showLoading(true);
+        const r = await API.post('/api/yantri/forward', {
+          message: parts.join(','), totalAmount: total,
+          gameID, rateID: rateOpt.value,
+          fReceiverUID: d.fUID,
+          D_PComm: d.D_PComm, D_Amt: d.D_Amt,
+          A_PComm: d.A_PComm, A_Amt: d.A_Amt, Patti: d.Patti,
+          ThirdPartyHissaID: d.ThirdPartyHissaID || 0, ThirdPartyHissaPer: d.ThirdPartyHissaPer || 0,
+          ThirdPartyCommID: d.ThirdPartyCommID || 0, ThirdPartyDaraComm: d.ThirdPartyDaraComm || 0,
+          ThirdPartyAkharComm: d.ThirdPartyAkharComm || 0
+        });
+        showLoading(false);
+        if (r?.success) { showToast('Forwarded!'); document.getElementById('fwdGame').selectedIndex = 0; }
+        else showToast(r?.message || 'Error', true);
+      } catch (e) { showLoading(false); showToast('Error', true); }
+    }
+
+    // ─── NEGATIVE SALE CLIENTS ────────────────────────
+    async function loadNegClients() {
+      try {
+        const r = await API.get('/api/yantri/uttar-clients');
+        const sel = document.getElementById('negClient');
+        sel.innerHTML = '<option value="">Select Client</option>';
+        (r?.data || []).forEach(c => {
+          const o = document.createElement('option');
+          o.value = c.CID;
+          o.textContent = c.CustomerName || c.Name || c.Mobile || 'Unknown';
+          o.dataset.uid = c.UID || '';
+          sel.appendChild(o);
+        });
+      } catch (e) { }
+    }
+
+    async function onNegClientChange() {
+      const cid = document.getElementById('negClient').value;
+      if (!cid) return;
+      try {
+        const r = await API.get(`/api/yantri/uttar-rates?cid=${cid}`);
+        const rateSel = document.getElementById('negRate');
+        rateSel.innerHTML = '<option value="">Select Rate</option>';
+        (r?.data || []).forEach(d => {
+          const o = document.createElement('option');
+          o.value = d.RateID; o.textContent = d.Rate;
+          o.dataset.json = JSON.stringify(d);
+          rateSel.appendChild(o);
+        });
+      } catch (e) { }
+    }
+
+    async function doNegSale() {
+      const rateOpt = document.getElementById('negRate').options[document.getElementById('negRate').selectedIndex];
+      const clientOpt = document.getElementById('negClient').options[document.getElementById('negClient').selectedIndex];
+      if (!rateOpt?.value) { showToast('Select client & rate', true); return; }
+
+      const d = JSON.parse(rateOpt.dataset.json || '{}');
+      const senderUID = clientOpt?.dataset.uid || d.fUID || '';
+      let parts = [], total = 0;
+      DARA_NUMS.forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) { const neg = -v; parts.push(`${String(n).padStart(2, '0')}=${neg}`); total += neg; }
+      });
+      [...AKHAR_AADAR, ...AKHAR_ANDER].forEach(n => {
+        const v = Math.trunc(numData[n] || 0);
+        if (v) { const neg = -v; parts.push(`${n}=${neg}`); total += neg; }
+      });
+
+      if (!parts.length) { showToast('No data', true); return; }
+
+      try {
+        showLoading(true);
+        const r = await API.post('/api/yantri/negative-sale', {
+          message: parts.join(','), totalAmount: total,
+          gameID: document.getElementById('gamesDropdown').value,
+          date: getDate(),
+          senderUID,
+          D_PComm: d.D_PComm, D_Amt: d.D_Amt,
+          A_PComm: d.A_PComm, A_Amt: d.A_Amt, Patti: d.Patti,
+          ThirdPartyHissaID: d.ThirdPartyHissaID || 0, ThirdPartyHissaPer: d.ThirdPartyHissaPer || 0,
+          ThirdPartyCommID: d.ThirdPartyCommID || 0, ThirdPartyDaraComm: d.ThirdPartyDaraComm || 0,
+          ThirdPartyAkharComm: d.ThirdPartyAkharComm || 0
+        });
+        showLoading(false);
+        if (r?.success) { showToast('Negative Sale Saved!'); document.getElementById('negRate').selectedIndex = 0; }
+        else showToast(r?.message || 'Error', true);
+      } catch (e) { showLoading(false); showToast('Error', true); }
+    }
+
+    // ─── MANAGE CLIENTS MODAL ─────────────────────────
+    async function openManage() {
+      document.getElementById('manageModal').classList.add('show');
+      try {
+        const r = await API.get('/api/yantri/all-clients');
+        allClients = r?.data || [];
+        renderClients(allClients);
+      } catch (e) { }
+    }
+    function renderClients(list) {
+      document.getElementById('clientList').innerHTML = list.map(c => `
+    <div class="client-item">
+      <input type="checkbox" id="cc${c.CID}" data-cid="${c.CID}"
+        ${(c.IsYantriTo === true || c.IsYantriTo === 'True' || c.IsYantriTo === 1) ? 'checked' : ''}>
+      <div><div class="ci-name">${c.CustomerName || ''}</div><div class="ci-mob">${c.Mobile || ''}</div></div>
+    </div>`).join('');
+    }
+    function filterClients() {
+      const q = document.getElementById('clientFilter').value.toLowerCase();
+      renderClients(allClients.filter(c => (c.CustomerName || '').toLowerCase().includes(q)));
+    }
+    async function saveClients() {
+      const checked = [...document.querySelectorAll('#clientList input[type=checkbox]:checked')]
+        .map(i => i.dataset.cid).join(',');
+      try {
+        const r = await API.post('/api/yantri/save-clients', { customerIDs: checked });
+        if (r?.success) { showToast('Saved!'); closeManage(); loadData(); loadForwardClients(); loadNegClients(); }
+        else showToast('Error', true);
+      } catch (e) { showToast('Error', true); }
+    }
+    function closeManage() { document.getElementById('manageModal').classList.remove('show'); }
+
+    // ─── TAB SWITCHER ─────────────────────────────────
+    function switchTab(id, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('show'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + id).classList.add('show');
+      if (btn) btn.classList.add('active');
+    }
+
+    // ─── UTILS ────────────────────────────────────────
+    function numOnly(el) { el.value = el.value.replace(/[^0-9.]/g, ''); }
+    function negNum(el) {
+      let v = el.value.replace(/[^0-9\-]/g, '');
+      if (v.indexOf('-') > 0) v = v.replace(/-/g, '');
+      el.value = v;
+    }
+    function showLoading(v) { document.getElementById('loadingOv').classList.toggle('show', v); }
+    function showToast(msg, err = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + (err ? 'err' : 'ok');
+      t.style.display = 'block';
+      clearTimeout(t._t);
+      t._t = setTimeout(() => t.style.display = 'none', 2200);
+    }
+    function goBack() {
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      const gid = document.getElementById('gamesDropdown').value;
+      const gname = document.getElementById('gamesDropdown').options[document.getElementById('gamesDropdown').selectedIndex]?.text || '';
+      window.location.href = `/pages/received.html?GID=${gid}&Game=${encodeURIComponent(gname)}`;
+    }
+
+    window.__escPageHandler = function() {
+      if (document.getElementById('manageModal').classList.contains('show')) { closeManage(); return true; }
+      goBack(); return true;
+    };
+
+    init();
+  </script>
+</body>
+
+</html>

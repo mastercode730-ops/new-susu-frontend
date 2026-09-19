@@ -1,0 +1,11 @@
+{
+  "name": "susu9-frontend",
+  "version": "1.0.0",
+  "description": "Susu9 Web Client",
+  "scripts": {
+    "start": "npx serve . -l 5500"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

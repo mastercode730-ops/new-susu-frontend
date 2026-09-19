@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LC Percent - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<style>
+/* Page-specific: positive/negative amount coloring — no Atlantis equivalent */
+.pos{color:var(--green2);}
+.neg{color:var(--red);}
+tbody tr[tabindex]{cursor:pointer;}
+tbody tr.selected-row{background:rgba(18,140,126,.08);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr;}}
+.flatpickr-input{cursor:pointer;background:#fff;}
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+#txtDateFrom,#txtDateTo,#txtDeleteLC{max-width:200px;}
+/* Compact cards — smaller fields/spacing, less scroll to get through them */
+.content .card{margin-bottom:14px!important;}
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:8px 16px!important;}
+.content .form-group{margin-bottom:6px!important;}
+#mainTotals{font-weight:900!important;font-size:.9rem!important;color:#000!important;}
+/* Data grids: bold bordered header instead of the faint Bootstrap table look */
+.content table{border-collapse:collapse!important;width:100%!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 12px!important;font-size:.85rem!important;}
+.content table td{border:1px solid #ccc!important;padding:6px 12px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
+.content table td.pos{color:#1b7a1b!important;}
+.content table td.neg{color:#c62828!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr.selected-row td{background:rgba(18,140,126,.15)!important;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+
+      <!-- FILTER CARD -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Search</div>
+        </div>
+        <div class="card-body">
+          <div class="row" style="align-items:flex-end;">
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="txtDateFrom">From Date</label>
+                <input type="text" class="form-control" id="txtDateFrom" readonly placeholder="dd/MMM/yyyy"
+                  onfocus="this.select()" onkeydown="onFromEnter(event)">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label for="txtDateTo">To Date</label>
+                <input type="text" class="form-control" id="txtDateTo" readonly placeholder="dd/MMM/yyyy"
+                  onfocus="this.select()" onkeydown="onToEnter(event)">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <button class="btn btn-primary" id="btnSearch" onclick="loadAll()">Search</button>
+                <button class="btn btn-success" onclick="postLC()">Post LC</button>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtsearch">Filter Name / Mobile</label>
+                <input type="text" class="form-control" id="txtsearch"
+                  placeholder="Filter Name / Mobile"
+                  onfocus="this.select()" oninput="liveSearch()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN TABLE: grvAccounts -->
+      <!-- Columns: Customer | Sale Balance | Adjust Amount | Net Balance | LC(%) | LC Amt -->
+      <!-- Hidden: UID, TotalAmount, Commision, WinAmt, Pati_Amt, CustomerName, Mobile -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">LC Percentage <span id="mainTotals" style="float:right;font-weight:400;font-size:.8rem;"></span></div>
+        </div>
+        <div class="table-responsive" id="mainTable">
+          <div class="emsg"><span class="spinner"></span> Loading...</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Uttar LC: GridViewUttarLC -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Uttar LC</div>
+          </div>
+          <div class="table-responsive" id="uttarTable"><div class="emsg"><span class="spinner"></span></div></div>
+        </div>
+        <!-- Reference LC: GridViewReferenceLC -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Reference LC Customer</div>
+          </div>
+          <div class="table-responsive" id="refTable"><div class="emsg"><span class="spinner"></span></div></div>
+        </div>
+      </div>
+
+      <!-- 3rd Party Hissa: GridView3rdPartyHissa -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">3rd Party Hissa LC Customer</div>
+        </div>
+        <div class="table-responsive" id="hissaTable"><div class="emsg"><span class="spinner"></span></div></div>
+      </div>
+
+      <!-- Delete LC row (same as ASPX txtDeleteLC + BtnDeleteLC) -->
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 col-lg-3">
+              <div class="form-group">
+                <label for="txtDeleteLC">Delete Commission for Date</label>
+                <input type="text" class="form-control" id="txtDeleteLC" readonly placeholder="dd/MMM/yyyy">
+              </div>
+              <button class="btn btn-danger" onclick="deleteLC()">Delete LC</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL (same as divGameHisabHistory in ASPX) -->
+<!-- Shows: TotalAmount, Commission, WinAmount, Hissa(Pati_Amt), Total Sale Balance -->
+<div class="modal-bg" id="histModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h3 id="histTitle">History</h3>
+      <button class="modal-close" onclick="closeHist()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-row">
+        <span class="dl">Total Amount</span>
+        <span class="dv" id="hTotalAmount"></span>
+      </div>
+      <div class="detail-row">
+        <span class="dl">Commission Amount</span>
+        <span class="dv neg" id="hComm"></span>
+      </div>
+      <div class="detail-row">
+        <span class="dl">Win Amount</span>
+        <span class="dv neg" id="hWin"></span>
+      </div>
+      <div class="detail-row">
+        <span class="dl">Hissa Amount</span>
+        <span class="dv neg" id="hPati"></span>
+      </div>
+      <div class="detail-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:12px;">
+        <span class="dl">Total Sale Balance</span>
+        <span class="dv pos" id="hBalance"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let mainData = [], refData = [], uttarData = [], hissaData = [];
+let myUID = null;
+
+window.__escPageHandler = function() {
+  if (document.getElementById('histModal').classList.contains('show')) { closeHist(); return true; }
+  return false;
+};
+
+// ── INIT ──
+async function init() {
+  const u = await initPage('lc');
+  if (!u) return;
+  myUID = u.UID;
+
+  // Set dates: first of month → today (same as ASPX Page_Load)
+  const now = new Date(new Date().getTime() + 5.5 * 3600000);
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  document.getElementById('txtDateFrom').value  = fmtD(first);
+  document.getElementById('txtDateTo').value    = fmtD(now);
+  document.getElementById('txtDeleteLC').value  = fmtD(now);
+
+  await loadAll();
+  document.getElementById('txtsearch').focus();
+}
+
+// ── KEYBOARD NAV (same as ASPX pageLoad dateInput keydown) ──
+function onFromEnter(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('txtDateTo').focus();
+    document.getElementById('txtDateTo').select();
+  }
+}
+function onToEnter(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    loadAll();
+    document.getElementById('btnSearch').focus();
+  }
+}
+
+// ── LOAD ALL 4 GRIDS (same as ASPX BindGrid which calls all 4) ──
+async function loadAll() {
+  const df = document.getElementById('txtDateFrom').value;
+  const dt = document.getElementById('txtDateTo').value;
+  const p = `?dateFrom=${encodeURIComponent(df)}&dateTo=${encodeURIComponent(dt)}`;
+
+  const [r1, r2, r3, r4] = await Promise.all([
+    API.get('/api/lc/main'        + p),
+    API.get('/api/lc/uttar'       + p),
+    API.get('/api/lc/reference'   + p),
+    API.get('/api/lc/third-party' + p)
+  ]);
+
+  mainData  = r1?.data || [];
+  uttarData = r2?.data || [];
+  refData   = r3?.data || [];
+  hissaData = r4?.data || [];
+
+  renderMain(mainData);
+  renderUttar(uttarData);
+  renderRef(refData);
+  renderHissa(hissaData);
+}
+
+// ── LIVE SEARCH (same as ASPX txtsearch_TextChanged + ViewState) ──
+function liveSearch() {
+  const term = document.getElementById('txtsearch').value.toLowerCase();
+  const filtered = !term ? mainData : mainData.filter(r =>
+    (r.CustomerName || '').toLowerCase().includes(term) ||
+    (r.Mobile || '').toLowerCase().includes(term)
+  );
+  renderMain(filtered);
+}
+
+// ── RENDER MAIN (grvAccounts) ──
+// ASPX cols: Customer | Sale Balance(WinAmount) | Adjust Amount | Net Balance(AdjustWinAmount) | LC(%) | LC Amt
+// Hidden: UID, TotalAmount, Commision, WinAmt, Pati_Amt, CustomerName, Mobile
+function renderMain(data) {
+  const el = document.getElementById('mainTable');
+  if (!data.length) { el.innerHTML = '<div class="emsg">No Data Found!</div>'; return; }
+
+  let totWin=0, totAdj=0, totAdjWin=0, totLC=0;
+  data.forEach(r => {
+    totWin    += +r.WinAmount      || 0;
+    totAdj    += +r.AdjustAmount   || 0;
+    totAdjWin += +r.AdjustWinAmount|| 0;
+    totLC     += +r.LCAmount       || 0;
+  });
+
+  document.getElementById('mainTotals').textContent =
+    `Net Balance: ${totAdjWin} | LC: ${totLC}`;
+
+  el.innerHTML = `<table id="tblMain" class="table-bordered-bd-primary table-hover" cellpadding="4"
+      style="text-transform:capitalize;text-align:center;width:100%;">
+    <thead><tr style="background-color:LightGray;">
+      <th>Customer</th>
+      <th>Sale Balance</th>
+      <th>Adjust Amount</th>
+      <th>Net Balance</th>
+      <th>LC(%)</th>
+      <th>LC Amt</th>
+    </tr></thead>
+    <tbody>
+      ${data.map((r, i) => `<tr tabindex="0"
+          onclick="showHistory(this, '${esc(r.CustomerName)}','${r.Mobile||''}','${r.WinAmount||0}','${r.TotalAmount||0}','${r.Commision||0}','${r.WinAmt||0}','${r.Pati_Amt||0}')"
+          onkeydown="arrowNav(event,this,'tblMain')">
+        <td style="text-align:left;">${r.CustomerName||''} <span style="color:var(--muted);font-size:.75em;">${r.Mobile||''}</span></td>
+        <td>${r.WinAmount||0}</td>
+        <td>${r.AdjustAmount||0}</td>
+        <td class="${+r.AdjustWinAmount>=0?'pos':'neg'}">${r.AdjustWinAmount||0}</td>
+        <td>${r.LC||0}%</td>
+        <td class="${+r.LCAmount>=0?'pos':'neg'}">${r.LCAmount||0}</td>
+      </tr>`).join('')}
+    </tbody>
+    <tfoot><tr>
+      <td>Total</td>
+      <td>${totWin}</td>
+      <td>${totAdj}</td>
+      <td class="${totAdjWin>=0?'pos':'neg'}">${totAdjWin}</td>
+      <td></td>
+      <td class="${totLC>=0?'pos':'neg'}">${totLC}</td>
+    </tr></tfoot>
+  </table>`;
+}
+
+// ── RENDER UTTAR LC (GridViewUttarLC) ──
+// ASPX cols: Customer | Sale Balance | Adjust Amount | Net Balance | LC(%) | LC Amt
+function renderUttar(data) {
+  const el = document.getElementById('uttarTable');
+  if (!data.length) { el.innerHTML = '<div class="emsg">No Data Found!</div>'; return; }
+  let t1=0, t2=0, t3=0, t4=0;
+  data.forEach(r => { t1+=+r.WinAmount||0; t2+=+r.AdjustAmount||0; t3+=+r.AdjustWinAmount||0; t4+=+r.LCAmount||0; });
+  el.innerHTML = `<table id="tblUttar" class="table-bordered-bd-primary table-hover" cellpadding="4"
+      style="text-transform:capitalize;text-align:center;width:100%;">
+    <thead><tr style="background-color:LightGray;">
+      <th>Customer</th><th>Sale Balance</th><th>Adjust Amount</th>
+      <th>Net Balance</th><th>LC(%)</th><th>LC Amt</th>
+    </tr></thead>
+    <tbody>${data.map(r => `<tr tabindex="0"
+        onclick="showHistory(this,'${esc(r.CustomerName)}','${r.Mobile||''}','${r.WinAmount||0}','${r.TotalAmount||0}','${r.Commision||0}','${r.WinAmt||0}','${r.Pati_Amt||0}')"
+        onkeydown="arrowNav(event,this,'tblUttar')">
+      <td style="text-align:left;">${r.CustomerName||''} <span style="color:var(--muted);font-size:.75em;">${r.Mobile||''}</span></td>
+      <td>${r.WinAmount||0}</td>
+      <td>${r.AdjustAmount||0}</td>
+      <td class="${+r.AdjustWinAmount>=0?'pos':'neg'}">${r.AdjustWinAmount||0}</td>
+      <td>${r.LC||0}%</td>
+      <td class="${+r.LCAmount>=0?'pos':'neg'}">${r.LCAmount||0}</td>
+    </tr>`).join('')}</tbody>
+    <tfoot><tr>
+      <td>Total</td><td>${t1}</td><td>${t2}</td>
+      <td class="${t3>=0?'pos':'neg'}">${t3}</td><td></td>
+      <td class="${t4>=0?'pos':'neg'}">${t4}</td>
+    </tr></tfoot>
+  </table>`;
+}
+
+// ── RENDER REFERENCE LC (GridViewReferenceLC) ──
+// ASPX cols: Customer(MyReferenceLC) | Sale Balance | Adjust Amount(MyAdjustAmount) | Net Balance | LC(%) | LC Amt
+function renderRef(data) {
+  const el = document.getElementById('refTable');
+  if (!data.length) { el.innerHTML = '<div class="emsg">No Data Found!</div>'; return; }
+  let t1=0, t2=0, t3=0, t4=0;
+  data.forEach(r => { t1+=+r.WinAmount||0; t2+=+r.MyAdjustAmount||0; t3+=+r.AdjustWinAmount||0; t4+=+r.LCAmount||0; });
+  el.innerHTML = `<table id="tblRef" class="table-bordered-bd-primary table-hover" cellpadding="4"
+      style="text-transform:capitalize;text-align:center;width:100%;">
+    <thead><tr style="background-color:LightGray;">
+      <th>Customer</th><th>Sale Balance</th><th>Adjust Amount</th>
+      <th>Net Balance</th><th>LC(%)</th><th>LC Amt</th>
+    </tr></thead>
+    <tbody>${data.map(r => `<tr tabindex="0"
+        onclick="showHistory(this,'${esc(r.MyReferenceLC||r.CustomerName)}','${r.Mobile||''}','${r.WinAmount||0}','${r.TotalAmount||0}','${r.Commision||0}','${r.WinAmt||0}','${r.Pati_Amt||0}')"
+        onkeydown="arrowNav(event,this,'tblRef')">
+      <td style="text-align:left;">${r.MyReferenceLC||r.CustomerName||''} <span style="color:var(--muted);font-size:.75em;">${r.Mobile||''}</span></td>
+      <td>${r.WinAmount||0}</td>
+      <td>${r.MyAdjustAmount||0}</td>
+      <td class="${+r.AdjustWinAmount>=0?'pos':'neg'}">${r.AdjustWinAmount||0}</td>
+      <td>${r.LC||0}%</td>
+      <td class="${+r.LCAmount>=0?'pos':'neg'}">${r.LCAmount||0}</td>
+    </tr>`).join('')}</tbody>
+    <tfoot><tr>
+      <td>Total</td><td>${t1}</td><td>${t2}</td>
+      <td class="${t3>=0?'pos':'neg'}">${t3}</td><td></td>
+      <td class="${t4>=0?'pos':'neg'}">${t4}</td>
+    </tr></tfoot>
+  </table>`;
+}
+
+// ── RENDER 3RD PARTY HISSA (GridView3rdPartyHissa) ──
+// ASPX cols: Customer | Net Balance(WinAmount) | LC Amt
+function renderHissa(data) {
+  const el = document.getElementById('hissaTable');
+  if (!data.length) { el.innerHTML = '<div class="emsg">No Data Found!</div>'; return; }
+  let t1=0, t2=0;
+  data.forEach(r => { t1+=+r.WinAmount||0; t2+=+r.LCAmount||0; });
+  el.innerHTML = `<table id="tblHissa" class="table-bordered-bd-primary table-hover" cellpadding="4"
+      style="text-transform:capitalize;text-align:center;width:100%;">
+    <thead><tr style="background-color:LightGray;">
+      <th>Customer</th><th>Net Balance</th><th>LC Amt</th>
+    </tr></thead>
+    <tbody>${data.map(r => `<tr tabindex="0"
+        onkeydown="arrowNav(event,this,'tblHissa')">
+      <td style="text-align:left;">${r.CustomerName||''} <span style="color:var(--muted);font-size:.75em;">${r.Mobile||''}</span></td>
+      <td>${r.WinAmount||0}</td>
+      <td class="${+r.LCAmount>=0?'pos':'neg'}">${r.LCAmount||0}</td>
+    </tr>`).join('')}</tbody>
+    <tfoot><tr>
+      <td>Total</td>
+      <td>${t1}</td>
+      <td class="${t2>=0?'pos':'neg'}">${t2}</td>
+    </tr></tfoot>
+  </table>`;
+}
+
+// ── HISTORY MODAL (same as grvGameHisab_RowCommand "History") ──
+// ASPX shows: TotalAmount, Commission, WinAmt, Pati_Amt*-1, SaleBalance(WinAmount from grid)
+function showHistory(row, custName, mobile, saleBalance, totalAmt, comm, winAmt, patiAmt) {
+  // Select row (same as ASPX selectRow)
+  const tbl = row.closest('table');
+  if (tbl) tbl.querySelectorAll('tbody tr').forEach(r => r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+
+  // Fill modal (same as ASPX grvGameHisab_RowCommand)
+  document.getElementById('histTitle').textContent =
+    custName + (mobile ? ' ( ' + mobile + ' )' : '');
+  document.getElementById('hTotalAmount').textContent  = ' ' + totalAmt;
+  document.getElementById('hComm').textContent         = ' - ' + comm;
+  document.getElementById('hWin').textContent          = ' - ' + winAmt;
+  // Pati_Amt * -1 (same as ASPX: Convert.ToDecimal(Pati_Amt) * -1)
+  document.getElementById('hPati').textContent         = ' ' + (parseFloat(patiAmt||0) * -1);
+  document.getElementById('hBalance').textContent      = saleBalance;
+
+  document.getElementById('histModal').classList.add('show');
+}
+
+function closeHist() {
+  document.getElementById('histModal').classList.remove('show');
+}
+
+// ── ARROW KEY NAVIGATION (same as ASPX MyfunctionUpDown) ──
+function arrowNav(e, row, tblId) {
+  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  e.preventDefault();
+  const rows = document.querySelectorAll(`#${tblId} tbody tr`);
+  const idx = Array.from(rows).indexOf(row);
+  let next = null;
+  if (e.key === 'ArrowUp' && idx > 0) next = rows[idx-1];
+  if (e.key === 'ArrowDown' && idx < rows.length-1) next = rows[idx+1];
+  if (next) { next.focus(); next.click(); }
+}
+
+// ── POST LC (BtnLCPost_Click) ──
+// ASPX: main rows LCAmount > 0, uttar rows LCAmount < 0, hissa rows LCAmount < 0, ref rows LCAmount > 0
+async function postLC() {
+  const dateTo = document.getElementById('txtDateTo').value;
+  if (!dateTo) { toast('Select To Date first', 'err'); return; }
+  if (!mainData.length && !uttarData.length && !hissaData.length && !refData.length) {
+    toast('No data to post', 'err'); return;
+  }
+  if (!confirm('Do you want to Post LC?')) return;
+
+  const r = await API.post('/api/lc/post', {
+    dateTo,
+    mainRows:      mainData.map(r  => ({ fCusID: r.fCusID  || r.UID, LCAmount: r.LCAmount })),
+    uttarRows:     uttarData.map(r => ({ fCusID: r.fCusID  || r.UID, LCAmount: r.LCAmount })),
+    hissaRows:     hissaData.map(r => ({ fCusID: r.fCusID  || r.UID, LCAmount: r.LCAmount })),
+    referenceRows: refData.map(r   => ({ fCusID: r.fCusID  || r.UID, LCAmount: r.LCAmount }))
+  });
+
+  if (r?.success) toast('LC Posted Successfully!', 'ok');
+  else toast(r?.message || 'LC Already Exists!', 'err');
+}
+
+// ── DELETE LC (BtnDeleteLC_Click) ──
+async function deleteLC() {
+  const date = document.getElementById('txtDeleteLC').value;
+  if (!date) { toast('Select date first', 'err'); return; }
+  if (!confirm('Do you want to Delete it?')) return;
+
+  const r = await API.delete('/api/lc/delete', { date });
+  if (r?.success) toast('Data Deleted Successfully!', 'ok');
+  else toast(r?.message || 'Error', 'err');
+}
+
+// ── UTILS ──
+function fmtD(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2,'0')}/${months[d.getMonth()]}/${d.getFullYear()}`;
+}
+
+function esc(s) { return String(s||'').replace(/'/g,"\\'"); }
+
+// ── Toast — uses main.css's shared .toast-wrap/.toast (tok/terr) classes ──
+function toast(msg, type='ok') {
+  const w = document.getElementById('toastWrap');
+  const d = document.createElement('div');
+  d.className = 'toast ' + (type==='ok'?'tok':'terr');
+  d.textContent = (type==='ok'?'✓ ':'✕ ') + msg;
+  w.appendChild(d);
+  setTimeout(() => d.remove(), 2800);
+}
+
+init();
+</script>
+
+<script>
+// Flatpickr calendar for date inputs
+document.addEventListener('DOMContentLoaded', function() {
+  ["txtDateFrom", "txtDateTo", "txtDeleteLC"].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    flatpickr(el, {
+      dateFormat: 'd/M/Y',
+      allowInput: false,
+      disableMobile: true,
+      onChange: function(selectedDates, dateStr, instance) {
+        // Trigger change event for any onchange handlers
+        el.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

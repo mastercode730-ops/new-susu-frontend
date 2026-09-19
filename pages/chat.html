@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+<script src="/js/theme-preload.js"></script>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Atlantis shell (main-header/sidebar/main-panel) now provides the
+       page chrome via nav.js — this page only styles its own card content. ── */
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── MAIN CHAT CARD ──
+       Fixed height + overflow:hidden, jaisa pehle tha — lekin ab andar do
+       "badhne wali" cheezein (messages + jo entries type ho rahi hain) EK
+       hi flex budget share karti hain (min-height:0 se dono genuinely
+       shrink ho sakti hain), jabki header/Number-Amt-input/pills sab
+       flex-shrink:0 hain — hamesha apni poori size guaranteed. Isliye ab
+       na kabhi kuch invisible clip hota hai, na page scroll karna padta
+       hai — jo bhi extra jagah chahiye wo dono scrollable lists khud-ba-khud
+       apas mein compress karke nikaal leti hain. */
+    /* .chat-main.card.full-height (3 classes) — not just .chat-main — kyuki
+       vendor theme ka ".card.full-height" rule (2 classes: height:calc(100%
+       - 30px)) higher specificity ki wajah se jeet jaata tha, chahe mera
+       rule baad mein likha ho. Wahi asli bug tha: chat-main ka height kabhi
+       calc(100vh-78px) resolve hi nahi hota tha, sirf min-height:480px hi
+       lagta tha — isiliye card chhota reh jaata tha aur andar sab squeeze
+       ho jaata tha. */
+    .chat-main.card.full-height {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 66px);
+      min-height: 480px;
+      overflow: hidden;
+    }
+    /* Vendor theme reserves 62px above .content for a second header row this
+       app doesn't render, plus .content's own 16px top/bottom padding — that
+       94px total chrome vs. the card's old 78px height budget left a 16px
+       shortfall, which is exactly why the page could still scroll a few
+       pixels even with an empty message list. Tightened to match exactly:
+       50(margin-top)+8(padding-top)+8(padding-bottom)=66px, same reduction
+       used on the other pages. */
+    .main-panel > .content {
+      margin-top: 50px !important;
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
+    }
+
+    /* ── Messages area — .my-table-wrap ke saath flex budget share karti
+       hai (dono min-height:0, flex:1), taaki neeche input/pills kabhi
+       squeeze/hide na ho ── */
+    #ScrollChatDiv {
+      flex: 1 1 0;
+      min-height: 40px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #fff;
+      scrollbar-width: thin;
+    }
+
+    /* ═══ HEADER — ASPX exact ═══ */
+    .chat-header {
+      background: #fff;
+      border-bottom: 1px solid #dee2e6;
+      padding: 5px 8px 3px;
+      flex-shrink: 0;
+    }
+
+    .hrow1 {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: nowrap;
+    }
+
+    /* Game name */
+    #lblSelectedGameName {
+      color: #000;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+      text-transform: capitalize;
+      cursor: pointer;
+      font-size: .95rem;
+      flex-shrink: 0;
+    }
+
+    /* Date input — ASPX jaisa compact */
+    #txtDate {
+      width: 95px;
+      height: 26px;
+      border: 1px solid #ced4da;
+      border-radius: 3px;
+      padding: 0 4px;
+      font-size: .78rem;
+      color: #000;
+      outline: none;
+      flex-shrink: 0;
+      text-align: center;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    #txtDate:focus {
+      border-color: #6861ce;
+    }
+
+    /* Yantri calendar icon */
+    #BtnYantri {
+      background: none;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      color: #6861ce;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0;
+    }
+
+    /* Bulk button */
+    #btnMoveMsg {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6861ce;
+      font-weight: bold;
+      font-size: .82rem;
+      flex-shrink: 0;
+      font-family: Arial;
+      white-space: nowrap;
+      padding: 0 2px;
+    }
+
+    /* Customer info row */
+    .hrow2 {
+      font-size: .8rem;
+      font-weight: 700;
+      color: #000;
+      text-transform: capitalize;
+      padding: 1px 0;
+      font-family: Arial;
+    }
+
+    #lblMobile {
+      font-weight: bold;
+    }
+
+    #lblUserBalance {
+      font-size: .9rem;
+      font-weight: bold;
+      color: green;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    /* (merged into .chat-main block above) */
+
+    /* ─── Message card — ASPX exact ─── */
+    .chat-row {
+      width: 100%;
+      padding: 4px 8px;
+      border-bottom: 1px solid #eee;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Right action buttons (↪ □ 📋 ✏) — stacked on right */
+    .msg-actions-right {
+      float: right;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin-left: 6px;
+    }
+
+    .msg-right {
+      text-align: left;
+      /* ASPX: message text left-aligned even in received */
+      font-size: 11.5px;
+      padding: 1px 0;
+    }
+
+    .msg-left {
+      text-align: left;
+      font-size: 11.5px;
+      padding: 1px 0;
+    }
+
+    /* Message text — ASPX/production is compact plain text, not a big bold
+       bubble — this is what actually fits many entries on screen at once.
+       Bumped very slightly (11.5→13px) so it's a touch easier to read while
+       staying compact. Font is 'Lato' (not Arial) — that's the Atlantis
+       theme's real body font (atlantis.css), which the message span inherits
+       on the actual production site since it has no font override there. */
+    .msg-text {
+      word-break: break-word;
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+      line-height: 1.3;
+      color: #000;
+      font-weight: 700;
+      display: block;
+    }
+
+    /* Total / Rate / Updated — combined onto ONE line (was 3 separate lines,
+       with the date shown twice — once as "Date: dd/mm/yy" and again inside
+       "Updated: dd/mm/yy h:mmAM/PM"); Updated already carries the date, so
+       the separate Date item is dropped here. */
+    .msg-meta-combined {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 10.5px;
+      margin-top: 2px;
+      font-family: 'Lato', sans-serif;
+    }
+
+    .lbl-total {
+      font-weight: 700;
+      font-size: 11px;
+      color: #000;
+    }
+
+    .msg-meta-combined .meta-item {
+      font-style: italic;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .msg-meta-combined .meta-label {
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .last-updated {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    /* Status row: Ok / BY ADMIN / ✕ — plain colored text, matching production
+       (not pill badges) */
+    .msg-status-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+      font-size: 11px;
+    }
+
+    .s-sent, .s-ok, .s-cancel {
+      font-weight: 700;
+    }
+
+    .s-sent {
+      color: #000;
+    }
+
+    .s-ok {
+      color: #28a745;
+    }
+
+    .s-cancel {
+      color: #dc3545;
+    }
+
+    .by-admin {
+      color: #1572e8;
+      font-weight: 700;
+      font-size: 11px;
+      margin-left: 2px;
+    }
+
+    .btn-acc {
+      color: green;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: .8rem;
+      margin-left: 2px;
+    }
+
+    .btn-rej {
+      color: red;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: .8rem;
+      margin-left: 40px;
+    }
+
+    .btn-del {
+      color: red;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: .78rem;
+      float: right;
+      padding: 0;
+    }
+
+    .btn-edit {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: .78rem;
+      padding: 0;
+    }
+
+    .btn-share {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6861ce;
+      font-size: .78rem;
+      float: right;
+      padding: 0 2px;
+    }
+
+    .btn-copy {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555;
+      font-size: .78rem;
+      float: right;
+      padding: 0 2px;
+      margin-right: 2px;
+    }
+
+    .subuser-lbl {
+      font-size: .62rem;
+      color: #888;
+      float: right;
+    }
+
+    .row-sep {
+      clear: both;
+    }
+
+    /* ASPX: sent messages — light yellow bg */
+    .bg-sent {
+      background: #f9f4d9;
+    }
+
+    /* ASPX: received (from customer) — white bg */
+    .bg-recv {
+      background: #ffffff;
+    }
+
+    /* ═══ Grand Total ═══ */
+    #totalamountmesssage {
+      padding: 4px 10px;
+      font-weight: bold;
+      font-size: .9rem;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: center;
+      color: #000;
+      min-height: 22px;
+      flex-shrink: 0;
+    }
+
+    /* ═══ INPUT AREA — Number/Amt/Save + pills — flex-shrink:0, kabhi
+       compress/hide nahi hoti, hamesha poori dikhti hai ═══ */
+    .input-area {
+      background: #fff;
+      border-top: 1px solid #dee2e6;
+      padding: 4px 6px;
+      flex-shrink: 0;
+    }
+
+    /* Pending entries — #ScrollChatDiv ke saath flex budget share karti hai
+       (dono flex:1, min-height:0), max-height sirf ek upper cap hai jab
+       jagah ho tab bhi ye bahut zyada bhari-bharkam na ho jaye */
+    .my-table-wrap {
+      display: none;
+      /* flex-direction:column — pins the entries table to the BOTTOM of this
+         box (via .my-table-spacer below) instead of the top, so it sits
+         right up against the Number/Amt input row with no empty gap when
+         there are only a few rows. Deliberately NOT justify-content:flex-end
+         — combined with overflow:auto that clips the earliest rows out of
+         scroll range once entries overflow max-height (confirmed: older
+         rows became completely inaccessible, not just scrolled-past). The
+         spacer approach gets the same bottom-anchored look without that
+         scroll-clipping bug — it only pushes content down when there's
+         actually slack space, and shrinks to nothing (never negative) once
+         the table itself is tall enough to need scrolling. */
+      flex-direction: column;
+      flex: 1 1 0;
+      min-height: 0;
+      margin-bottom: 2px;
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 24vh;
+      border: 1px solid #dee2e6;
+      border-radius: 3px;
+    }
+
+    .my-table-spacer {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    #myTable {
+      flex: 0 0 auto;
+    }
+
+    #myTable {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    #myTable td {
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #000;
+      text-align: center;
+      height: 18px;
+      border: 1px solid #dee2e6;
+    }
+
+    #myTable td:first-child {
+      width: 60px;
+    }
+
+    #myTable td:nth-child(2) {
+      width: 70px;
+    }
+
+    #myTable td:nth-child(3) {
+      width: 32px;
+    }
+
+    #myTable td:nth-child(3) button {
+      width: 16px;
+      height: 16px;
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+      font-size: .8rem;
+    }
+
+    #lblTotalAmountShow {
+      color: #000;
+      font-weight: bold;
+    }
+
+    #lblTotalAmount {
+      font-weight: bold;
+      color: #000;
+      margin-left: 3px;
+    }
+
+    #SpanClearTable {
+      display: none;
+      background: #FF474C !important;
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    /* Input row — ASPX: Number | Amt | Save(F2) */
+    .input-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-bottom: 3px;
+    }
+
+    #txtonlyTextMessage {
+      flex: 1;
+      height: 36px;
+      border: 1px solid #ced4da;
+      border-radius: 4px 0 0 4px;
+      padding: 0 8px;
+      font-size: .9rem;
+      color: #000;
+      outline: none;
+      display: none;
+      font-family: Arial;
+    }
+
+    #txtMessage {
+      flex: 3;
+      height: 36px;
+      border: 1px solid #aaa;
+      border-radius: 4px 0 0 4px;
+      padding: 0 8px;
+      font-size: .9rem;
+      color: #000;
+      outline: none;
+      font-family: Arial;
+    }
+
+    #txtMessage:focus {
+      border-color: #6861ce;
+      outline: none;
+    }
+
+    #txtSecondNumber {
+      width: 72px;
+      height: 36px;
+      border: 1px solid #aaa;
+      border-left: none;
+      padding: 0 5px;
+      font-size: .9rem;
+      color: #000;
+      outline: none;
+      display: none;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    #txtMessageAmount {
+      flex: 1;
+      height: 36px;
+      border: 1px solid #aaa;
+      border-left: none;
+      padding: 0 5px;
+      font-size: .9rem;
+      color: #000;
+      outline: none;
+      display: none;
+      text-align: center;
+      font-family: Arial;
+      min-width: 55px;
+    }
+
+    #txtMessageAmount:focus {
+      border-color: #6861ce;
+    }
+
+    #txtMessageAmountPalat {
+      width: 80px;
+      height: 36px;
+      border: 1px solid #aaa;
+      border-left: none;
+      padding: 0 5px;
+      font-size: .9rem;
+      color: #000;
+      outline: none;
+      display: none;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    /* Save(F2) button — ASPX's real visible button here (#btnSend in
+       WhatsaapLikeReceivedChat.aspx, the page this chat view is actually
+       modeled on) is purple #6861ce, not green — the green btn-success is a
+       different, hidden legacy control on that page. */
+    #btnSend {
+      background: #6861ce;
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      padding: 0 16px;
+      height: 36px;
+      font-size: .88rem;
+      cursor: pointer;
+      white-space: nowrap;
+      border-radius: 0 4px 4px 0;
+      flex-shrink: 0;
+    }
+
+    #btnSend:hover {
+      background: #574fb8;
+    }
+
+    #btnSend:active {
+      opacity: .85;
+    }
+
+    /* Extra opts */
+    .extra-opts {
+      font-size: .78rem;
+      color: #000;
+      margin-bottom: 2px;
+    }
+
+    .extra-opts span {
+      margin-right: 10px;
+    }
+
+    .extra-opts input[type=checkbox] {
+      margin-right: 3px;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+
+    /* Nav pills — ASPX: rounded pills, purple active */
+    .chat-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .chat-pill {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: #6c757d;
+      text-decoration: none;
+      border: 1px solid #dee2e6;
+      background: #f8f9fa;
+      line-height: 1.4;
+      font-family: Arial;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+
+    .chat-pill:hover {
+      background: #e9ecef;
+      color: #333;
+      border-color: #bbb;
+    }
+
+    .chat-pill.active {
+      background: #6861ce;
+      color: #fff;
+      font-weight: 700;
+      border-color: #6861ce;
+    }
+
+    .hidden-radio {
+      display: none;
+    }
+
+    /* Spinner */
+    .spin {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid #dee2e6;
+      border-top-color: #6861ce;
+      border-radius: 50%;
+      animation: sp .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes sp {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* Toast */
+    .toast-msg {
+      position: fixed;
+      bottom: 65px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: .8rem;
+      z-index: 9999;
+      display: none;
+      white-space: nowrap;
+    }
+
+    /* YANTRI MODAL */
+    .ym-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .ym-overlay.open {
+      display: block;
+    }
+
+    .ym-box {
+      background: #fff;
+      border-radius: 6px;
+      width: 99%;
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .ym-close {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #555;
+      z-index: 10;
+    }
+
+    .ym-top {
+      padding: 6px 12px;
+      border-bottom: 1px solid #dee2e6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ym-clr-btn {
+      background: #dc3545;
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      padding: 4px 14px;
+      border-radius: 4px;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+
+    .ym-ud-chk {
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .ym-grid {
+      padding: 4px 6px;
+    }
+
+    .ym-row {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 2px;
+      margin-bottom: 1px;
+    }
+
+    .ym-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .ym-lbl {
+      font-size: .72rem;
+      color: #555;
+      font-weight: 700;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .ym-inp {
+      width: 100%;
+      height: 28px;
+      border: 1px solid #ced4da;
+      border-radius: 2px;
+      text-align: center;
+      font-size: .85rem;
+      font-weight: bold;
+      outline: none;
+      padding: 0;
+    }
+
+    .ym-inp:focus {
+      border-color: #6861ce;
+      background: #f0f4ff;
+    }
+
+    .ym-inp.ak {
+      background: #f0f8ff;
+    }
+
+    .ym-tot-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .ym-tot-val {
+      font-size: .85rem;
+      font-weight: bold;
+      color: green;
+    }
+
+    .ym-col-tot {
+      font-size: .8rem;
+      font-weight: bold;
+      color: #1572e8;
+    }
+
+    .ym-sep {
+      border: none;
+      border-top: 2px solid #dee2e6;
+      margin: 4px 0;
+    }
+
+    .ym-footer {
+      padding: 6px 12px;
+      border-top: 1px solid #dee2e6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ym-total-lbl {
+      font-size: .95rem;
+      font-weight: bold;
+    }
+
+    .ym-send-btn {
+      background: #6861ce;
+      color: #fff;
+      font-weight: 700;
+      border: none;
+      padding: 5px 20px;
+      border-radius: 4px;
+      font-size: .92rem;
+      cursor: pointer;
+    }
+
+    /* Edit mode bar */
+    #editChoiceBar {
+      display: none;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 5px 10px;
+      font-size: .8rem;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Bulk modal */
+    .ym-overlay2 {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 1100;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .ym-overlay2.open {
+      display: block;
+    }
+
+    /* ══ MOBILE RESPONSIVE ══ */
+    @media (max-width:768px) {
+
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+      }
+
+      body {
+        font-size: 13px;
+      }
+
+      /* Header: wrap ki zaroorat nahi, scroll karne do */
+      .chat-header {
+        padding: 4px 6px 3px;
+      }
+
+      .hrow1 {
+        gap: 4px;
+      }
+
+      #lblSelectedGameName {
+        font-size: .82rem;
+      }
+
+      #txtDate {
+        width: 90px;
+        height: 26px;
+        font-size: .75rem;
+      }
+
+      #btnSend {
+        padding: 0 10px;
+        font-size: .82rem;
+      }
+
+      #lblUserBalance {
+        font-size: .85rem;
+      }
+
+      /* Input row: thoda compact */
+      .input-row {
+        gap: 0;
+        margin-bottom: 3px;
+      }
+
+      #txtMessage {
+        height: 36px;
+        font-size: .88rem;
+        padding: 0 7px;
+      }
+
+      #txtMessageAmount {
+        height: 36px;
+        font-size: .88rem;
+        min-width: 50px;
+        padding: 0 4px;
+      }
+
+      #txtSecondNumber {
+        height: 36px;
+        font-size: .88rem;
+        width: 60px;
+        padding: 0 4px;
+      }
+
+      #txtMessageAmountPalat {
+        height: 36px;
+        font-size: .88rem;
+        width: 72px;
+        padding: 0 4px;
+      }
+
+      #txtonlyTextMessage {
+        height: 36px;
+        font-size: .88rem;
+        padding: 0 7px;
+      }
+
+      #btnSend {
+        height: 36px;
+      }
+
+      /* Pills: smaller + wrap */
+      .chat-pills {
+        gap: 3px;
+      }
+
+      .chat-pill {
+        padding: 3px 8px;
+        font-size: .7rem;
+      }
+
+      /* Table wrap — mobile par bhi bounded rakhna hai taaki Number/Amt
+         input aur pills hamesha visible rahein, neeche push na hon */
+      .my-table-wrap {
+        max-height: 20vh;
+      }
+
+      /* Input area padding */
+      .input-area {
+        padding: 4px 6px 4px;
+      }
+
+      /* Extra opts */
+      .extra-opts {
+        font-size: .75rem;
+      }
+
+      /* Chat rows — same compact sizing as desktop, matches production */
+      .chat-row {
+        padding: 4px 6px;
+      }
+
+      .msg-text {
+        font-size: 13px;
+      }
+
+      .lbl-total {
+        font-size: 11px;
+      }
+
+      .msg-meta-combined {
+        font-size: 10.5px;
+      }
+
+      .last-updated {
+        font-size: 10.5px;
+      }
+
+      /* Toast bottom */
+      .toast-msg {
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        transform: none;
+        max-width: calc(100vw - 16px);
+        white-space: normal;
+        text-align: center;
+      }
+
+      /* Yantri modal */
+      .ym-box {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
+      }
+
+      .ym-row {
+        gap: 1px;
+      }
+
+      .ym-inp {
+        height: 22px;
+        font-size: .72rem;
+      }
+
+      .ym-lbl {
+        font-size: .62rem;
+      }
+    }
+
+    @media (max-width:380px) {
+      .chat-pill {
+        padding: 2px 6px;
+        font-size: .65rem;
+      }
+
+      #txtDate {
+        width: 78px;
+      }
+
+      #lblSelectedGameName {
+        font-size: .75rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-6">
+      <!-- ASPX: Chat.aspx wraps the chat card in a single col-md-6, not full-width -->
+      <!-- ══ MAIN CHAT CARD — ASPX: .card.full-height, scrolls when table is large ══ -->
+      <div class="chat-main card full-height">
+
+        <!-- ═══ HEADER — ASPX: card-header / card-title ═══ -->
+        <div class="chat-header card-header">
+          <div class="hrow1">
+        <img src="/vendor/images/game-icon-png.png" alt="avatar" width="30" height="30" onclick="OpenYantri()" style="cursor:pointer;flex-shrink:0;">
+
+        <span id="lblGameID" style="display:none;"></span>
+        <span id="lblchatid" style="display:none;"></span>
+        <span id="lblrow_num" style="display:none;"></span>
+        <span id="lblSaleHistoryMessage" style="display:none;"></span>
+        <span id="lblYantriOn" style="display:none;"></span>
+        <span id="lblRefreshStatus" style="display:none;"></span>
+        <span id="lblSelectedPage" style="display:none;"></span>
+        <span id="lblSenderUserID" style="display:none;"></span>
+        <span id="lblSelectedUID" style="display:none;"></span>
+        <span id="lblsubuserid" style="display:none;"></span>
+        <span id="lblMobile1" style="display:none;"></span>
+        <span id="lblIsUttarCustomer" style="display:none;"></span>
+        <span id="lblMessage" style="display:none;"></span>
+        <span id="lblSendBulkORMessage" style="display:none;">1</span>
+        <span id="lblTotalAmountHidden" style="display:none;">0</span>
+        <span id="lblD_PComm" style="display:none;"></span>
+        <span id="lblD_Amt" style="display:none;"></span>
+        <span id="lblA_PComm" style="display:none;"></span>
+        <span id="lblA_Amt" style="display:none;"></span>
+        <span id="lblPati_PComm" style="display:none;"></span>
+        <span id="lblfHissaPartyID" style="display:none;"></span>
+        <span id="lblHissaPerc" style="display:none;"></span>
+        <span id="LabelThirdPartyCommID" style="display:none;"></span>
+        <span id="LabelThirdPartyDaraComm" style="display:none;"></span>
+        <span id="LabelThirdPartyAkharComm" style="display:none;"></span>
+        <span id="lblActualUserBalance" style="display:none;"></span>
+        <span id="lblActuallimit" style="display:none;"></span>
+        <span id="lblRates" style="display:none;"></span>
+        <span id="lblTodaysDate" style="display:none;"></span>
+        <span id="lblSenderMobileNo" style="display:none;"></span>
+
+        <span id="lblSelectedGameName" onclick="OpenYantri()" style="cursor:pointer;"></span>
+
+        <input type="text" id="txtDate" placeholder="dd/MMM/yyyy" onchange="FilterByDate(this)" autocomplete="off">
+
+        <button id="BtnYantri" onclick="OpenYantriagent()" title="Yantri">📅</button>
+        <button id="btnMoveMsg" onclick="openBulkMovePopup()">💬 Bulk</button>
+        <span id="lblUserBalance"></span>
+      </div>
+
+      <div class="hrow2">
+        <span id="lblMobile"></span>&nbsp;(<span id="lblRateDisplay"></span>)
+      </div>
+    </div>
+
+    <!-- ASPX: card-body — GridView message log + input area ── -->
+    <div class="card-body" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:0;position:relative;">
+
+    <!-- ASPX: btnMultipleShare — float:right fa-share icon above the message log -->
+    <button onclick="openBulkMovePopup()" title="Share"
+      style="position:absolute;top:4px;right:8px;z-index:2;background:none;border:none;color:#6861ce;font-size:1.1rem;cursor:pointer;padding:4px;">
+      <i class="fa fa-share"></i>
+    </button>
+
+    <!-- ═══ CHAT MESSAGES (ASPX: GridView rptChatMessage) ═══ -->
+    <div id="ScrollChatDiv">
+      <div style="text-align:center;padding:28px;color:#aaa;"><span class="spin"></span></div>
+    </div>
+
+    <!-- Grand Total -->
+    <div id="totalamountmesssage"></div>
+
+    <!-- Pending entries — DIRECT sibling of #ScrollChatDiv (not nested inside
+       .input-area) so both can share/shrink the same flex budget in
+       .card-body. This is what actually guarantees Number/Amt input + pills
+       below are never squeezed out: as entries grow, this competes for
+       space with the messages log (both shrink together via flex), instead
+       of everything below it in .input-area being pushed down/clipped. -->
+    <div class="my-table-wrap" id="myTableWrap">
+      <div class="my-table-spacer"></div>
+      <table id="myTable">
+        <tbody id="myTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ═══ INPUT AREA — always renders at full natural size, never shrinks ═══ -->
+    <div class="input-area">
+      <div class="total-row">
+        <div>
+          <span id="lblTotalAmountShow"></span>
+          <span id="lblTotalAmount"></span>
+        </div>
+        <span id="SpanClearTable" onclick="ClearTableNew()">Clear (F5)</span>
+      </div>
+
+      <!-- Input row -->
+      <div class="input-row">
+        <input type="text" id="txtonlyTextMessage" placeholder="Enter text here..." tabindex="9995" autocomplete="off"
+          onkeydown="if(event.keyCode==13&&this.value.trim()){sendPlainMessage();return false;}">
+        <input type="text" id="txtMessage" placeholder="Number" tabindex="9996" autocomplete="off" onkeypress="return isNumberNdSpl(event)"
+          oninput="processSpl(this)" onkeydown="txtMessageKeyDown(event)" onpaste="return PasteMsg(event)">
+        <input type="tel" id="txtSecondNumber" placeholder="To" tabindex="9997" autocomplete="off" onkeypress="return isNumber(event)"
+          oninput="process(this)"
+          onkeydown="if(event.keyCode==13){document.getElementById('txtMessageAmount').focus();return false;}">
+        <input type="tel" id="txtMessageAmount" placeholder="Amt" tabindex="9998" autocomplete="off" onkeypress="return isNumber(event)"
+          oninput="process(this)" onkeydown="amtKeyDown(event)">
+        <input type="tel" id="txtMessageAmountPalat" placeholder="Palat Amt" tabindex="9998" autocomplete="off"
+          onkeypress="return isNumber(event)" oninput="process(this)"
+          onkeydown="if(event.keyCode==13){SaveBulkMessage(document.getElementById('txtMessage').value,document.getElementById('txtMessageAmount').value);return false;}">
+        <button id="btnSend" tabindex="9999" onclick="btnSendClick()">Save(F2)</button>
+      </div>
+
+      <!-- Without Jode + Add3Pahada -->
+      <div class="extra-opts">
+        <span id="WithOutJode" style="display:none;">
+          <input type="checkbox" id="chkCrossingWithoutJode" onclick="txtMessageFocusTrue()"> Without Jode
+        </span>
+        <span id="Add3Pahada" style="display:none;">
+          <!-- ISSUE 3: ASPX value="50" but ADD3 means pahada of 3, value irrelevant for logic -->
+          <input type="checkbox" id="CHFP" value="50" onclick="txtMessageFocusTrue()"> ADD 3
+        </span>
+      </div>
+
+      <!-- Nav pills -->
+      <ul class="chat-pills">
+        <li><a class="chat-pill active" id="Bulkpills" onclick="BulkpillsClick()">Typing(Home)</a></li>
+        <li><a class="chat-pill" id="ALaddi" onclick="ALaddiClick()">Laddi (F4)</a></li>
+        <li><a class="chat-pill" id="AJode" onclick="AJodeClick()">Jode (F8)</a></li>
+        <li><a class="chat-pill" id="ACrossing" onclick="ACrossingClick()">Cross (F9)</a></li>
+        <li><a class="chat-pill" id="APahada" onclick="APahadaClick()">Pahada(P)</a></li>
+        <li><a class="chat-pill" id="A1Ander" onclick="A1AnderClick()">Ander(A)</a></li>
+        <li><a class="chat-pill" id="A2Bahar" onclick="A2BaharClick()">Bahar(B)</a></li>
+        <li><a class="chat-pill" id="AYantri" onclick="AYantriClick()">Yantri(End)</a></li>
+        <li><a class="chat-pill" id="A57" onclick="A57Click()">57</a></li>
+        <li><a class="chat-pill" id="A43" onclick="A43Click()">43</a></li>
+        <li><a class="chat-pill" id="APalat" onclick="APalatClick()">Palat</a></li>
+        <li><a class="chat-pill" id="Typingpills" onclick="TypingpillsClick()">Chat</a></li>
+      </ul>
+
+      <input class="hidden-radio" type="radio" id="RadioCrossing" name="contact">
+      <input class="hidden-radio" type="radio" id="RadioJode" name="contact">
+      <input class="hidden-radio" type="radio" id="RadioLaddi" name="contact">
+      <input class="hidden-radio" type="radio" id="RadioPahada" name="contact">
+      <input class="hidden-radio" type="radio" id="RadioAnder" name="contact">
+      <input class="hidden-radio" type="radio" id="RadioBahar" name="contact">
+      <input class="hidden-radio" type="radio" id="Radio57" name="contact">
+      <input class="hidden-radio" type="radio" id="Radio43" name="contact">
+      <input class="hidden-radio" type="radio" id="RadioPalat" name="contact">
+      <span id="lblShowMsgAlert" style="display:none;"></span>
+    </div>
+
+    <!-- Edit Mode Bar -->
+    <div id="editChoiceBar"
+      style="display:none;background:#fff3cd;border:1px solid #ffc107;padding:5px 10px;font-size:.8rem;align-items:center;gap:8px;flex-shrink:0;">
+      <span style="font-weight:bold;color:#856404;">✍🏻 Edit Mode:</span>
+      <button onclick="editDoUpdate()"
+        style="background:#6861ce;color:#fff;border:none;padding:3px 12px;border-radius:4px;font-size:.78rem;cursor:pointer;font-weight:bold;">Update
+        Entry</button>
+      <button onclick="editDoNew()"
+        style="background:#28a745;color:#fff;border:none;padding:3px 12px;border-radius:4px;font-size:.78rem;cursor:pointer;font-weight:bold;">Add
+        as New</button>
+      <button onclick="editCancel()"
+        style="background:#dc3545;color:#fff;border:none;padding:3px 12px;border-radius:4px;font-size:.78rem;cursor:pointer;">✕
+        Cancel</button>
+      <span id="editChatIdLabel" style="color:#666;font-size:.72rem;"></span>
+    </div>
+    </div><!-- /.card-body -->
+
+    <!-- Bulk Move/Copy Modal — ASPX: divShowAllMessageGames (Mycardsecondary purple) -->
+    <div class="ym-overlay2" id="bulkOverlay">
+      <div class="ym-box" style="max-width:520px;">
+        <button class="ym-close" onclick="closeBulkModal()" style="color:#fff;">×</button>
+        <!-- ASPX Mycardsecondary: background:#6861ce; color:#fff — game-picker/share modal accent -->
+        <div style="padding:8px 12px 6px;border-bottom:1px solid #dee2e6;background:#6861ce;color:#fff;border-radius:6px 6px 0 0;">
+          <b style="font-size:.9rem;">↪ Move / Copy Messages (Share to other Game)</b>
+        </div>
+        <!-- Current (FROM) info -->
+        <div style="padding:6px 12px 0;background:#f8f9fa;border-bottom:1px solid #dee2e6;font-size:.75rem;color:#555;">
+          <b>FROM (Current):</b>
+          <span id="bulkFromInfo" style="margin-left:6px;color:#333;"></span>
+        </div>
+        <!-- TO fields -->
+        <div style="padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label style="font-size:.75rem;font-weight:bold;display:block;margin-bottom:3px;">📅 Target Date
+              (TO)</label>
+            <input type="date" id="bulkDate"
+              style="width:100%;height:32px;border:1px solid #ced4da;border-radius:4px;padding:0 8px;font-size:.82rem;outline:none;cursor:pointer;background:#fff;">
+          </div>
+          <div>
+            <label style="font-size:.75rem;font-weight:bold;display:block;margin-bottom:3px;">🎮 Target Game
+              (TO)</label>
+            <select id="bulkGame"
+              style="width:100%;height:32px;border:1px solid #ced4da;border-radius:4px;padding:0 6px;font-size:.82rem;">
+              <option value="">-- Select Game --</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.75rem;font-weight:bold;display:block;margin-bottom:3px;">👤 Target Customer
+              (TO)</label>
+            <!-- Search input — received.html wala behavior: type karo naam aaye -->
+            <input type="text" id="bulkCustSearch" placeholder="Name / Mobile type karo..." autocomplete="off"
+              style="width:100%;height:32px;border:1px solid #ced4da;border-radius:4px 4px 0 0;padding:0 8px;font-size:.82rem;outline:none;display:block;"
+              oninput="bulkCustFilter(this.value)">
+            <select id="bulkCustomer"
+              style="width:100%;height:32px;border:1px solid #ced4da;border-top:none;border-radius:0 0 4px 4px;padding:0 6px;font-size:.82rem;"
+              onchange="bulkCustomerChange();document.getElementById('bulkCustSearch').value=this.options[this.selectedIndex]?.text||''">
+              <option value="">-- Select Customer --</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.75rem;font-weight:bold;display:block;margin-bottom:3px;">📊 Target Rate
+              (TO)</label>
+            <select id="bulkRate"
+              style="width:100%;height:32px;border:1px solid #ced4da;border-radius:4px;padding:0 6px;font-size:.82rem;">
+              <option value="">-- Select Rate --</option>
+            </select>
+          </div>
+        </div>
+        <div style="padding:6px 12px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button onclick="doBulkMove()"
+            style="background:#28a745;color:#fff;border:none;padding:6px 22px;border-radius:4px;font-size:.85rem;font-weight:bold;cursor:pointer;">🔀
+            Move</button>
+          <button onclick="doBulkCopy()"
+            style="background:#28a745;color:#fff;border:none;padding:6px 22px;border-radius:4px;font-size:.85rem;font-weight:bold;cursor:pointer;">📋
+            Copy</button>
+          <span id="bulkMsg" style="font-size:.78rem;margin-left:6px;"></span>
+        </div>
+        <div style="padding:0 12px 8px;font-size:.68rem;color:#888;">
+          🔀 Move = current date se messages hatenge → target date/game/customer mein jayenge<br>
+          📋 Copy = current date ke messages wahan bhi jayenge, yahan bhi rahenge
+        </div>
+      </div>
+    </div>
+
+    <!-- Yantri Modal -->
+    <div class="ym-overlay" id="ymOverlay">
+      <div class="ym-box">
+        <button class="ym-close" onclick="closeYantriModal()">×</button>
+        <div class="ym-top">
+          <label class="ym-ud-chk">
+            <input type="checkbox" id="ymUpToDown" checked> Up-To-Down
+          </label>
+          <button class="ym-clr-btn" onclick="ymClear()">Clear</button>
+        </div>
+        <div class="ym-grid" id="ymGrid"></div>
+        <div class="ym-footer">
+          <span class="ym-total-lbl">Total Amount: <span id="ymTotalAmt">0</span></span>
+          <!-- ISSUE 4: Send(F2) button in Yantri modal also triggers ymSend() -->
+          <button class="ym-send-btn" id="ymSendBtn" onclick="ymSend()">Send(F2)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-msg" id="toastMsg"></div>
+    <input type="text" id="myInput" style="display:none;">
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/nav.js"></script>
+    <script>
+      // ═══════════════════════════════════════════════════════
+      // PARAMS
+      // ═══════════════════════════════════════════════════════
+      function gp(k, d) { return new URLSearchParams(location.search).get(k) || d || ''; }
+      const P = {
+        mobile: gp('SelectedMobile'), gameId: gp('GameId'), gameName: gp('GameName'),
+        selUID: gp('SelectedUID'), rates: gp('Rates', '0/100-0/10-0'),
+        dPComm: gp('D_PComm', '0'), dAmt: gp('D_Amt', '100'),
+        aPComm: gp('A_PComm', '0'), aAmt: gp('A_Amt', '10'),
+        pati: gp('Pati_PComm', '0'), hissaID: gp('ThirdPartyHissaID', '0'),
+        hissaPer: gp('ThirdPartyHissaPer', '0'),
+        tpCommID: gp('ThirdPartyCommID', '0'),
+        tpDara: gp('ThirdPartyDaraComm', '0'),
+        tpAkhar: gp('ThirdPartyAkharComm', '0'),
+        selPage: gp('SelectedPage', '1'),
+        lastDate: gp('LastMsgDate'),
+        rateID: gp('RateID')
+      };
+
+      // ═══════════════════════════════════════════════════════
+      // CONSTANTS — same as ASPX
+      // ═══════════════════════════════════════════════════════
+      const JODE_NUMS = ['11', '22', '33', '44', '55', '66', '77', '88', '99', '100'];
+      const SET57 = ['21', '23', '24', '26', '27', '28', '29', '31', '32', '34', '36', '37', '38', '39', '41', '42', '43', '46', '47', '48', '49', '51', '52', '53', '54', '56', '57', '58', '59', '61', '62', '63', '64', '67', '68', '69', '71', '72', '73', '74', '76', '78', '79', '81', '82', '83', '84', '86', '87', '89', '91', '92', '93', '94', '96', '97', '98'];
+      const SET43 = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '22', '25', '30', '33', '35', '40', '44', '45', '50', '55', '60', '65', '66', '70', '75', '77', '80', '85', '88', '90', '95', '99', '100'];
+
+      let _uid = null, _subUID = null, _todaysDate = '', _currentDate = '', _isUttarCustomer = false, Amount = 0;
+
+      // ═══════════════════════════════════════════════════════
+      // INIT
+      // ═══════════════════════════════════════════════════════
+      async function init() {
+        const u = await initPage('chat');
+        if (!u) return;
+        _uid = u.UID; _subUID = u.SubUID || null;
+
+        document.getElementById('lblSelectedGameName').textContent = P.gameName;
+        // Navbar update
+        const navGame = document.getElementById('navGameName');
+        const navCust = document.getElementById('navCustomerName');
+        if (navGame) navGame.textContent = P.gameName;
+        document.getElementById('lblGameID').innerText = P.gameId;
+        document.getElementById('lblRateDisplay').textContent = P.rates;
+        document.getElementById('lblRates').innerText = P.rates;
+        document.getElementById('lblSelectedPage').innerText = P.selPage;
+        document.getElementById('lblSelectedUID').innerText = P.selUID;
+        document.getElementById('lblD_PComm').innerText = P.dPComm;
+        document.getElementById('lblD_Amt').innerText = P.dAmt;
+        document.getElementById('lblA_PComm').innerText = P.aPComm;
+        document.getElementById('lblA_Amt').innerText = P.aAmt;
+        document.getElementById('lblPati_PComm').innerText = P.pati;
+        document.getElementById('lblfHissaPartyID').innerText = P.hissaID;
+        document.getElementById('lblHissaPerc').innerText = P.hissaPer;
+        document.getElementById('LabelThirdPartyCommID').innerText = P.tpCommID;
+        document.getElementById('LabelThirdPartyDaraComm').innerText = P.tpDara;
+        document.getElementById('LabelThirdPartyAkharComm').innerText = P.tpAkhar;
+        if (_subUID) document.getElementById('lblsubuserid').innerText = _subUID;
+
+        await loadCustomerName();
+        await SelectedUserBalance();
+        await SelectRefreshStatus();
+        await initDate();
+        await getTime();
+        startRefresh();
+
+        if (P.selPage === '1') document.getElementById('btnMoveMsg').style.display = 'inline-block';
+        document.getElementById('lblSenderMobileNo').innerText = '';
+        cleartable();
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessageAmount').value = '';
+        if (P.selPage !== '1') {
+          document.getElementById('BtnYantri').style.display = 'none';
+          document.getElementById('btnMoveMsg').style.display = 'none';
+        }
+        document.getElementById('SpanClearTable').style.display = 'none';
+        // Default: Typing(Home) pill active, txtMessage visible, txtMessageAmount visible
+        BulkpillsClick();
+        scrollBottom();
+
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        // Parse _currentDate (DD/MM/YYYY) → Date for flatpickr defaultDate
+        // DS game ke liye midnight ke baad _currentDate = yesterday (correct), new Date() = today (wrong)
+        const _fpParts = (_currentDate || '').split('/');
+        const _fpDefault = _fpParts.length === 3
+          ? new Date(parseInt(_fpParts[2]), parseInt(_fpParts[1]) - 1, parseInt(_fpParts[0]))
+          : new Date();
+        flatpickr('#txtDate', {
+          allowInput: true,
+          defaultDate: _fpDefault,
+          dateFormat: 'Y-m-d',
+          altInput: true,
+          altFormat: 'd/m/Y',   // DD/MM/YYYY display format
+          allowInput: true,
+          onReady: function (sel, str, fp) {
+            if (fp.altInput) {
+              fp.altInput.value = _currentDate;
+              fp.altInput.style.cssText = document.getElementById('txtDate').style.cssText;
+              fp.altInput.readOnly = false;
+            }
+          },
+          // Calendar se date select karne par
+          onChange: function (selectedDates) {
+            if (!selectedDates[0]) return;
+            applyDateChange(selectedDates[0]);
+          },
+          // Calendar close hone par (manual type + calendar dono handle)
+          onClose: function (selectedDates) {
+            if (selectedDates[0]) applyDateChange(selectedDates[0]);
+          }
+        });
+
+        // Helper: date change apply karo + chat reload
+        function applyDateChange(d) {
+          const fmt = String(d.getDate()).padStart(2, '0') + '/' +
+            String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+          if (fmt === _currentDate) return; // same date — reload mat karo
+          _currentDate = fmt;
+          document.getElementById('txtDate').value = fmt;
+          document.getElementById('lblTodaysDate').innerText = fmt;
+          const fp2 = document.querySelector('#txtDate')._flatpickr;
+          if (fp2 && fp2.altInput) fp2.altInput.value = fmt;
+          cleartable();
+          getTime();
+        }
+
+        // bulkDate: native type="date" — no flatpickr needed, browser ki native calendar use karega
+        // (flatpickr ka positioning issue modal ke andar tha)
+      }
+
+      async function loadCustomerName() {
+        try {
+          const r = await API.get(`/api/chat/customer-name?mobile=${P.mobile}`);
+          const mobno = P.mobile.length > 5 ? P.mobile.substring(P.mobile.length - 5) : P.mobile;
+          if (r?.success && r.data && r.data.CustomerName) {
+            // Customer name mila — header + navbar mein dikhao
+            document.getElementById('lblMobile').textContent = r.data.CustomerName + ' (' + mobno + ')';
+            const navCust2 = document.getElementById('navCustomerName');
+            if (navCust2) navCust2.textContent = r.data.CustomerName;
+            _isUttarCustomer = r.data.IsUttar === 'True' || r.data.IsUttar === true;
+            document.getElementById('lblIsUttarCustomer').innerText = r.data.IsUttar || 'False';
+          } else {
+            // API mein nahi mila — mobile number dikhao
+            document.getElementById('lblMobile').textContent = P.mobile;
+            const navCust2 = document.getElementById('navCustomerName');
+            if (navCust2) navCust2.textContent = P.mobile;
+          }
+          document.getElementById('lblMobile1').innerText = P.mobile;
+        } catch (e) {
+          document.getElementById('lblMobile').textContent = P.mobile;
+          const navCust2 = document.getElementById('navCustomerName');
+          if (navCust2) navCust2.textContent = P.mobile;
+        }
+      }
+
+      async function SelectedUserBalance() {
+        try {
+          const r = await API.get(`/api/accounts/selected-balance?customerUID=${P.selUID}`);
+          const el = document.getElementById('lblUserBalance');
+          const elAct = document.getElementById('lblActualUserBalance');
+          const elLim = document.getElementById('lblActuallimit');
+          if (r?.success && r.data?.IsLimit === 'True') {
+            elLim.innerText = 'True';
+            const bal = Math.trunc(parseFloat(r.data.WinAmount || 0));
+            elAct.innerText = bal.toString();
+            if (bal > 0) { el.textContent = 'Bal : ' + bal; el.style.color = 'red'; }
+            else if (bal < 0) { el.textContent = 'Bal : ' + Math.abs(bal); el.style.color = 'green'; }
+            else { el.textContent = ''; el.style.color = 'green'; }
+          } else { el.textContent = ''; elAct.innerText = ''; elLim.innerText = ''; }
+        } catch (e) { }
+      }
+
+      async function SelectRefreshStatus() {
+        try { const r = await API.get('/api/auth/me'); if (r?.user?.IsRefreshStatus) document.getElementById('lblRefreshStatus').innerText = r.user.IsRefreshStatus; } catch (e) { }
+      }
+
+      async function initDate() {
+        // ASPX logic: GetChatDate SP se date lo (same as ASPX Page_Load)
+        // DS logic: DrawTime ke baad ki entries agle din subah 8am tak same date pe dikhen
+        // Backend SP GetChatDate yahi handle karta hai
+        try {
+          // Step 1: GetChatDate - game ki current date (IST + DrawTime logic)
+          const r = await API.get(`/api/chat/date?gameId=${P.gameId}`);
+          if (r?.date) _todaysDate = fmtDate(r.date);
+          else _todaysDate = getIST();
+        } catch (e) { _todaysDate = getIST(); }
+
+        _currentDate = _todaysDate;
+
+        // Step 2: Unread date - earliest unread message ki date pe jump karo (ASPX exact)
+        try {
+          const r2 = await API.get(`/api/chat/unread-date?gameId=${P.gameId}&selectedUID=${P.selUID}`);
+          if (r2?.date) {
+            const ud = fmtDate(r2.date);
+            // Only override if unread date is valid and not same as today
+            if (ud && ud !== _todaysDate) _currentDate = ud;
+          }
+        } catch (e) { }
+
+        // Step 3: URL lastDate override — sirf non-DS games ke liye
+        // DS ke liye backend GetChatDate SP DrawTime rule handle karta hai,
+        // lastDate (last saved message ki date) se override nahi karna — DS session date galat ho jaati hai
+        if (P.lastDate && P.gameName !== 'DS') _currentDate = fmtDate(P.lastDate);
+
+        document.getElementById('txtDate').value = _currentDate;
+        document.getElementById('lblTodaysDate').innerText = _currentDate;
+      }
+
+      function FilterByDate(txt) {
+        const val = txt.value;
+        if (!val || val === _currentDate) return false;
+        _currentDate = val;
+        document.getElementById('lblTodaysDate').innerText = _currentDate;
+        cleartable();
+        getTime();
+        return false;
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // GET TIME — fetch & render messages
+      // ═══════════════════════════════════════════════════════
+      async function getTime() {
+        try {
+          const r = await API.get(`/api/chat/received?gameId=${P.gameId}&date=${encodeURIComponent(_currentDate)}&selectedUID=${P.selUID}&rates=${encodeURIComponent(P.rates)}`);
+          if (!r?.success) { renderMessages([]); return; }
+          renderMessages(r.data || []);
+          // Grand Total: Accepted + Pending (all active bets)
+          const tot = (r.data || [])
+            .filter(m => m.IsAccepted === 'Accepted' || m.IsAccepted === 'Pending')
+            .reduce((s, m) => {
+              // Message field parse karke sum karo (yantri jaisa exact calculation)
+              let sum = 0;
+              (m.Message || '').split(',').forEach(e => {
+                const parts = e.split('=');
+                if (parts.length === 2) sum += parseFloat(parts[1]) || 0;
+              });
+              // Agar Message parse nahi hua to TotalAmount fallback
+              return s + (sum > 0 ? sum : (parseFloat(m.TotalAmount) || 0));
+            }, 0);
+          document.getElementById('totalamountmesssage').textContent = tot ? 'Grand Total: ' + Math.round(tot) : '';
+        } catch (e) { renderMessages([]); }
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // RENDER MESSAGES — ISSUE 1 & 5: Show like image 2
+      // All entries visible, latest at bottom (scroll to bottom)
+      // ═══════════════════════════════════════════════════════
+      function renderMessages(msgs) {
+        const el = document.getElementById('ScrollChatDiv');
+        if (!msgs.length) {
+          el.innerHTML = '<div style="text-align:center;padding:28px;color:#aaa;font-size:.85rem;">No messages for this date</div>';
+          return;
+        }
+        const isTrue = v => v === true || v === 'True' || v === 'true' || v === '1';
+
+        el.innerHTML = msgs.map(m => {
+          const isSent = String(m.Sender) === '0';
+          const rowCls = isSent ? 'bg-sent' : 'bg-recv';
+          const isYantri = isTrue(m.IsYantriStyle);
+          const isByAdmin = isTrue(m.IsSendByReceiver);
+          const isSettledFalse = !isTrue(m.IsSettled);
+
+          let msgBody = '';
+          if (String(m.IsTextChat) === 'False' || m.IsTextChat === false) {
+            msgBody = `<img src="${m.Message || ''}" style="max-width:180px;border-radius:4px;" alt="img">`;
+          } else {
+            msgBody = `<span class="msg-text">${escHtml(m.Message || '')}</span>`;
+          }
+
+          // Parse datetime once
+          const _msgDt = parseMsgDateTime(m.MessageDateTime);
+          const fullDate = _msgDt?.fullDate || '';
+
+          // Total / Rate / Updated — ONE combined line (Updated already carries
+          // the date, so no separate "Date:" item — that was showing the date twice)
+          const metaLine = (isYantri && (m.TotalAmount || m.Rate || fullDate))
+            ? `<div class="msg-meta-combined">
+                 ${m.TotalAmount ? `<span class="lbl-total">💰 Total: ${m.TotalAmount}</span>` : ''}
+                 ${m.Rate ? `<span class="meta-item"><span class="meta-label">Rate:</span> ${escHtml(m.Rate)}</span>` : ''}
+                 ${fullDate ? `<span class="last-updated">🕐 ${fullDate}</span>` : ''}
+               </div>` : '';
+
+          const byAdmin = isByAdmin ? `<span class="by-admin">BY ADMIN</span>` : '';
+          const subLbl = m.subuserID ? `<span class="subuser-lbl">${escHtml(String(m.subuserID))}</span>` : '';
+
+          // Right-side action icons — ASPX screenshot: ↪ □ 📋 ✏ stacked vertically
+          const showEdit = (m.IsAccepted === 'Pending' && String(m.X) === '1')
+            || (isByAdmin && String(m.X) === '0' && m.IsAccepted !== 'Rejected');
+          const editBtn = showEdit
+            ? `<button class="btn-edit" title="Edit" onclick="ReSendChat('${m.ChatID}','${escJs(m.Message || '')}')">✏️</button>` : '';
+          const shareBtn = `<button class="btn-share" title="Share">↪</button>`;
+          const copyBtn = `<button class="btn-copy" title="Copy" onclick="copyMsg('${escJs(m.Message || '')}')">📋</button>`;
+          const chkBtn = `<input type="checkbox" style="width:14px;height:14px;cursor:pointer;" title="Select">`;
+
+          const rightActions = `<div class="msg-actions-right">${shareBtn}${chkBtn}${copyBtn}${editBtn}</div>`;
+
+          if (isSent) {
+            // Customer ne bheja (received by admin) — ASPX: yellow bg
+            let statusEl = '';
+            if (m.IsAccepted === 'Accepted') statusEl = `<span class="s-ok">Ok</span>`;
+            else if (m.IsAccepted === 'Rejected') statusEl = `<span class="s-cancel">Cancelled</span>`;
+            else if (m.IsAccepted === 'Pending') statusEl = `<span class="s-sent">Sent ✔</span>`;
+
+            const delBtn = m.IsAccepted === 'Pending'
+              ? `<button class="btn-del" onclick="GetSelectedRow('${m.ChatID}')">🗑</button>` : '';
+
+            return `<div class="chat-row ${rowCls}">
+        ${rightActions}
+        ${delBtn}
+        <div class="msg-right">
+          ${msgBody}${metaLine}
+          <div class="msg-status-row">${statusEl}${byAdmin}</div>
+        </div>
+        ${subLbl}<div class="row-sep"></div>
+      </div>`;
+
+          } else {
+            // Admin ne bheja — ASPX: white bg
+            let statusEl = '';
+            if (m.IsAccepted === 'Rejected') statusEl = `<span class="s-cancel">Cancelled</span>`;
+            else if (m.IsAccepted === 'Accepted') statusEl = `<span class="s-ok">Ok</span>`;
+
+            const acBtn = (m.IsAccepted === 'Pending' && isYantri)
+              ? `<button class="btn-acc" onclick="btnAccepted_Click('${m.ChatID}')">✔</button>` : '';
+            const rejBtn = (m.IsAccepted !== 'Rejected' && isYantri && isSettledFalse)
+              ? `<button class="btn-rej" onclick="btnRejected_Click('${m.ChatID}')">✕</button>` : '';
+
+            return `<div class="chat-row ${rowCls}">
+        ${rightActions}
+        <div class="msg-left">
+          ${msgBody}${metaLine}
+          <div class="msg-status-row">${statusEl}${byAdmin}${acBtn}${rejBtn}</div>
+        </div>
+        ${subLbl}<div class="row-sep"></div>
+      </div>`;
+          }
+        }).join('');
+        // ISSUE 5: Scroll to bottom so latest entry is always visible
+        scrollBottom();
+      }
+
+      function parseMsgDateTime(s) {
+        if (!s) return null;
+        const str = String(s).trim();
+
+        // Helper: raw values se display strings banao — NO new Date(), no timezone issue
+        function makeObj(dd, mm, yy, h24, min) {
+          const h12 = h24 % 12 || 12;
+          const ap = h24 >= 12 ? 'PM' : 'AM';
+          const dds = String(dd).padStart(2, '0');
+          const mms = String(mm).padStart(2, '0');
+          const yys = String(yy).slice(-2);
+          const mins = String(min).padStart(2, '0');
+          return {
+            shortDate: `${dds}/${mms}/${yys}`,
+            fullDate: `${dds}/${mms}/${yys} ${h12}:${mins}${ap}`
+          };
+        }
+
+        // Format 1 (API response): "09/04/26 3:37PM" or "09/04/26 3:37 PM"
+        const m1 = str.match(/^(\d{1,2})\/(\d{2})\/(\d{2})\s+(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (m1) {
+          let h = parseInt(m1[4]); const ap = m1[6].toUpperCase();
+          if (ap === 'PM' && h !== 12) h += 12;
+          if (ap === 'AM' && h === 12) h = 0;
+          return makeObj(parseInt(m1[1]), parseInt(m1[2]), 2000 + parseInt(m1[3]), h, parseInt(m1[5]));
+        }
+
+        // Format 2 (DB varchar format): "10-Apr-2026 12:44:00 PM"
+        const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+        const m2 = str.match(/^(\d{1,2})-(\w{3})-(\d{4})\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?/i);
+        if (m2) {
+          let h = parseInt(m2[4]); const ap = (m2[6] || '').toUpperCase();
+          if (ap === 'PM' && h !== 12) h += 12;
+          if (ap === 'AM' && h === 12) h = 0;
+          const moIdx = months[m2[2].toLowerCase()];
+          if (moIdx !== undefined) return makeObj(parseInt(m2[1]), moIdx + 1, parseInt(m2[3]), h, parseInt(m2[5]));
+        }
+
+        // Format 3 (mssql JSON datetime): "2026-04-14T16:17:00.000Z" or "2026-04-14T16:17:00"
+        // mssql driver datetime column ko ISO string mein convert karta hai
+        // Server IST pe hai, time IST mein store hai, lekin mssql galat Z tag lagata hai
+        // ISO string ke numbers raw extract karo — NO new Date() — no timezone shift
+        const m3 = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+        if (m3) {
+          // Raw numbers: yyyy, mm, dd, hh, min — ye server (IST) ke actual values hain
+          const yyyy = parseInt(m3[1]), mo = parseInt(m3[2]), dd = parseInt(m3[3]);
+          const hh = parseInt(m3[4]), mn = parseInt(m3[5]);
+          return makeObj(dd, mo, yyyy, hh, mn);
+        }
+
+        return null;
+      }
+      function formatShortDate(d) {
+        if (!d) return '';
+        if (d.shortDate) return d.shortDate; // new object format
+        if (d instanceof Date && !isNaN(d))
+          return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getFullYear()).slice(-2);
+        return '';
+      }
+
+      // Accept/Reject/Delete
+      async function btnAccepted_Click(chatId) { const r = await API.post('/api/chat/accept-reject', { chatId, status: 'Accepted' }); if (r?.success) getTime(); }
+      async function btnRejected_Click(chatId) { const r = await API.post('/api/chat/accept-reject', { chatId, status: 'Rejected' }); if (r?.success) getTime(); }
+      async function GetSelectedRow(chatId) { await API.delete(`/api/chat/${chatId}`); getTime(); }
+
+      function copyMsg(msg) {
+        if (!msg) return;
+        // localhost = secure context, navigator.clipboard works
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(msg)
+            .then(() => showToast('Copied!'))
+            .catch(() => showToast('Copy failed'));
+        } else {
+          // Ultra-safe fallback: textarea off-screen, no focus interference
+          const ta = document.createElement('textarea');
+          ta.value = msg;
+          ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); showToast('Copied!'); } catch (e) { }
+          document.body.removeChild(ta);
+        }
+      }
+
+      function startRefresh() {
+        setInterval(() => {
+          if (document.hidden) return; // tab background me — API/DB mat maro
+          const tbl = document.getElementById('myTableBody');
+          if (document.getElementById('lblRefreshStatus').innerText === 'True' && (!tbl || !tbl.rows.length)) getTime();
+        }, 2000);
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // SAVE BULK MESSAGE — ISSUE 2 & 3: ADD3 (CHFP) logic fixed
+      // ADD3 logic: start=typed number, step+=3 each time (e.g. type 2 → 02,05,08,11...)
+      // Also full ASPX-matching logic for all modes
+      // ═══════════════════════════════════════════════════════
+      function SaveBulkMessage(txtNumber, txtAmount) {
+        const s1 = txtNumber, s2 = txtAmount;
+
+        // ── Capture mode flags at START — before CleartxtNumbersamt() can reset them
+        const isJode = document.getElementById('RadioJode').checked;
+        const isPalat = document.getElementById('RadioPalat').checked;
+        const is57 = document.getElementById('Radio57').checked;
+        const is43 = document.getElementById('Radio43').checked;
+        const isPahada = document.getElementById('RadioPahada').checked;
+        const isAnder = document.getElementById('RadioAnder').checked;
+        const isBahar = document.getElementById('RadioBahar').checked;
+        const isLaddi = document.getElementById('RadioLaddi').checked;
+        const isCrossing = document.getElementById('RadioCrossing').checked;
+        // CRITICAL: capture ADD3 state HERE — before CleartxtNumbersamt resets it
+        const isAdd3 = document.getElementById('CHFP').checked;
+
+        if (!((s1 !== '') || (isJode && s2 !== '' && s2 !== '0') || (is57 && s2 !== '' && s2 !== '0') || (is43 && s2 !== '' && s2 !== '0'))) return;
+
+        if (isJode) { JODE_NUMS.forEach(n => addRow(n, s2)); CleartxtNumbersamt(); return; }
+
+        if (isPalat) {
+          const s3 = document.getElementById('txtMessageAmountPalat').value;
+          const raw = s1.replace(/[^0-9]/g, '');
+          if (raw.length === 1) { addRow('0' + raw, s2); SubTotal(); addRow(raw + '0', s3); SubTotal(); CleartxtNumbersamt(); return; }
+          if (raw.length % 2 === 0) {
+            for (let i = 0; i < raw.length; i += 2) {
+              let c = raw.substr(i, 2); if (c === '00') c = '100'; addRow(c, s2); SubTotal();
+              const rev = parseInt(c.split('').reverse().join(''));
+              addRow(rev < 10 ? '0' + rev : String(rev), s3); SubTotal();
+            }
+            CleartxtNumbersamt(); return;
+          }
+          ErrorMessage(); return;
+        }
+
+        if (is57) { SET57.forEach(n => addRow(n, s2)); CleartxtNumbersamt(); return; }
+        if (is43) { SET43.forEach(n => addRow(n, s2)); CleartxtNumbersamt(); return; }
+
+        // ── PAHADA logic (from image):
+        // Normal: type 5 → 05,10,15,20... (start=typed, step=typed)
+        // ADD3:   type 2 → 02,05,08,11... (start=typed, step=3)
+        if (isPahada) {
+          let start = parseInt(s1.replace(/[^0-9]/g, ''));
+          if (isNaN(start) || start <= 0) start = 1;
+          const step = isAdd3 ? 3 : start;
+          for (let i = start; i <= 100; i += step) {
+            const Tstr = i >= 1 && i <= 9 ? '0' + i : String(i);
+            addRow(Tstr, s2); SubTotal();
+          }
+          CleartxtNumbersamt();
+          return;
+        }
+
+        if (isAnder) {
+          s1.replace(/[^0-9]/g, '').split('').forEach(d => { let n = d + d + d + d; if (n === '0000') n = '10000'; addRow(n, s2); SubTotal(); });
+          CleartxtNumbersamt(); return;
+        }
+        if (isBahar) {
+          s1.replace(/[^0-9]/g, '').split('').forEach(d => { let n = d + d + d; if (n === '000') n = '1000'; addRow(n, s2); SubTotal(); });
+          CleartxtNumbersamt(); return;
+        }
+        if (isLaddi) {
+          const from = parseInt(s1.replace(/[^0-9]/g, ''));
+          const to = parseInt(document.getElementById('txtSecondNumber').value);
+          const amt = parseInt(s2);
+          // from must be < to, both 1-100, amount > 0
+          if (!isNaN(from) && !isNaN(to) && amt > 0 && from >= 1 && from < to && to <= 100) {
+            for (let i = from; i <= to; i++) {
+              addRow(i <= 9 ? '0' + i : String(i), s2);
+              SubTotal();
+            }
+            // Fix 1: Laddi sirf table mein add karo — auto-save nahi
+            // User F2 se save karega (baaki modes ki tarah)
+            CleartxtNumbersamt();
+          } else {
+            ErrorMessage();
+          }
+          return;
+        }
+        if (isCrossing) {
+          const digits = txtNumber.replace(/[^0-9]/g, '').split('');
+          const noJode = document.getElementById('chkCrossingWithoutJode').checked;
+          for (let i = 0; i < digits.length; i++)for (let j = 0; j < digits.length; j++) {
+            if (noJode && i === j) continue;
+            let pair = digits[i] + digits[j]; if (pair === '00' || pair === '0') pair = '100';
+            addRow(pair, s2); SubTotal();
+          }
+          CleartxtNumbersamt(); return;
+        }
+        // A/B prefix
+        if ((s2 !== '' && s2 !== '0') && (s1.includes('a') || s1.includes('A') || s1.includes('b') || s1.includes('B'))) {
+          parseABInput(s1, s2); CleartxtNumbersamt(); return;
+        }
+        if (s2 !== '' && s2 !== '0' && s1 !== '0') {
+          parseTypingInput(s1.replace(/[^0-9]/g, '')).forEach(n => { if (n) { addRow(n, s2); SubTotal(); } });
+          CleartxtNumbersamt();
+        } else if (s2 !== '' && s2 === '0' && s1 !== '0') {
+          parsePasteMessage(s1); CleartxtNumbersamt();
+        } else ErrorMessage();
+      }
+
+      function parseABInput(s1, s2) {
+        if (s1.includes('ab') || s1.includes('AB')) {
+          const str = s1.replace(/[aAbB]/g, '');
+          str.split('').forEach(d => { let n = d + d + d + d; if (n === '0000') n = '10000'; addRow(n, s2); SubTotal(); });
+          str.split('').forEach(d => { let n = d + d + d; if (n === '000') n = '1000'; addRow(n, s2); SubTotal(); });
+        } else if (s1.includes('a') || s1.includes('A')) {
+          s1.replace(/[^0-9]/g, '').split('').forEach(d => { let n = d + d + d + d; if (n === '0000') n = '10000'; addRow(n, s2); SubTotal(); });
+        } else if (s1.includes('b') || s1.includes('B')) {
+          s1.replace(/[^0-9]/g, '').split('').forEach(d => { let n = d + d + d; if (n === '000') n = '1000'; addRow(n, s2); SubTotal(); });
+        }
+      }
+
+      function parseTypingInput(raw) {
+        if (!raw) return [];
+        const v = parseInt(raw);
+        if (raw.length === 1) return [v >= 1 && v <= 9 ? '0' + v : v === 0 ? '100' : String(v)];
+        if (raw.length === 3 && allCharactersSame(raw)) return [raw === '000' ? '1000' : raw];
+        if (raw.length === 4 && allCharactersSame(raw)) return [raw === '0000' ? '10000' : raw];
+        if (raw.length % 2 === 0) { const r = []; for (let i = 0; i < raw.length; i += 2) { let c = raw.substr(i, 2); if (c === '00') c = '100'; r.push(c); } return r; }
+        if (v >= 1 && v <= 9) return ['0' + v];
+        return [String(v)];
+      }
+
+      function parsePasteMessage(s1) {
+        let str = s1.replace(/ /g, '');
+        const parts = str.split(/[\n),+$#@\\_]/); let pending = '';
+        parts.forEach(part => {
+          const segs = part.split(/[=(]/);
+          let num = (segs[0] || '').replace(/[^0-9]/g, ''); const amt = segs[1];
+          if (!amt) { pending += num; return; }
+          let fn = num + pending; pending = '';
+          parseTypingInput(fn).forEach(n => { if (n && amt) { addRow(n, amt); SubTotal(); } });
+        });
+      }
+
+      function allCharactersSame(s) { return s.split('').every(c => c === s[0]); }
+
+      // ═══════════════════════════════════════════════════════
+      // ADD ROW — ISSUE 1: Like image 2 design
+      // ═══════════════════════════════════════════════════════
+      function addRow(s1, s2) {
+        if (!s1 || !s2) return;
+        const isValid = ((parseInt(s1) <= 100 && parseInt(s1) > 0) || (s1.length >= 3 && allCharactersSame(s1)) || s1 === '1000' || s1 === '10000');
+        if (!isValid) return;
+        const amt = parseFloat(s2) || 0; if (amt === 0) return;
+        const finalAmt = _isUttarCustomer ? -Math.abs(amt) : Math.abs(amt);
+        if (isNaN(finalAmt) || finalAmt === 0) return;
+        const tbody = document.getElementById('myTableBody');
+        const tr = document.createElement('tr');
+        // ISSUE 1: Match image 2 — number | amount | X button columns
+        // Image 2 jaisi design: number | amount | X button — clear, bold, readable
+        tr.innerHTML = `<td style="width:60px;height:18px;color:black;text-align:center;font-size:11px;font-weight:600;">${s1}</td>
+    <td style="width:70px;height:18px;color:black;text-align:center;font-size:11px;font-weight:600;">${finalAmt}</td>
+    <td style="width:32px;height:18px;text-align:center;"><button onclick="deleteRow(this)" style="width:16px;height:16px;background:red;color:white;border:none;border-radius:3px;font-size:9px;font-weight:bold;line-height:1;padding:0;">X</button></td>`;
+        tbody.appendChild(tr);
+        Amount += finalAmt;
+        document.getElementById('SpanClearTable').style.display = 'block';
+        const wrap = document.getElementById('myTableWrap');
+        wrap.style.display = 'flex';
+        // myTableWrap ab khud bounded/scrollable hai — usi ko scroll karo
+        // taaki latest entry dikhe, Number/Amt input aur pills ko chhedo mat
+        wrap.scrollTop = wrap.scrollHeight;
+      }
+
+      function deleteRow(btn) { const row = btn.closest('tr'); const amt = parseFloat(row.cells[1].textContent) || 0; Amount -= amt; row.remove(); SubTotal(); }
+
+      function SubTotal() {
+        const tbody = document.getElementById('myTableBody');
+        let sum = 0; Array.from(tbody.rows).forEach(r => { sum += parseFloat(r.cells[1]?.textContent) || 0; });
+        Amount = sum;
+        document.getElementById('lblTotalAmount').textContent = sum ? sum : '';
+        document.getElementById('lblTotalAmountShow').textContent = sum ? 'Total Amount:' : '';
+        if (!sum) { document.getElementById('myTableWrap').style.display = 'none'; document.getElementById('SpanClearTable').style.display = 'none'; }
+      }
+
+      function myFunction() {
+        const tbody = document.getElementById('myTableBody'); let final = '';
+        for (let i = 0; i < tbody.rows.length; i++)final += tbody.rows[i].cells[0].innerHTML + '=' + tbody.rows[i].cells[1].innerHTML + ',';
+        if (final) final = final.slice(0, -1);
+        document.getElementById('lblMessage').innerHTML = final;
+      }
+
+      function cleartable() { document.getElementById('myTableBody').innerHTML = ''; Amount = 0; SubTotal(); }
+
+      function ClearTableNew() {
+        document.getElementById('editChoiceBar').style.display = 'none';
+        document.getElementById('lblSenderMobileNo').innerText = '';
+        cleartable();
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessageAmount').value = '';
+        if (P.selPage !== '1') { document.getElementById('BtnYantri').style.display = 'none'; document.getElementById('btnMoveMsg').style.display = 'none'; }
+        document.getElementById('lblMessage').innerHTML = '';
+        document.getElementById('lblTotalAmount').innerText = '';
+        Amount = 0; CleartxtNumbersamt();
+        document.getElementById('lblchatid').innerText = '';
+        document.getElementById('btnSend').textContent = 'Save(F2)';
+        document.getElementById('SpanClearTable').style.display = 'none';
+        txtMessageFocusTrue();
+      }
+
+      function CleartxtNumbersamt() {
+        // Save current mode BEFORE clearing
+        const isPahada = document.getElementById('RadioPahada').checked;
+        const isAdd3 = document.getElementById('CHFP').checked;
+
+        ['txtSecondNumber', 'txtMessage', 'txtMessageAmount', 'txtonlyTextMessage', 'txtMessageAmountPalat']
+          .forEach(id => document.getElementById(id).value = '');
+        document.getElementById('txtMessage').maxLength = 50000;
+
+        if (isPahada) {
+          // Pahada mode mein rehna — ADD3 state preserve karo
+          document.getElementById('CHFP').checked = isAdd3;
+          APahadaClick_noReset();
+        } else {
+          // Baaki sab modes ke baad — Typing(Home) pe aao
+          document.getElementById('CHFP').checked = false;
+          // Without Jode reset karo
+          document.getElementById('chkCrossingWithoutJode').checked = false;
+          BulkpillsClick();
+        }
+      }
+
+      // APahadaClick without resetting CHFP — called from CleartxtNumbersamt after pahada entry
+      function APahadaClick_noReset() {
+        setAllInactive();
+        document.getElementById('APahada').classList.add('active');
+        document.getElementById('RadioPahada').checked = true;
+        document.getElementById('Add3Pahada').style.display = 'block';
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessage').maxLength = 2;
+        // Focus on txtMessage so user can type next number
+        txtMessageFocusTrue();
+      }
+
+
+
+      // ═══════════════════════════════════════════════════════
+      // SEND MESSAGE
+      // ═══════════════════════════════════════════════════════
+      async function sendmessage() {
+        myFunction();
+        const msg = document.getElementById('lblMessage').innerHTML;
+        const totAmt = Amount;
+        if (!msg || totAmt === 0) { ErrorMessageSorry(); txtMessageFocusTrue(); return; }
+
+        const limTrue = document.getElementById('lblActuallimit').innerText === 'True';
+        const actBal = parseFloat(document.getElementById('lblActualUserBalance').innerText || 0);
+        if (msg !== '' && limTrue && totAmt > 0) {
+          if (actBal < 0 && totAmt > Math.abs(actBal)) { ErrorMessageSorryAmountGreater(); return; }
+          else if (actBal > 0) { ErrorMessageSorryLimitOut(); return; }
+        }
+
+        const editId = document.getElementById('lblchatid').innerText;
+        const btnText = editId ? 'Update(Insert)' : 'Send(Insert)';
+        const isYantri = document.getElementById('lblSendBulkORMessage').innerText === '1' ? 'True' : 'False';
+        const payload = {
+          gameId: P.gameId, message: msg, totalAmount: totAmt, isYantriStyle: isYantri,
+          checkAcceptedStatus: isYantri === 'True', fUserID: P.selUID, date: _currentDate,
+          chatId: editId || '', btnText,
+          D_PComm: P.dPComm, D_Amt: P.dAmt, A_PComm: P.aPComm, A_Amt: P.aAmt, Pati_PComm: P.pati,
+          fHissaPartyID: P.hissaID, HissaPerc: P.hissaPer,
+          ThirdPartyCommID: P.tpCommID, ThirdPartyDaraComm: P.tpDara, ThirdPartyAkharComm: P.tpAkhar
+        };
+        const r = await API.post('/api/chat/save-receiver-message', payload);
+        if (r?.success || r?.message === 'SuccessFully') {
+          // FIX 3: ASPX exact — message send hone ke baad clipboard mein copy karo
+          // ASPX: document.getElementById("myInput").value = lblMessage.innerText; myFunctionCopyMsg();
+          // Fix 4: Save ke baad message clipboard mein copy karo (Ctrl+V se paste ho)
+          const sentMsg = document.getElementById('lblMessage').innerHTML;
+          if (sentMsg) {
+            const el = document.getElementById('myInput');
+            el.style.display = 'block';
+            el.value = sentMsg; el.select(); el.setSelectionRange(0, 99999);
+            try {
+              document.execCommand('copy'); // fallback for HTTP
+            } catch (e) { }
+            navigator.clipboard?.writeText(sentMsg).catch(() => { });
+            el.style.display = 'none';
+          }
+          document.getElementById('lblMessage').innerHTML = '';
+          Amount = 0; cleartable(); CleartxtNumbersamt();
+          document.getElementById('lblchatid').innerText = '';
+          document.getElementById('btnSend').textContent = 'Save(F2)';
+          document.getElementById('SpanClearTable').style.display = 'none';
+          // Fix 8: Save ke baad refresh — background mein (UI ko block nahi karta, F2 turant respond karega)
+          txtMessageFocusTrue();
+          getTime();
+          // Double-check: agar pehli refresh mein nahi aaya to 500ms baad dobara
+          setTimeout(() => { getTime(); scrollBottom(); }, 500);
+        } else { showToast(r?.message || 'Error!'); txtMessageFocusTrue(); }
+      }
+
+      async function sendPlainMessage() {
+        const msg = document.getElementById('txtonlyTextMessage').value.trim();
+        if (!msg) { document.getElementById('txtonlyTextMessage').focus(); return; }
+        const r = await API.post('/api/chat/save-receiver-message', {
+          gameId: P.gameId, message: msg, totalAmount: 0, isYantriStyle: 'False',
+          checkAcceptedStatus: false, fUserID: P.selUID, date: _currentDate,
+          chatId: '', btnText: 'Send(Insert)',
+          D_PComm: P.dPComm, D_Amt: P.dAmt, A_PComm: P.aPComm, A_Amt: P.aAmt, Pati_PComm: P.pati,
+          fHissaPartyID: P.hissaID, HissaPerc: P.hissaPer,
+          ThirdPartyCommID: P.tpCommID, ThirdPartyDaraComm: P.tpDara, ThirdPartyAkharComm: P.tpAkhar
+        });
+        if (r?.success || r?.message === 'SuccessFully') {
+          document.getElementById('txtonlyTextMessage').value = '';
+          document.getElementById('txtonlyTextMessage').focus();
+          getTime();
+          scrollBottom();
+        } else showToast(r?.message || 'Error!');
+      }
+
+      function ReSendChat(chatId, msg) {
+        document.getElementById('lblMessage').innerHTML = ''; cleartable();
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        SaveBulkMessage(msg, '0');
+        document.getElementById('lblchatid').innerText = chatId;
+        document.getElementById('editChatIdLabel').textContent = 'ChatID: ' + chatId;
+        const bar = document.getElementById('editChoiceBar');
+        bar.style.display = 'flex';
+        document.getElementById('SpanClearTable').style.display = 'block';
+        document.getElementById('btnSend').textContent = 'Update(Insert)';
+        txtMessageFocusTrue();
+      }
+
+      function editDoUpdate() {
+        document.getElementById('btnSend').textContent = 'Update(Insert)';
+        document.getElementById('editChoiceBar').style.display = 'none';
+        myFunction(); sendmessage();
+      }
+      function editDoNew() {
+        document.getElementById('lblchatid').innerText = '';
+        document.getElementById('btnSend').textContent = 'Save(F2)';
+        document.getElementById('editChoiceBar').style.display = 'none';
+        myFunction(); sendmessage();
+      }
+      function editCancel() {
+        document.getElementById('editChoiceBar').style.display = 'none';
+        document.getElementById('lblchatid').innerText = '';
+        document.getElementById('btnSend').textContent = 'Save(F2)';
+        cleartable(); CleartxtNumbersamt();
+      }
+
+      function btnSendClick() {
+        if (document.getElementById('lblSendBulkORMessage').innerText === '1') {
+          myFunction();
+          const msg = document.getElementById('lblMessage').innerHTML;
+          if (msg && Amount !== 0) sendmessage();
+          else { ErrorMessageSorry(); txtMessageFocusTrue(); }
+        } else sendPlainMessage();
+      }
+
+      function amtKeyDown(e) {
+        if (e.keyCode === 13) {
+          const num = document.getElementById('txtMessage').value;
+          const amt = document.getElementById('txtMessageAmount').value;
+          if (amt) {
+            const palatVisible = window.getComputedStyle(document.getElementById('txtMessageAmountPalat')).display !== 'none';
+            if (!palatVisible) {
+              SaveBulkMessage(num, amt);
+              return false;
+            } else {
+              document.getElementById('txtMessageAmountPalat').focus();
+            }
+          }
+          e.preventDefault();
+        }
+        // FIX 3: Up arrow in Amount → go back to Number field, select all
+        if (e.keyCode === 38) {
+          const msgEl = document.getElementById('txtMessage');
+          if (msgEl.style.display !== 'none') {
+            e.preventDefault();
+            msgEl.focus();
+            msgEl.select();
+          }
+        }
+      }
+
+      function txtMessageKeyDown(e) {
+        if (e.keyCode === 13) {
+          const sec = document.getElementById('txtSecondNumber');
+          const amt = document.getElementById('txtMessageAmount');
+          if (sec.style.display !== 'none' && document.getElementById('txtMessage').value) sec.focus();
+          else if (amt.style.display !== 'none' && document.getElementById('txtMessage').value) {
+            amt.focus(); amt.select();
+          }
+          e.preventDefault();
+        }
+        // FIX 3: Down arrow in Number → go to Amount, select all
+        if (e.keyCode === 40) {
+          const amt = document.getElementById('txtMessageAmount');
+          if (amt.style.display !== 'none') {
+            e.preventDefault();
+            amt.focus();
+            amt.select();
+          }
+        }
+        // FIX 3: Up arrow in Number → select all current value (ASPX behavior)
+        if (e.keyCode === 38) {
+          e.preventDefault();
+          document.getElementById('txtMessage').select();
+        }
+      }
+
+      function PasteMsg(e) {
+        e.preventDefault(); let text = e.clipboardData.getData('text');
+        text = text.replace(/(\r\n|\n|\r)/gm, ',');
+        document.getElementById('txtMessage').value += text;
+        processSpl(document.getElementById('txtMessage')); return false;
+      }
+
+      function isNumber(evt) { const c = (evt.which || evt.keyCode); return !(c > 31 && (c < 48 || c > 57)); }
+      function isNumberNdSpl(evt) { const c = (evt.which || evt.keyCode); if ((c > 64 && c < 91) || (c > 96 && c < 123) && c !== 13) return false; return true; }
+      function process(input) { input.value = input.value.replace(/[^0-9]/g, ''); }
+      function processSpl(input) {
+        input.value = input.value.replace(/[a-zA-Z]/g, '');
+        // ASPX: formatInput() — as you type a long number, group it into
+        // comma-separated pairs (78,94,56,12,30) for readability. Parsing at
+        // save-time already strips commas back out, so this is display-only.
+        const raw = input.value.replace(/,/g, '');
+        if (/^\d+$/.test(raw) && raw.length > 2) {
+          input.value = raw.match(/\d{1,2}/g).join(',');
+        }
+      }
+      function txtMessageFocusTrue() { setTimeout(() => { const el = document.getElementById('txtMessage'); el.focus(); el.select(); }, 50); }
+
+      // ═══════════════════════════════════════════════════════
+      // NAV PILLS — ISSUE 2: Pahada click shows ADD3 checkbox
+      // ISSUE 3: All logic exactly as ASPX
+      // ═══════════════════════════════════════════════════════
+      function setAllInactive() { ['Bulkpills', 'ALaddi', 'AJode', 'ACrossing', 'APahada', 'A1Ander', 'A2Bahar', 'AYantri', 'A57', 'A43', 'APalat', 'Typingpills'].forEach(id => document.getElementById(id)?.classList.remove('active')); }
+
+      function BulkpillsClick() {
+        setAllInactive(); document.getElementById('Bulkpills').classList.add('active');
+        ['RadioJode', 'RadioBahar', 'RadioAnder', 'RadioCrossing', 'RadioLaddi', 'RadioPahada', 'Radio57', 'Radio43', 'RadioPalat'].forEach(id => document.getElementById(id).checked = false);
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessage').value = '';
+        document.getElementById('txtMessageAmount').value = '';
+        document.getElementById('txtMessage').maxLength = 50000;
+        txtMessageFocusTrue();
+      }
+
+      function ALaddiClick() {
+        setAllInactive(); document.getElementById('ALaddi').classList.add('active');
+        document.getElementById('RadioLaddi').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'block';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessage').maxLength = 2;
+        document.getElementById('txtSecondNumber').maxLength = 3;
+        txtMessageFocusTrue();
+      }
+
+      function AJodeClick() {
+        setAllInactive(); document.getElementById('AJode').classList.add('active');
+        document.getElementById('RadioJode').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        // FIX 1: Jode par fresh click → Without Jode reset
+        document.getElementById('chkCrossingWithoutJode').checked = false;
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'none';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessageAmount').focus();
+        document.getElementById('txtMessageAmount').select();
+      }
+
+      function ACrossingClick() {
+        setAllInactive(); document.getElementById('ACrossing').classList.add('active');
+        document.getElementById('RadioCrossing').checked = true;
+        document.getElementById('WithOutJode').style.display = 'block';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        // FIX 3: Crossing click pe Without Jode reset — har baar khali aaye
+        document.getElementById('chkCrossingWithoutJode').checked = false;
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessage').maxLength = 50000;
+        txtMessageFocusTrue();
+      }
+
+      // ISSUE 2 & 3: Pahada — show Add3Pahada, exact ASPX logic
+      function APahadaClick() {
+        setAllInactive(); document.getElementById('APahada').classList.add('active');
+        document.getElementById('RadioPahada').checked = true;
+        // ASPX: Add3Pahada shown, WithOutJode hidden
+        document.getElementById('Add3Pahada').style.display = 'block';
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        // ASPX: maxLength=2 for pahada number
+        document.getElementById('txtMessage').maxLength = 2;
+        // Fresh click from nav pill: reset ADD3 checkbox
+        document.getElementById('CHFP').checked = false;
+        txtMessageFocusTrue();
+      }
+
+      function A1AnderClick() {
+        setAllInactive(); document.getElementById('A1Ander').classList.add('active');
+        document.getElementById('RadioAnder').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessage').maxLength = 50000;
+        txtMessageFocusTrue();
+      }
+
+      function A2BaharClick() {
+        setAllInactive(); document.getElementById('A2Bahar').classList.add('active');
+        document.getElementById('RadioBahar').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessage').maxLength = 50000;
+        txtMessageFocusTrue();
+      }
+
+      // ISSUE 4: AYantri click opens yantri modal
+      // ISSUE 4: F2 in Yantri modal now calls ymSend() (handled in keydown listener)
+      function AYantriClick() {
+        setAllInactive(); document.getElementById('AYantri').classList.add('active');
+        cleartable();
+        document.getElementById('lblYantriOn').innerText = 'Yes';
+        buildYantriGrid();
+        openYantriModal();
+      }
+
+      function OpenYantriagent() {
+        // yantri.html expects Date in dd/MMM/yyyy format (e.g. "14/May/2026")
+        // _currentDate is now DD/MM/YYYY — convert it
+        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        function toYantriDate(ddmmyyyy) {
+          const p = String(ddmmyyyy || '').match(/^(\d{1,2})\/(\d{2})\/(\d{4})/);
+          if (p) return `${p[1].padStart(2, '0')}/${MONTHS[parseInt(p[2]) - 1]}/${p[3]}`;
+          // ISO YYYY-MM-DD
+          const iso = String(ddmmyyyy || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (iso) return `${iso[3].padStart(2, '0')}/${MONTHS[parseInt(iso[2]) - 1]}/${iso[1]}`;
+          return ddmmyyyy;
+        }
+        const dateForYantri = toYantriDate(_currentDate) || toYantriDate(getIST());
+        window.location.href = `/pages/yantri.html?GameID=${P.gameId}&SelectedUID=${P.selUID}&Date=${encodeURIComponent(dateForYantri)}&Rates=${encodeURIComponent(P.rates)}&SelectedPage=1`;
+      }
+
+      function A57Click() {
+        setAllInactive(); document.getElementById('A57').classList.add('active');
+        document.getElementById('Radio57').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'none';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessageAmount').focus();
+        document.getElementById('txtMessageAmount').select();
+      }
+
+      function A43Click() {
+        setAllInactive(); document.getElementById('A43').classList.add('active');
+        document.getElementById('Radio43').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'none';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessageAmount').focus();
+        document.getElementById('txtMessageAmount').select();
+      }
+
+      function APalatClick() {
+        setAllInactive(); document.getElementById('APalat').classList.add('active');
+        document.getElementById('RadioPalat').checked = true;
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '1';
+        document.getElementById('txtMessage').style.display = 'block';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'block';
+        document.getElementById('txtMessageAmountPalat').value = '';
+        document.getElementById('txtMessageAmount').style.display = 'block';
+        document.getElementById('txtMessage').maxLength = 50000;
+        txtMessageFocusTrue();
+      }
+
+      function TypingpillsClick() {
+        setAllInactive(); document.getElementById('Typingpills').classList.add('active');
+        ['RadioJode', 'RadioBahar', 'RadioAnder', 'RadioCrossing', 'RadioLaddi', 'RadioPahada', 'Radio57', 'Radio43', 'RadioPalat'].forEach(id => document.getElementById(id).checked = false);
+        document.getElementById('WithOutJode').style.display = 'none';
+        document.getElementById('Add3Pahada').style.display = 'none';
+        document.getElementById('lblSendBulkORMessage').innerText = '0';
+        document.getElementById('txtMessageAmount').style.display = 'none';
+        document.getElementById('txtSecondNumber').style.display = 'none';
+        document.getElementById('txtMessage').style.display = 'none';
+        document.getElementById('txtMessageAmountPalat').style.display = 'none';
+        document.getElementById('txtonlyTextMessage').style.display = 'block';
+        document.getElementById('txtonlyTextMessage').focus();
+        document.getElementById('txtonlyTextMessage').select();
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // KEYBOARD SHORTCUTS — ISSUE 4: F2 in yantri modal → ymSend()
+      // ═══════════════════════════════════════════════════════
+      document.addEventListener('keydown', e => {
+        if (e.keyCode === 116 || (e.ctrlKey && e.keyCode === 82)) { e.preventDefault(); ClearTableNew(); }
+        // F4 = keyCode 115 — preventDefault taaki browser F4 default action na ho (other PCs)
+        if (e.keyCode === 115) { e.preventDefault(); }
+        // F2 = 113, F8 = 119, F9 = 120 — prevent browser defaults
+        if (e.keyCode === 113 || e.keyCode === 119 || e.keyCode === 120) { e.preventDefault(); }
+      });
+      document.addEventListener('keyup', e => {
+        const k = e.keyCode || e.which;
+        if (k === 34 || k === 40) scrollBottom();
+        if (k === 65 && document.getElementById('lblSendBulkORMessage').innerText === '1') A1AnderClick();
+        if (k === 66 && document.getElementById('lblSendBulkORMessage').innerText === '1') A2BaharClick();
+        if (k === 80 && document.getElementById('lblSendBulkORMessage').innerText === '1') APahadaClick();
+        if (k === 115) ALaddiClick();
+        if (k === 119) AJodeClick();
+        if (k === 120) ACrossingClick();
+        if (k === 36) BulkpillsClick();
+        if (k === 35) AYantriClick();
+        // ISSUE 4: F2 — if yantri modal open → ymSend(); else normal save
+        if (k === 113) {
+          const yantriOpen = document.getElementById('ymOverlay').classList.contains('open');
+          if (yantriOpen) {
+            // F2 in yantri modal sends the yantri message
+            ymSend();
+          } else if (!document.getElementById('lblYantriOn').innerText) {
+            document.getElementById('btnSend').click(); scrollBottom();
+          }
+        }
+        if (k === 27) {
+          const pg = P.selPage, gid = P.gameId, game = P.gameName;
+          if (!pg || pg === '') window.location.href = '/pages/home.html';
+          else if (pg === '1') window.location.href = `/pages/received.html?GID=${gid}&Game=${encodeURIComponent(game)}`;
+          else if (pg === '2') window.location.href = '/pages/home.html';
+          else window.location.href = '/pages/home.html';
+        }
+      });
+
+      function OpenYantri() { if (P.selPage === '1') AYantriClick(); }
+      function openBulkMovePopup() { openBulkModal(); }
+      function goBack() { const gid = P.gameId, game = P.gameName; if (P.selPage === '1') window.location.href = `/pages/received.html?GID=${gid}&Game=${encodeURIComponent(game)}`; else window.location.href = '/pages/home.html'; }
+      function scrollBottom() {
+        setTimeout(() => {
+          // Messages: scroll to latest message
+          const msgs = document.getElementById('ScrollChatDiv');
+          if (msgs) msgs.scrollTop = msgs.scrollHeight;
+          // Input area: scroll to top so table starts from top, Number field visible
+          const inp = document.querySelector('.input-area');
+          if (inp) inp.scrollTop = 0;
+        }, 80);
+      }
+      // fmtDate → DD/MM/YYYY display format
+      // fmtDate — always UTC methods to avoid browser timezone double-shift
+      function fmtDate(dt) {
+        try {
+          // Date object → use UTC (our IST dates are stored as UTC-shifted)
+          if (dt instanceof Date) {
+            return String(dt.getUTCDate()).padStart(2, '0') + '/' +
+              String(dt.getUTCMonth() + 1).padStart(2, '0') + '/' +
+              dt.getUTCFullYear();
+          }
+          const s = String(dt || '').trim();
+          // ISO "2026-04-15T..." → extract date portion only (UTC, no timezone shift)
+          const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (iso) return `${iso[3].padStart(2, '0')}/${iso[2]}/${iso[1]}`;
+          // Already DD/MM/YYYY
+          if (/^\d{1,2}\/\d{2}\/\d{4}/.test(s)) return s;
+          // dd/MMM/yyyy → DD/MM/YYYY
+          const mth = { Jan: '01', Feb: '02', Mar: '03', Apr: '04', May: '05', Jun: '06', Jul: '07', Aug: '08', Sep: '09', Oct: '10', Nov: '11', Dec: '12' };
+          const m2 = s.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/);
+          if (m2) return `${String(m2[1]).padStart(2, '0')}/${mth[m2[2]] || '01'}/${m2[3]}`;
+          // Fallback — use UTC to avoid local timezone shift
+          const d = new Date(s);
+          if (!isNaN(d)) return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0') + '/' + d.getUTCFullYear();
+          return s.split('T')[0];
+        } catch { return String(dt); }
+      }
+      function getIST() {
+        // IST = UTC + 5:30 — use UTC methods to avoid browser timezone double-shift
+        const ist = new Date(Date.now() + 5.5 * 3600000);
+        const d = String(ist.getUTCDate()).padStart(2, '0');
+        const m = String(ist.getUTCMonth() + 1).padStart(2, '0');
+        const y = ist.getUTCFullYear();
+        return `${d}/${m}/${y}`;
+      }
+      function getISTiso() {
+        const ist = new Date(Date.now() + 5.5 * 3600000);
+        const y = ist.getUTCFullYear();
+        const m = String(ist.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(ist.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+      function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+      function escJs(s) { return String(s || '').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
+      function ErrorMessage() { showToast('Wrong Inputs! Something Went Wrong!'); }
+      function ErrorMessageSorry() { showToast('Sorry Please Check Value !'); }
+      function ErrorMessageSorryLimitOut() { showToast('Limit Out! Your message sending limit has been Exceeded.'); }
+      function ErrorMessageSorryAmountGreater() { showToast('Amount Greater! Sending amount is greater than limit.'); }
+      function showToast(msg) { const t = document.getElementById('toastMsg'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 2800); }
+      async function doLogout() { await API.post('/api/auth/logout', {}); window.location.href = '/login.html'; }
+
+      // ═══════════════════════════════════════════════════════
+      // YANTRI MODAL — ISSUE 4: ymSend() triggered by F2 + button
+      // ═══════════════════════════════════════════════════════
+      const YM_ROWS = [
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+        [21, 22, 23, 24, 25, 26, 27, 28, 29, 30], [31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
+        [41, 42, 43, 44, 45, 46, 47, 48, 49, 50], [51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
+        [61, 62, 63, 64, 65, 66, 67, 68, 69, 70], [71, 72, 73, 74, 75, 76, 77, 78, 79, 80],
+        [81, 82, 83, 84, 85, 86, 87, 88, 89, 90], [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
+      ];
+      const YM_AADAR = [111, 222, 333, 444, 555, 666, 777, 888, 999, 1000];
+      const YM_ANDER = [1111, 2222, 3333, 4444, 5555, 6666, 7777, 8888, 9999, 10000];
+      const YM_ALL = [...YM_ROWS.flat(), ...YM_AADAR, ...YM_ANDER];
+      let _ymBuilt = false;
+
+      function buildYantriGrid() {
+        if (_ymBuilt) return; _ymBuilt = true;
+        const g = document.getElementById('ymGrid');
+        const dl = n => { if (n === 100) return '100'; if (n === 1000) return '000'; if (n === 10000) return '0000'; return n < 10 ? '0' + n : String(n); };
+        let h = '';
+        YM_ROWS.forEach((row, ri) => {
+          h += '<div class="ym-row">';
+          row.forEach(n => h += `<div class="ym-col"><span class="ym-lbl">${dl(n)}</span></div>`);
+          h += `<div class="ym-col"><span class="ym-lbl"></span></div></div>`;
+          h += '<div class="ym-row">';
+          row.forEach(n => h += `<div class="ym-col"><input type="tel" class="ym-inp" id="ymn${n}" maxlength="6"
+      autocomplete="off" autocorrect="off" autocapitalize="off"
+      onkeypress="return isNumber(event)" oninput="ymCalc()" onkeydown="ymKD(event,${n},${ri})"></div>`);
+          h += `<div class="ym-tot-col"><span class="ym-tot-val" id="ymr${ri}">0</span></div></div>`;
+        });
+        h += '<div class="ym-row">';
+        for (let c = 0; c < 10; c++)h += `<div class="ym-col"><span class="ym-col-tot" id="ymcol${c}">0</span></div>`;
+        h += '<div class="ym-col"></div></div>';
+        h += '<hr class="ym-sep">';
+        h += '<div class="ym-row">';
+        YM_AADAR.forEach(n => h += `<div class="ym-col"><span class="ym-lbl">${dl(n)}</span></div>`);
+        h += `<div class="ym-col"></div></div>`;
+        h += '<div class="ym-row">';
+        YM_AADAR.forEach(n => h += `<div class="ym-col"><input type="tel" class="ym-inp ak" id="ymn${n}" maxlength="6"
+    autocomplete="off" onkeypress="return isNumber(event)" oninput="ymCalc()" onkeydown="ymKDAk(event,${n},'aa')"></div>`);
+        h += `<div class="ym-tot-col"><span class="ym-tot-val" id="ymrAa">0</span></div></div>`;
+        h += '<hr class="ym-sep">';
+        h += '<div class="ym-row">';
+        YM_ANDER.forEach(n => h += `<div class="ym-col"><span class="ym-lbl">${dl(n)}</span></div>`);
+        h += `<div class="ym-col"></div></div>`;
+        h += '<div class="ym-row">';
+        YM_ANDER.forEach(n => h += `<div class="ym-col"><input type="tel" class="ym-inp ak" id="ymn${n}" maxlength="6"
+    autocomplete="off" onkeypress="return isNumber(event)" oninput="ymCalc()" onkeydown="ymKDAk(event,${n},'an')"></div>`);
+        h += `<div class="ym-tot-col"><span class="ym-tot-val" id="ymrAn">0</span></div></div>`;
+        g.innerHTML = h;
+      }
+
+      function ymCalc() {
+        let grand = 0;
+        YM_ROWS.forEach((row, ri) => {
+          let t = 0; row.forEach(n => { t += parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; });
+          const el = document.getElementById('ymr' + ri); if (el) el.textContent = t; grand += t;
+        });
+        for (let c = 0; c < 10; c++) {
+          let ct = 0; for (let r = 0; r < 10; r++) { const n = YM_ROWS[r][c]; ct += parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; }
+          const el = document.getElementById('ymcol' + c); if (el) el.textContent = ct;
+        }
+        let aa = 0; YM_AADAR.forEach(n => { aa += parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; });
+        const elAa = document.getElementById('ymrAa'); if (elAa) elAa.textContent = aa; grand += aa;
+        let an = 0; YM_ANDER.forEach(n => { an += parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; });
+        const elAn = document.getElementById('ymrAn'); if (elAn) elAn.textContent = an; grand += an;
+        document.getElementById('ymTotalAmt').textContent = grand;
+      }
+
+      function ymKD(e, n, rowIdx) {
+        const ud = document.getElementById('ymUpToDown').checked;
+        if (e.which === 13) {
+          e.preventDefault(); ymCalc();
+          if (ud) {
+            const col = YM_ROWS[rowIdx].indexOf(n);
+            const nr = rowIdx + 1;
+            if (nr < 10) { ymFocus(YM_ROWS[nr][col]); }
+            else { const nc = col + 1; if (nc < 10) { ymFocus(YM_ROWS[0][nc]); } else { ymFocus(YM_AADAR[0]); } }
+          } else { if (n < 100) ymFocus(n + 1); else ymFocus(YM_AADAR[0]); }
+        }
+        if (e.which === 38) {
+          e.preventDefault(); ymCalc();
+          if (ud) {
+            const col = YM_ROWS[rowIdx].indexOf(n); const pr = rowIdx - 1;
+            if (pr >= 0) { ymFocus(YM_ROWS[pr][col]); } else { const pc = col - 1; if (pc >= 0) { ymFocus(YM_ROWS[9][pc]); } }
+          } else { if (n > 1) ymFocus(n - 1); }
+        }
+      }
+
+      function ymKDAk(e, n, sec) {
+        if (e.which === 13) {
+          e.preventDefault(); ymCalc();
+          if (sec === 'aa') { const i = YM_AADAR.indexOf(n); if (i < 9) ymFocus(YM_AADAR[i + 1]); else ymFocus(YM_ANDER[0]); }
+          else { const i = YM_ANDER.indexOf(n); if (i < 9) ymFocus(YM_ANDER[i + 1]); }
+        }
+        if (e.which === 38) {
+          e.preventDefault(); ymCalc();
+          if (sec === 'aa') { const i = YM_AADAR.indexOf(n); if (i > 0) ymFocus(YM_AADAR[i - 1]); else ymFocus(100); }
+          else { const i = YM_ANDER.indexOf(n); if (i > 0) ymFocus(YM_ANDER[i - 1]); else ymFocus(YM_AADAR[9]); }
+        }
+      }
+
+      function ymFocus(n) { const el = document.getElementById('ymn' + n); if (el) { el.focus(); el.select(); } }
+      function ymClear() { YM_ALL.forEach(n => { const el = document.getElementById('ymn' + n); if (el) el.value = ''; }); ymCalc(); ymFocus(1); }
+
+      // ISSUE 4: ymSend — triggered by button AND F2 key when modal is open
+      function ymSend() {
+        const total = parseInt(document.getElementById('ymTotalAmt').textContent) || 0;
+        if (total === 0) { showToast('Please fill some values'); return; }
+        let parts = [];
+        YM_ROWS.flat().forEach(n => { const v = parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; if (v) { parts.push((n < 10 ? '0' + n : String(n)) + '=' + v); } });
+        YM_AADAR.forEach(n => { const v = parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; if (v) parts.push(n + '=' + v); });
+        YM_ANDER.forEach(n => { const v = parseInt(document.getElementById('ymn' + n)?.value || 0) || 0; if (v) parts.push(n + '=' + v); });
+        if (!parts.length) { showToast('No data'); return; }
+        API.post('/api/chat/save-receiver-message', {
+          gameId: P.gameId, message: parts.join(','), totalAmount: total,
+          isYantriStyle: 'True', checkAcceptedStatus: true,
+          fUserID: P.selUID, date: _currentDate, chatId: '', btnText: 'Send(Insert)',
+          D_PComm: P.dPComm, D_Amt: P.dAmt, A_PComm: P.aPComm, A_Amt: P.aAmt, Pati_PComm: P.pati,
+          fHissaPartyID: P.hissaID, HissaPerc: P.hissaPer,
+          ThirdPartyCommID: P.tpCommID, ThirdPartyDaraComm: P.tpDara, ThirdPartyAkharComm: P.tpAkhar
+        }).then(r => {
+          if (r?.success || r?.message === 'SuccessFully') { closeYantriModal(); getTime(); showToast('Sent!'); }
+          else showToast(r?.message || 'Error!');
+        });
+      }
+
+      function openYantriModal() {
+        buildYantriGrid(); ymClear();
+        document.getElementById('ymOverlay').classList.add('open');
+        setTimeout(() => ymFocus(1), 150);
+      }
+
+      function closeYantriModal() {
+        document.getElementById('ymOverlay').classList.remove('open');
+        document.getElementById('lblYantriOn').innerText = '';
+        // Reset AYantri pill back to Typing(Home)
+        setAllInactive();
+        document.getElementById('Bulkpills').classList.add('active');
+        txtMessageFocusTrue();
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // BULK MOVE/COPY
+      // ═══════════════════════════════════════════════════════
+      async function openBulkModal() {
+        // Default date = current chat date, convert to YYYY-MM-DD for native date input
+        const ist = new Date(Date.now() + 5.5 * 3600000);
+        const todayISO = `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
+
+        // _currentDate is DD/MM/YYYY — convert to YYYY-MM-DD for native input
+        function toISO(ddmmyyyy) {
+          if (!ddmmyyyy) return todayISO;
+          // DD/MM/YYYY → YYYY-MM-DD
+          const p = ddmmyyyy.match(/^(\d{1,2})\/(\d{2})\/(\d{4})/);
+          if (p) return `${p[3]}-${p[2].padStart(2, '0')}-${p[1].padStart(2, '0')}`;
+          // Already ISO
+          if (/^\d{4}-\d{2}-\d{2}/.test(ddmmyyyy)) return ddmmyyyy.substring(0, 10);
+          return todayISO;
+        }
+
+        document.getElementById('bulkDate').value = toISO(_currentDate) || todayISO;
+        document.getElementById('bulkMsg').textContent = '';
+        document.getElementById('bulkMsg').style.color = '';
+        // Search field reset karo + focus
+        const sf = document.getElementById('bulkCustSearch');
+        if (sf) { sf.value = ''; }
+
+        // FROM info display — current game + date + customer
+        const fromInfo = document.getElementById('bulkFromInfo');
+        if (fromInfo) {
+          fromInfo.textContent = `Game: ${P.gameName} | Date: ${_currentDate} | Customer: ${document.getElementById('lblMobile').textContent}`;
+        }
+
+        await bulkLoadGames();
+        await bulkLoadCustomers();
+        document.getElementById('bulkOverlay').classList.add('open');
+      }
+      function closeBulkModal() { document.getElementById('bulkOverlay').classList.remove('open'); }
+
+      async function bulkLoadGames() {
+        try {
+          const r = await API.get('/api/home/games');
+          const games = r?.data || [];
+          const sel = document.getElementById('bulkGame');
+          sel.innerHTML = '<option value="">-- Select Game --</option>';
+          games.forEach(g => {
+            const o = document.createElement('option');
+            o.value = g.GID || g.gid;
+            o.textContent = g.GameName || g.gameName || '';
+            if (String(o.value) === String(P.gameId)) o.selected = true;
+            sel.appendChild(o);
+          });
+        } catch (e) { console.error('bulkLoadGames', e); }
+      }
+
+      async function bulkLoadCustomers() {
+        try {
+          const r = await API.get('/api/customer/list');
+          const custs = r?.data || [];
+          // Cache store karo for search filtering
+          _bulkAllCustomers = custs;
+          // Initial render (no filter)
+          bulkCustFilter('');
+          // Current customer pre-select
+          const sel = document.getElementById('bulkCustomer');
+          for (let i = 1; i < sel.options.length; i++) {
+            const parts = sel.options[i].value.split('|');
+            if (parts[2] === String(P.selUID) || parts[1] === P.mobile) { sel.selectedIndex = i; break; }
+          }
+          await bulkCustomerChange();
+          bulkPreSelectRate();
+        } catch (e) { console.error('bulkLoadCustomers', e); }
+      }
+
+      function bulkPreSelectRate() {
+        const rateSel = document.getElementById('bulkRate');
+        const currentRate = P.rates || '';
+        if (!currentRate || rateSel.options.length <= 1) return;
+        for (let i = 1; i < rateSel.options.length; i++) {
+          const opt = rateSel.options[i];
+          const rateText = (opt.dataset.dpcomm || 0) + '/' +
+            (opt.dataset.damt || 100) + '-' + (opt.dataset.apcomm || 0) + '/' +
+            (opt.dataset.aamt || 10) + '-' + (opt.dataset.pati || 0);
+          if (rateText === currentRate || opt.textContent.trim() === currentRate) { opt.selected = true; break; }
+          if (opt.dataset.damt === P.dAmt && opt.dataset.aamt === P.aAmt &&
+            opt.dataset.dpcomm === P.dPComm && opt.dataset.apcomm === P.aPComm) { opt.selected = true; break; }
+        }
+      }
+
+      async function bulkCustomerChange() {
+        const sel = document.getElementById('bulkCustomer');
+        const val = sel.value;
+        const rateSel = document.getElementById('bulkRate');
+        rateSel.innerHTML = '<option value="">-- Select Rate --</option>';
+        if (!val) return;
+        const cid = val.split('|')[0];
+        if (!cid) return;
+        try {
+          const r = await API.get('/api/customer/' + cid + '/rates');
+          const rates = r?.data || [];
+          rates.forEach(rt => {
+            const o = document.createElement('option');
+            o.value = rt.RateID || rt.rateID || '';
+            o.dataset.dpcomm = rt.D_PComm || 0; o.dataset.damt = rt.D_Amt || 100;
+            o.dataset.apcomm = rt.A_PComm || 0; o.dataset.aamt = rt.A_Amt || 10;
+            o.dataset.pati = rt.Patti || rt.Pati_PComm || 0;
+            o.dataset.targetuid = rt.fUID || ''; o.dataset.mobile = rt.MobileNo || '';
+            o.dataset.hissaid = rt.ThirdPartyHissaID || '0'; o.dataset.hissaper = rt.ThirdPartyHissaPer || '0';
+            o.dataset.tpcommid = rt.ThirdPartyCommID || '0'; o.dataset.tpdara = rt.ThirdPartyDaraComm || '0';
+            o.dataset.tpakhar = rt.ThirdPartyAkharComm || '0';
+            o.textContent = rt.Rate || ((rt.D_PComm || 0) + '/' +
+              (rt.D_Amt || 100) + '-' + (rt.A_PComm || 0) + '/' + (rt.A_Amt || 10) + '-' + (rt.Patti || 0));
+            rateSel.appendChild(o);
+          });
+        } catch (e) { console.error('bulkCustomerChange', e); }
+      }
+
+      function bulkGetRate() {
+        const sel = document.getElementById('bulkRate');
+        const o = sel.options[sel.selectedIndex];
+        if (!o || !o.value) return null;
+        return {
+          rateID: o.value, D_PComm: o.dataset.dpcomm || 0, D_Amt: o.dataset.damt || 100,
+          A_PComm: o.dataset.apcomm || 0, A_Amt: o.dataset.aamt || 10, Pati: o.dataset.pati || 0,
+          targetUID: o.dataset.targetuid || '', mobile: o.dataset.mobile || '',
+          hissaID: o.dataset.hissaid || '0', hissaPer: o.dataset.hissaper || '0',
+          tpCommID: o.dataset.tpcommid || '0', tpDara: o.dataset.tpdara || '0', tpAkhar: o.dataset.tpakhar || '0'
+        };
+      }
+
+      // Bulk modal customer search — received.html wali tarah
+      // type karo → matching customers dropdown mein aayein
+      let _bulkAllCustomers = []; // full customer list cache
+
+      function bulkCustFilter(q) {
+        const sel = document.getElementById('bulkCustomer');
+        const term = q.toLowerCase().trim();
+        sel.innerHTML = '<option value="">-- Select Customer --</option>';
+        const source = _bulkAllCustomers;
+        const filtered = term
+          ? source.filter(c =>
+            (c.CustomerName || '').toLowerCase().includes(term) ||
+            (c.Mobile || '').toLowerCase().includes(term))
+          : source;
+        filtered.forEach(c => {
+          const o = document.createElement('option');
+          const uid = c.UID || c.uid || '';
+          const mobile = c.Mobile || c.mobile || '';
+          const cid = c.CID || c.cid || '';
+          o.value = cid + '|' + mobile + '|' + uid;
+          o.textContent = (c.CustomerName || c.customerName || mobile) + ' ' + String(mobile).slice(-5);
+          if (String(uid) === String(P.selUID) || mobile === P.mobile) o.selected = true;
+          sel.appendChild(o);
+        });
+        // Agar sirf ek result ho to auto-select karo
+        if (filtered.length === 1) { sel.selectedIndex = 1; bulkCustomerChange(); }
+      }
+
+      function bulkMsgSet(txt, ok) { const el = document.getElementById('bulkMsg'); el.textContent = txt; el.style.color = ok ? 'green' : 'red'; }
+
+      function bulkValidate() {
+        const gameID = document.getElementById('bulkGame').value;
+        const custVal = document.getElementById('bulkCustomer').value;
+        const date = document.getElementById('bulkDate').value;
+        const rate = bulkGetRate();
+        if (!gameID) { bulkMsgSet('Please select Game', false); return null; }
+        if (!custVal) { bulkMsgSet('Please select Customer', false); return null; }
+        if (!date) { bulkMsgSet('Please enter Date', false); return null; }
+        if (!rate) { bulkMsgSet('Please select Rate', false); return null; }
+        return { gameID, custVal, date, rate };
+      }
+
+      async function doBulkMove() {
+        const v = bulkValidate(); if (!v) return;
+        const { gameID, custVal, date, rate } = v;
+
+        // SP UpdateMoveChatMessage:
+        // WHERE fGameID=@GameID(P.gameId) AND fSenderID=@SelectedUID(P.selUID) AND fReceiverID=@UserID(me) AND MsgDate=@MsgDate(_currentDate)
+        // SET fSenderID=(SELECT UID FROM Users WHERE Mobile=@Mobile), MsgDate=@CurrentMsgDate(date), fGameID=@CurrentGameID(gameID)
+
+        const mobile = rate.mobile || '';
+        if (!mobile) { bulkMsgSet('Rate mein MobileNo nahi — rate select karo ❌', false); return; }
+
+        try {
+          bulkMsgSet('Moving...⏳', true);
+          const r = await API.post('/api/chat/move-message', {
+            gameID: P.gameId,
+            selectedUID: P.selUID,
+            mobile: mobile,
+            msgDate: _currentDate,
+            currentMsgDate: date,
+            currentGameID: gameID,
+            // SOURCE rate (current chat ka rate — filtering ke liye)
+            src_D_PComm: P.dPComm, src_D_Amt: P.dAmt,
+            src_A_PComm: P.aPComm, src_A_Amt: P.aAmt,
+            src_Pati_PComm: P.pati,
+            // DEST rate
+            fHissaPartyID: rate.hissaID || 0,
+            hissaPerc: rate.hissaPer || 0,
+            D_PComm: rate.D_PComm, D_Amt: rate.D_Amt,
+            A_PComm: rate.A_PComm, A_Amt: rate.A_Amt,
+            Pati_PComm: rate.Pati
+          });
+          if (r?.success) {
+            bulkMsgSet(r.message || 'Moved! ✅', true);
+            setTimeout(() => { closeBulkModal(); getTime(); }, 1500);
+          } else bulkMsgSet(r?.message || 'Messages Not Move ❌', false);
+        } catch (e) { bulkMsgSet('Error: ' + e.message, false); }
+      }
+
+      async function doBulkCopy() {
+        const v = bulkValidate(); if (!v) return;
+        const { gameID, custVal, date, rate } = v;
+
+        // SP SelectForCopyChatMessage:
+        // WHERE fGameID=@GameID(P.gameId) AND fSenderID=@SelectedUID(P.selUID) AND fReceiverID=@UserID(me) AND MsgDate=@MsgDate(_currentDate)
+        // Then InsertChatMessageWhatsappLike: fGameID=currentGameID, fReceiverID=targetUID, @CurrentMsgDate=date
+
+        // targetUID = TO customer ka UID
+        // FIX: custVal.split('|')[2] = bulkCustomer dropdown ka actual customer UID (correct!)
+        // rate.targetUID = rate ki MobileNo se joined UID (galat ho sakta hai — sub-agent ka UID aata hai)
+        const custParts = custVal.split('|');
+        let targetUID = custParts[2] || '';  // PRIMARY: customer dropdown ka UID
+
+        // Fallback: mobile se lookup
+        if (!targetUID || targetUID === '0') {
+          try {
+            const mob = custParts[1] || rate.mobile || '';
+            if (mob) {
+              const ur = await API.get('/api/home/user-by-mobile/' + mob);
+              if (ur?.data?.[0]?.UID) targetUID = String(ur.data[0].UID);
+            }
+          } catch (e) { }
+        }
+        if (!targetUID || targetUID === '0') {
+          bulkMsgSet('Target customer UID nahi mila ❌', false);
+          return;
+        }
+
+        try {
+          bulkMsgSet('Copying...⏳', true);
+          const r = await API.post('/api/chat/copy-message', {
+            selectedUID: P.selUID,
+            gameID: P.gameId,
+            msgDate: _currentDate,
+            currentGameID: gameID,
+            currentMsgDate: date,
+            targetUID: targetUID,
+            // SOURCE rate (current chat ka — sirf isi rate ki entries copy hogi)
+            src_D_PComm: P.dPComm, src_D_Amt: P.dAmt,
+            src_A_PComm: P.aPComm, src_A_Amt: P.aAmt,
+            src_Pati_PComm: P.pati,
+            // DEST rate
+            D_PComm: rate.D_PComm, D_Amt: rate.D_Amt,
+            A_PComm: rate.A_PComm, A_Amt: rate.A_Amt,
+            Pati_PComm: rate.Pati,
+            fHissaPartyID: rate.hissaID || 0,
+            hissaPerc: rate.hissaPer || 0,
+            ThirdPartyCommID: rate.tpCommID || 0,
+            ThirdPartyDaraComm: rate.tpDara || 0,
+            ThirdPartyAkharComm: rate.tpAkhar || 0
+          });
+          if (r?.success) {
+            bulkMsgSet(r.message || 'Copied! ✅', true);
+            setTimeout(() => { closeBulkModal(); getTime(); }, 1500);
+          } else bulkMsgSet(r?.message || 'Messages Not Copy ❌', false);
+        } catch (e) { bulkMsgSet('Error: ' + e.message, false); }
+      }
+
+      init();
+    </script>
+
+      </div><!-- /.chat-main -->
+    </div><!-- /.col-md-6 -->
+  </div><!-- /.row -->
+</div><!-- /.content -->
+</body>
+
+</html>

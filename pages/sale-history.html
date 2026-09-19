@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sale History - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<style>
+.hideGridColumn{display:none;}
+#myTable{width:100%;border-collapse:collapse;border:1px solid #000;margin-top:8px;}
+#myTable td{padding:1px 5px;font-size:13px;font-weight:bold;color:#000;text-align:center;height:22px;border:1px solid #ccc;}
+
+/* Embedded chat panel (opens when a Customer link in the results grid is clicked) */
+.right-panel-chat{display:none;flex-direction:column;overflow:hidden;background:#fff;font-family:Arial,sans-serif;font-size:13px;height:calc(100vh - 150px);min-height:480px;border:1px solid #dee2e6;border-radius:8px;}
+.chat-hdr{background:#fff;border-bottom:2px solid #e0e0e0;padding:6px 12px 4px;flex-shrink:0;}
+.hr1{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;}
+.hr2{font-size:.78rem;color:#000;padding:1px 0 2px;}
+#sh_gameName{color:#000;font-weight:bold;font-size:.94rem;}
+#sh_txtDate{width:100px;height:26px;border:1px solid #ced4da;border-radius:4px;padding:0 6px;font-size:.78rem;color:#000;outline:none;text-align:center;background:#fff;}
+#sh_balance{font-size:.9rem;font-weight:bold;color:green;margin-left:auto;}
+#sh_backBtn{background:rgba(0,0,0,.07);border:1px solid #ccc;padding:2px 7px;border-radius:4px;cursor:pointer;font-size:.78rem;}
+#sh_scroll{flex:1;overflow-y:auto;background:#fff;}
+.sh-row{width:100%;padding:3px 8px;border-bottom:1px solid #f0f0f0;overflow:hidden;}
+.sh-sent{background:#f9f4d9;}.sh-recv{background:#fff;}
+.sh-mtxt{word-break:break-word;font-size:13px;color:#000;font-weight:bold;}
+.sh-ltot{font-weight:bold;font-size:11px;color:#000;}
+.sh-meta{font-size:10px;color:#555;display:block;}
+.sh-lupd{font-size:10px;color:#6c757d;}
+.sh-sok{font-weight:700;font-size:11px;color:green;}.sh-sno{font-weight:700;font-size:11px;color:#000;}.sh-sca{font-weight:700;font-size:11px;color:red;}
+.sh-bad{color:#6861ce;font-weight:bold;font-size:10px;margin-left:6px;}
+.sh-acc{color:green;background:none;border:none;cursor:pointer;font-size:.85rem;}
+.sh-rej{color:red;background:none;border:none;cursor:pointer;font-size:.85rem;margin-left:28px;}
+.sh-del{color:red;background:none;border:none;cursor:pointer;font-size:.8rem;float:right;}
+.sh-shr{background:none;border:none;cursor:pointer;color:#6861ce;font-size:.82rem;float:right;padding:0 2px;}
+.sh-cpy{background:none;border:none;cursor:pointer;color:#555;font-size:.82rem;float:right;padding:0 2px;}
+.sh-sep{height:2px;background:#fff;width:100%;clear:both;}
+#sh_grandTotal{padding:3px 10px;font-weight:bold;font-size:.86rem;background:#fff;border-bottom:1px solid #e0e0e0;text-align:center;color:#000;min-height:20px;}
+.sh-input-area{background:#fff;border-top:1px solid #e0e0e0;flex-shrink:0;padding:4px 8px;}
+.sh-tblwrap{display:none;margin-bottom:3px;overflow-x:auto;max-height:95px;overflow-y:auto;}
+#sh_myTable{width:100%;border-collapse:collapse;border:1px solid #000;}
+#sh_myTable td{padding:1px 5px;font-size:13px;font-weight:bold;color:#000;text-align:center;height:22px;border:1px solid #ccc;}
+.sh-totrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;font-size:.76rem;}
+#sh_SpanClear{display:none;background:#FF474C;color:#fff;font-size:.72rem;font-weight:700;padding:2px 8px;cursor:pointer;border-radius:4px;}
+.sh-inrow{display:flex;align-items:stretch;gap:0;margin-bottom:3px;}
+#sh_txtText{flex:1;height:36px;border:1px solid #aaa;border-radius:4px 0 0 4px;padding:0 9px;font-size:.88rem;color:#000;outline:none;display:none;}
+#sh_txtMsg{flex:3;height:36px;border:1px solid #aaa;border-radius:4px 0 0 4px;padding:0 9px;font-size:.88rem;color:#000;outline:none;}
+#sh_txtMsg:focus{border-color:#6861ce;}
+#sh_txtMsg2{width:65px;height:36px;border:1px solid #aaa;border-left:none;padding:0 5px;font-size:.88rem;color:#000;outline:none;display:none;text-align:center;}
+#sh_txtAmt{flex:1;height:36px;border:1px solid #aaa;border-left:none;padding:0 5px;font-size:.88rem;color:#000;outline:none;display:none;text-align:center;min-width:52px;}
+#sh_txtAmtP{width:80px;height:36px;border:1px solid #aaa;border-left:none;padding:0 5px;font-size:.88rem;color:#000;outline:none;display:none;text-align:center;}
+#sh_btnSave{background:#6861ce;color:#fff;font-weight:700;border:none;padding:0 14px;height:36px;font-size:.86rem;cursor:pointer;white-space:nowrap;border-radius:0 4px 4px 0;flex-shrink:0;}
+.sh-extra{font-size:.76rem;color:#000;margin-bottom:2px;}
+.sh-extra span{margin-right:10px;}
+.sh-extra input[type=checkbox]{margin-right:3px;cursor:pointer;vertical-align:middle;}
+.sh-pills{display:flex;flex-wrap:wrap;gap:3px;list-style:none;padding:0;margin:0;}
+.sh-pill{display:inline-block;padding:4px 10px;border-radius:20px;font-size:.71rem;font-weight:500;cursor:pointer;color:#6c757d;border:1px solid #dee2e6;background:#f8f9fa;line-height:1.4;white-space:nowrap;transition:all .15s;}
+.sh-pill:hover{background:#e9ecef;color:#333;}
+.sh-pill.active{background:#6861ce;color:#fff;font-weight:700;border-color:#6861ce;}
+.sh-hid{display:none;}
+.sh-spin{display:inline-block;width:12px;height:12px;border:2px solid #dee2e6;border-top-color:#6861ce;border-radius:50%;animation:shsp .6s linear infinite;vertical-align:middle;}
+@keyframes shsp{to{transform:rotate(360deg)}}
+.sh-toast{position:fixed;bottom:55px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 14px;border-radius:6px;font-size:.78rem;z-index:9999;display:none;}
+</style>
+</head>
+<body>
+
+<div class="content" id="searchView">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Find Chat Messages</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Number</label>
+                <input type="text" class="form-control" id="txtNumber" placeholder="Number"
+                  onfocus="this.select()" onkeypress="return shIsNumber(event)" onkeydown="numberKD(event)">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Amount</label>
+                <input type="text" class="form-control" id="txtAmount" placeholder="Amount"
+                  onfocus="this.select()" onkeypress="return shIsNumber(event)" oninput="shProcess(this)" onkeydown="amountKD(event)">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>&nbsp;</label><br>
+                <button type="button" class="btn btn-success" onclick="copyMessage()">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="lblMessage" style="display:block;"></div>
+          <div class="table-responsive" style="height:auto;width:100%">
+            <table id="myTable"><tbody id="myTableBody"></tbody></table>
+          </div>
+          <span id="lblTotalAmountShow"></span> <span id="lblTotalAmount"></span>
+
+          <div class="row" style="margin-top:10px;">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" class="form-control" id="txtDate">
+              </div>
+            </div>
+            <div class="col-md-5">
+              <div class="form-group">
+                <label>Message</label>
+                <input type="text" class="form-control" id="txtMessage" placeholder="Enter Message">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label>&nbsp;</label><br>
+                <button type="button" class="btn btn-success" onclick="loadHistory()">Search</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table-bordered-bd-primary table-hover" cellpadding="4"
+              style="text-transform:capitalize;text-align:center;width:100%;">
+              <thead>
+                <tr style="background-color:LightGray;">
+                  <th>Customer</th>
+                  <th>Game</th>
+                  <th>Rate</th>
+                  <th>Sub_User</th>
+                  <th>Updated_Time</th>
+                  <th>Sale</th>
+                  <th style="text-align:left;">Message</th>
+                </tr>
+              </thead>
+              <tbody id="saleTbody"><tr><td colspan="7">Enter number and search</td></tr></tbody>
+              <tfoot><tr style="background-color:LightGray;font-weight:bold;"><td colspan="5">Total</td><td id="saleTotal" colspan="2">0</td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Embedded chat panel (opens when a Customer link is clicked — matches the rest
+     of the app's click-through-to-chat pattern, since the ASPX itself navigates to
+     a separate chat page on the "SaleHistory" RowCommand) -->
+<div class="content" id="chatView" style="display:none;">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="right-panel-chat" id="sh_panel" style="display:flex;">
+        <div class="chat-hdr">
+          <div class="hr1">
+            <button id="sh_backBtn" onclick="sh_back()">&larr;</button>
+            <span style="font-size:1.1rem;">🎮</span>
+            <span id="sh_gameID" style="display:none;"></span><span id="sh_chatid" style="display:none;"></span>
+            <span id="sh_lblRefresh" style="display:none;"></span><span id="sh_isBulk" style="display:none;">1</span>
+            <span id="sh_actBal" style="display:none;"></span><span id="sh_actLim" style="display:none;"></span>
+            <span id="sh_rates" style="display:none;"></span><span id="sh_todayDate" style="display:none;"></span>
+            <span id="sh_dPComm" style="display:none;"></span><span id="sh_dAmt" style="display:none;"></span>
+            <span id="sh_aPComm" style="display:none;"></span><span id="sh_aAmt" style="display:none;"></span>
+            <span id="sh_pati" style="display:none;"></span><span id="sh_hissaID" style="display:none;"></span>
+            <span id="sh_hissaPer" style="display:none;"></span><span id="sh_tpCommID" style="display:none;"></span>
+            <span id="sh_tpDara" style="display:none;"></span><span id="sh_tpAkhar" style="display:none;"></span>
+            <span id="sh_lblMsg" style="display:none;"></span><span id="sh_selUID" style="display:none;"></span>
+            <span id="sh_isUttar" style="display:none;"></span>
+            <span id="sh_gameName"></span>
+            <input type="text" id="sh_txtDate" placeholder="Date" onchange="sh_FilterByDate(this)" autocomplete="off">
+            <span id="sh_balance"></span>
+          </div>
+          <div class="hr2"><span id="sh_custName"></span>&nbsp;(<span id="sh_rateDisplay"></span>)</div>
+        </div>
+        <div id="sh_scroll"><div style="text-align:center;padding:16px;color:#aaa;"><span class="sh-spin"></span></div></div>
+        <div id="sh_grandTotal"></div>
+        <div class="sh-input-area">
+          <div class="sh-tblwrap" id="sh_tableWrap">
+            <table id="sh_myTable"><tbody id="sh_tableBody"></tbody></table>
+            <div class="sh-totrow">
+              <div><span id="sh_totShow"></span><span id="sh_totAmt"></span></div>
+              <span id="sh_SpanClear" onclick="sh_ClearNew()">Clear(F5)</span>
+            </div>
+          </div>
+          <div class="sh-inrow">
+            <input type="text" id="sh_txtText" placeholder="Enter text..." onkeydown="if(event.keyCode==13&&this.value.trim()){sh_sendPlain();return false;}">
+            <input type="text" id="sh_txtMsg" placeholder="Number" onkeypress="return sh_isNumSpl(event)" oninput="sh_procSpl(this)" onkeydown="sh_msgKD(event)" onpaste="return sh_pasteMsg(event)">
+            <input type="tel" id="sh_txtMsg2" placeholder="To" onkeypress="return sh_isNum(event)" oninput="sh_proc(this)" onkeydown="if(event.keyCode==13){document.getElementById('sh_txtAmt').focus();return false;}">
+            <input type="tel" id="sh_txtAmt" placeholder="Amt" onkeypress="return sh_isNum(event)" oninput="sh_proc(this)" onkeydown="sh_amtKD(event)">
+            <input type="tel" id="sh_txtAmtP" placeholder="Palat" onkeypress="return sh_isNum(event)" oninput="sh_proc(this)" onkeydown="if(event.keyCode==13){sh_SaveBulk(document.getElementById('sh_txtMsg').value,document.getElementById('sh_txtAmt').value);return false;}">
+            <button id="sh_btnSave" onclick="sh_btnSaveClick()">Save(F2)</button>
+          </div>
+          <div class="sh-extra">
+            <span id="sh_WithOutJode" style="display:none;"><input type="checkbox" id="sh_chkNoJode" onclick="sh_focusMsg()"> Without Jode</span>
+            <span id="sh_Add3" style="display:none;"><input type="checkbox" id="sh_CHFP" value="50" onclick="sh_focusMsg()"> ADD 3</span>
+          </div>
+          <ul class="sh-pills">
+            <li><a class="sh-pill active" id="sh_Bulk"   onclick="sh_BulkClick()">Typing(Home)</a></li>
+            <li><a class="sh-pill"        id="sh_Laddi"  onclick="sh_LaddiClick()">Laddi (F4)</a></li>
+            <li><a class="sh-pill"        id="sh_Jode"   onclick="sh_JodeClick()">Jode (F8)</a></li>
+            <li><a class="sh-pill"        id="sh_Cross"  onclick="sh_CrossClick()">Cross (F9)</a></li>
+            <li><a class="sh-pill"        id="sh_Pahada" onclick="sh_PahadaClick()">Pahada(P)</a></li>
+            <li><a class="sh-pill"        id="sh_Ander"  onclick="sh_AnderClick()">Ander(A)</a></li>
+            <li><a class="sh-pill"        id="sh_Bahar"  onclick="sh_BaharClick()">Bahar(B)</a></li>
+            <li><a class="sh-pill"        id="sh_Yantri" onclick="sh_YantriClick()">Yantri(End)</a></li>
+            <li><a class="sh-pill"        id="sh_57"     onclick="sh_57Click()">57</a></li>
+            <li><a class="sh-pill"        id="sh_43"     onclick="sh_43Click()">43</a></li>
+            <li><a class="sh-pill"        id="sh_Palat"  onclick="sh_PalatClick()">Palat</a></li>
+            <li><a class="sh-pill"        id="sh_Chat"   onclick="sh_ChatClick()">Chat</a></li>
+          </ul>
+          <input class="sh-hid" type="radio" id="sh_rCross" name="shr"><input class="sh-hid" type="radio" id="sh_rJode" name="shr">
+          <input class="sh-hid" type="radio" id="sh_rLaddi" name="shr"><input class="sh-hid" type="radio" id="sh_rPahada" name="shr">
+          <input class="sh-hid" type="radio" id="sh_rAnder" name="shr"><input class="sh-hid" type="radio" id="sh_rBahar" name="shr">
+          <input class="sh-hid" type="radio" id="sh_r57" name="shr"><input class="sh-hid" type="radio" id="sh_r43" name="shr">
+          <input class="sh-hid" type="radio" id="sh_rPalat" name="shr">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="text" id="sh_clipInput" style="display:none;">
+<div class="sh-toast" id="sh_toast"></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+const SG=id=>document.getElementById(id);
+let SH_P={},sh_uid=null,sh_isUttar=false,sh_Amount=0,sh_currentDate='',sh_refreshTimer=null;
+const JODE_SH=['11','22','33','44','55','66','77','88','99','100'];
+const S57_SH=['21','23','24','26','27','28','29','31','32','34','36','37','38','39','41','42','43','46','47','48','49','51','52','53','54','56','57','58','59','61','62','63','64','67','68','69','71','72','73','74','76','78','79','81','82','83','84','86','87','89','91','92','93','94','96','97','98'];
+const S43_SH=['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','22','25','30','33','35','40','44','45','50','55','60','65','66','70','75','77','80','85','88','90','95','99','100'];
+
+async function init(){
+  const u=await initPage('sale-history');if(!u)return;
+  sh_uid=u.UID;
+  SG('txtDate').value=new Date(Date.now()+5.5*3600000).toISOString().split('T')[0];
+  const p=new URLSearchParams(location.search);
+  if(p.get('Date'))SG('txtDate').value=shToInput(p.get('Date'));
+  if(p.get('Msg')){SG('txtMessage').value=p.get('Msg');loadHistory();}
+}
+
+function shToInput(d){try{const dt=new Date(d);if(!isNaN(dt))return dt.toISOString().split('T')[0];const m={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};const pts=d.split('/');if(pts.length===3){const mon=m[pts[1]]||pts[1];return`${pts[2]}-${mon}-${pts[0].padStart(2,'0')}`;}return d;}catch{return d;}}
+
+// ── ASPX: Number/Amount mini-composer (isNumber/process/SaveBulkMessage/addRow/myFunction) ──
+function shIsNumber(e){const c=(e.which||e.keyCode);return!(c!==46&&c>31&&(c<48||c>57));}
+function shProcess(input){input.value=input.value.replace(/[^0-9.]/g,'');}
+function shAllSame(s){return s.split('').every(c=>c===s[0]);}
+
+function numberKD(e){
+  if(e.keyCode===13){
+    SG('lblMessage').innerHTML='';
+    SG('txtAmount').focus();SG('txtAmount').select();
+    e.preventDefault();
+  }
+}
+function amountKD(e){
+  if(e.keyCode===13){
+    if(SG('txtNumber').value!==''){
+      if(SG('txtAmount').value==='')SG('txtAmount').value='0';
+      saveBulkMessage(SG('txtNumber').value,SG('txtAmount').value);
+    }
+    e.preventDefault();
+  }
+}
+function saveBulkMessage(s1,s2){
+  if(s2!==''&&s2!=='0'&&s1!=='0'&&s1!==''){
+    s1=s1.replace(/[^0-9]/g,'');
+    if(s1.length===1){ addRow('0'+s1,s2); }
+    else if(s1.length===3&&shAllSame(s1)){ addRow(s1==='000'?'1000':s1,s2); }
+    else if(s1.length===4&&shAllSame(s1)){ addRow(s1==='0000'?'10000':s1,s2); }
+    else if(s1.length%2===0){
+      let str=s1,chunks=[];
+      while(str){ if(str.length<2){chunks.push(str);break;} chunks.push(str.substr(0,2));str=str.substr(2); }
+      chunks.forEach(c=>addRow(c==='00'?'100':c,s2));
+    } else { shToast('Invalid Values Entered'); SG('txtNumber').focus();SG('txtNumber').select(); return; }
+    clearNumberAmount();
+  } else if(s2!==''&&s2==='0'&&s1!=='0'){
+    // paste-mode: "num=amt,num=amt" style bulk paste
+    s1.split(/[)*\-.+,$#@\\_]/).forEach(part=>{
+      const mn=part.split(/[(=]/);
+      if(mn[0]&&mn[1]&&(mn[0].length===3||mn[0].length===4)&&shAllSame(mn[0])) addRow(mn[0],mn[1]);
+      else if(mn[0]&&mn[1]) addRow(mn[0].length===1?'0'+mn[0]:mn[0],mn[1]);
+    });
+    clearNumberAmount();
+  }
+}
+function clearNumberAmount(){SG('txtNumber').value='';SG('txtAmount').value='';SG('txtNumber').focus();}
+function addRow(s1,s2){
+  const valid=((s1!==''&&parseInt(s1)<=100&&parseInt(s1)>0)||(s1.length>=3&&shAllSame(s1))||s1==='1000'||s1==='10000');
+  if(!valid||!(parseFloat(s2)>0))return;
+  const tb=SG('myTableBody'),tr=document.createElement('tr');
+  tr.innerHTML=`<td style="width:55px;">${s1}</td><td style="width:85px;">${s2}</td><td style="width:55px;"><button onclick="this.closest('tr').remove();shSubTotal();" style="width:20px;height:20px;background:red;color:#fff;border:2px solid red;border-radius:5px;font-size:10px;font-weight:bold;">X</button></td>`;
+  tb.appendChild(tr);
+  shSubTotal();
+}
+function shSubTotal(){
+  const tb=SG('myTableBody');let sum=0;
+  Array.from(tb.rows).forEach(r=>sum+=parseFloat(r.cells[1].textContent)||0);
+  if(sum){SG('lblTotalAmountShow').textContent='Total Amount:';SG('lblTotalAmount').textContent=sum.toFixed(0);}
+  else{SG('lblTotalAmountShow').textContent='';SG('lblTotalAmount').textContent='';}
+}
+function copyMessage(){
+  const tb=SG('myTableBody');let final='';
+  Array.from(tb.rows).forEach(r=>{ final+=r.cells[0].textContent+'='+r.cells[1].textContent+','; });
+  final=final.slice(0,-1);
+  SG('lblMessage').innerHTML=final;
+  SG('txtMessage').value=final;
+}
+
+// ── ASPX: BtnSearch_Click → BindGrid() → SP ShowSaleHistory(@fUID,@Date,@Filter) ──
+async function loadHistory(){
+  const date=SG('txtDate').value,filter=SG('txtMessage').value.trim();
+  if(!filter){SG('saleTbody').innerHTML='<tr><td colspan="7">Enter a message to search</td></tr>';return;}
+  SG('saleTbody').innerHTML='<tr><td colspan="7"><span class="sh-spin"></span> Loading...</td></tr>';
+  const r=await API.get(`/api/hisab/sale-history?date=${date}&filter=${encodeURIComponent(filter)}`);
+  const data=r?.data||[];let total=0;
+  SG('saleTbody').innerHTML=data.length?data.map((d,i)=>{
+    total+=parseFloat(d.TotalAmount||0);
+    return`<tr id="sh-row-${i}">
+      <td><a href="#" onclick="openShChat(${JSON.stringify(d).replace(/"/g,'&quot;')},${i});return false;" style="color:var(--green,#128c7e);font-weight:700;">${d.CMobile||d.CustomerName||d.Mobile||''}</a></td>
+      <td>${d.GameName||''}</td>
+      <td>${d.Rate||''}</td>
+      <td>${d.subuserID||''}</td>
+      <td>${d.MessageDateTime?new Date(d.MessageDateTime).toLocaleString('en-GB'):''}</td>
+      <td>${d.TotalAmount||0}</td>
+      <td style="text-align:left;">${d.Message||''}</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="7">No Data Found!</td></tr>';
+  SG('saleTotal').textContent=total.toFixed(0);
+}
+
+async function openShChat(d,idx){
+  const mob=d.Mobile||d.MobileNo||'';
+  const uRes=mob?await API.get(`/api/home/user-by-mobile/${mob}`):null;
+  const realUID=(uRes?.data?.[0]?.UID)||d.fSenderID||d.fUID||'';
+  SH_P={mobile:mob,gameId:d.fGameID||d.GID||'',gameName:d.GameName||'',selUID:realUID,
+    rates:d.Rate||d.Rates||'0/100-0/10-0',dPComm:d.D_PComm||'0',dAmt:d.D_Amt||'100',
+    aPComm:d.A_PComm||'0',aAmt:d.A_Amt||'10',pati:d.Pati_PComm||d.Patti||'0',
+    hissaID:d.ThirdPartyHissaID||'0',hissaPer:d.HissaPerc||d.ThirdPartyHissaPer||'0',
+    tpCommID:d.ThirdPartyCommID||'0',tpDara:d.ThirdPartyDaraComm||'0',tpAkhar:d.ThirdPartyAkharComm||'0',
+    lastDate:d.MsgDate||'',selPage:'3'};
+  SG('searchView').style.display='none';
+  SG('chatView').style.display='block';
+  sh_initChat();
+}
+
+function sh_back(){SG('chatView').style.display='none';SG('searchView').style.display='block';sh_stopRefresh();}
+
+async function sh_initChat(){
+  sh_stopRefresh();
+  SG('sh_gameName').textContent=SH_P.gameName;SG('sh_gameID').innerText=SH_P.gameId;
+  SG('sh_selUID').innerText=SH_P.selUID;SG('sh_rates').innerText=SH_P.rates;
+  SG('sh_rateDisplay').textContent=SH_P.rates;SG('sh_dPComm').innerText=SH_P.dPComm;
+  SG('sh_dAmt').innerText=SH_P.dAmt;SG('sh_aPComm').innerText=SH_P.aPComm;SG('sh_aAmt').innerText=SH_P.aAmt;
+  SG('sh_pati').innerText=SH_P.pati;SG('sh_hissaID').innerText=SH_P.hissaID;SG('sh_hissaPer').innerText=SH_P.hissaPer;
+  SG('sh_isBulk').innerText='1';SG('sh_txtAmt').style.display='block';SG('sh_SpanClear').style.display='none';
+  sh_cleartable();sh_BulkClick();
+  await sh_loadName();await sh_loadBalance();await sh_loadRefStat();await sh_initDate();
+  await sh_getTime();sh_startRefresh();sh_scrollBottom();
+}
+async function sh_loadName(){try{const r=await API.get(`/api/chat/customer-name?mobile=${SH_P.mobile}`);if(r?.success&&r.data){const mob=SH_P.mobile.substring(5)||SH_P.mobile;SG('sh_custName').textContent=(r.data.CustomerName||'')+' '+mob;sh_isUttar=r.data.IsUttar==='True';}else SG('sh_custName').textContent=SH_P.mobile;}catch(e){SG('sh_custName').textContent=SH_P.mobile;}}
+async function sh_loadBalance(){try{const r=await API.get(`/api/accounts/selected-balance?customerUID=${SH_P.selUID}`);const el=SG('sh_balance');if(r?.success&&r.data?.IsLimit==='True'){const bal=Math.trunc(parseFloat(r.data.WinAmount||0));if(bal>0){el.textContent='Bal:'+bal;el.style.color='red';}else if(bal<0){el.textContent='Bal:'+Math.abs(bal);el.style.color='green';}else el.textContent='';}else if(el)el.textContent='';}catch(e){}}
+async function sh_loadRefStat(){try{const r=await API.get('/api/auth/me');if(r?.user?.IsRefreshStatus)SG('sh_lblRefresh').innerText=r.user.IsRefreshStatus;}catch(e){}}
+async function sh_initDate(){
+  try{const r1=await API.get(`/api/chat/date?gameId=${SH_P.gameId}`);const t=r1?.date?sh_fmtDate(r1.date):sh_getIST();
+    const r2=await API.get(`/api/chat/unread-date?gameId=${SH_P.gameId}&selectedUID=${SH_P.selUID}`);
+    sh_currentDate=SH_P.lastDate?sh_fmtDate(SH_P.lastDate):(r2?.date?sh_fmtDate(r2.date):t);
+  }catch(e){sh_currentDate=sh_getIST();}
+  SG('sh_txtDate').value=sh_currentDate;SG('sh_todayDate').innerText=sh_currentDate;
+}
+function sh_FilterByDate(txt){sh_currentDate=txt.value;SG('sh_todayDate').innerText=sh_currentDate;sh_cleartable();sh_getTime();}
+async function sh_getTime(){try{const r=await API.get(`/api/chat/received?gameId=${SH_P.gameId}&date=${encodeURIComponent(sh_currentDate)}&selectedUID=${SH_P.selUID}&rates=${encodeURIComponent(SH_P.rates)}`);if(!r?.success){sh_renderMsgs([]);return;}sh_renderMsgs(r.data||[]);const tot=(r.data||[]).filter(m=>m.IsAccepted==='Accepted'||m.IsAccepted==='Pending').reduce((s,m)=>s+(parseFloat(m.TotalAmount)||0),0);SG('sh_grandTotal').textContent=tot?'Grand Total: '+tot:'';}catch(e){sh_renderMsgs([]);}}
+function sh_renderMsgs(msgs){
+  const el=SG('sh_scroll');
+  if(!msgs.length){el.innerHTML='<div style="text-align:center;padding:16px;color:#aaa;font-size:.8rem;">No messages</div>';return;}
+  el.innerHTML=msgs.map(m=>{
+    const isSent=String(m.Sender)==='0',rowCls=isSent?'sh-sent':'sh-recv',isY=m.IsYantriStyle==='True';
+    const body=m.IsTextChat==='False'?`<img src="${m.Message||''}" style="max-width:150px;border-radius:4px;">`:`<span class="sh-mtxt">${shEsc(m.Message||'')}</span>`;
+    let extra='';if(isY&&m.TotalAmount)extra+=`<div><span class="sh-ltot">Total Amt: ${m.TotalAmount}</span></div>`;
+    const ds=m.MessageDateTime?sh_fmtShort(m.MessageDateTime):'';
+    if(isY&&(m.Rate||ds))extra+=`<div class="sh-meta">${shEsc(m.Rate||'')}${ds?` Date:(${ds})`:''}</div>`;
+    const full=m.MessageDateTime?sh_fmtFull(m.MessageDateTime):'';
+    const lastLine=`<div><span class="sh-lupd">Last Updated: ${full}</span></div>`;
+    const byA=m.IsSendByReceiver==='True'?`<span class="sh-bad">BY ADMIN</span>`:'';
+    const share=`<button class="sh-shr">↪</button>`;const copy=`<button class="sh-cpy" onclick="sh_copy('${shEscJs(m.Message||'')}')">📋</button>`;
+    const chk=`<input type="checkbox" style="width:12px;height:12px;margin-top:2px;">`;
+    if(isSent){let st='';if(m.IsAccepted==='Accepted')st=`<span class="sh-sok">Ok</span>`;else if(m.IsAccepted==='Rejected')st=`<span class="sh-sca">Cancelled</span>${byA}`;else if(isY)st=`<span class="sh-sno">Sent ✔</span>${byA}`;else st=byA;const del=m.IsAccepted==='Pending'?`<button class="sh-del" onclick="sh_delRow('${m.ChatID}')">🗑</button>`:'';return`<div class="sh-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div>${del}<div style="text-align:right;">${body}${extra}${lastLine}<div>${st}</div></div><div class="sh-sep"></div></div>`;}
+    else{let st='';if(m.IsAccepted==='Rejected')st=`<span class="sh-sca">Cancelled</span>${byA}`;else if(m.IsAccepted==='Accepted'&&isY)st=`<span class="sh-sok">Ok</span>${byA}`;else st=byA;const acBtns=m.IsAccepted==='Pending'&&isY?`<button class="sh-acc" onclick="sh_accept('${m.ChatID}')">✔</button><button class="sh-rej" onclick="sh_reject('${m.ChatID}')">✕</button>`:'';return`<div class="sh-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div><div style="text-align:left;">${body}${extra}${lastLine}<div>${st}${acBtns}</div></div><div class="sh-sep"></div></div>`;}
+  }).join('');sh_scrollBottom();
+}
+function sh_parseSPDate(str){if(!str)return null;if(str instanceof Date)return str;const d=new Date(str);if(!isNaN(d))return d;const m=String(str).match(/^(\d{1,2})\/(\d{2})\/(\d{2})\s+(\d{1,2}):(\d{2})(AM|PM)$/i);if(m){let h=parseInt(m[4]);const mn=parseInt(m[5]),ap=m[6].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return new Date(2000+parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,mn,0);}return null;}
+function sh_fmtShort(str){const d=sh_parseSPDate(str);if(!d||isNaN(d))return'';return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2);}
+function sh_fmtFull(str){const d=sh_parseSPDate(str);if(!d||isNaN(d))return'';const h=d.getHours(),mn=d.getMinutes(),ap=h>=12?'PM':'AM',h12=h%12||12;return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2)+' '+h12+':'+String(mn).padStart(2,'0')+ap;}
+function sh_fmtDate(dt){try{const d=new Date(dt);if(isNaN(d))return String(dt).split('T')[0];return String(d.getDate()).padStart(2,'0')+'/'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+'/'+d.getFullYear();}catch{return String(dt);}}
+function sh_getIST(){return sh_fmtDate(new Date(Date.now()+5.5*3600000));}
+async function sh_accept(id){const r=await API.post('/api/chat/accept-reject',{chatId:id,status:'Accepted'});if(r?.success)sh_getTime();}
+async function sh_reject(id){const r=await API.post('/api/chat/accept-reject',{chatId:id,status:'Rejected'});if(r?.success)sh_getTime();}
+async function sh_delRow(id){await API.delete(`/api/chat/${id}`);sh_getTime();}
+function sh_copy(msg){const el=SG('sh_clipInput');el.value=msg;el.select();navigator.clipboard?.writeText(msg);}
+function sh_startRefresh(){sh_stopRefresh();sh_refreshTimer=setInterval(()=>{if(document.hidden)return;const tb=SG('sh_tableBody');if(SG('sh_lblRefresh').innerText==='True'&&(!tb||!tb.rows.length))sh_getTime();},2000);}
+function sh_stopRefresh(){if(sh_refreshTimer){clearInterval(sh_refreshTimer);sh_refreshTimer=null;}}
+function sh_SaveBulk(s1,s2){
+  if(!((s1!=='')||(SG('sh_rJode').checked&&s2!==''&&s2!=='0')||(SG('sh_r57').checked&&s2!==''&&s2!=='0')||(SG('sh_r43').checked&&s2!==''&&s2!=='0')))return;
+  if(SG('sh_rJode').checked){JODE_SH.forEach(n=>sh_addRow(n,s2));sh_clearI();return;}
+  if(SG('sh_r57').checked){S57_SH.forEach(n=>sh_addRow(n,s2));sh_clearI();return;}
+  if(SG('sh_r43').checked){S43_SH.forEach(n=>sh_addRow(n,s2));sh_clearI();return;}
+  if(SG('sh_rPahada').checked){let base=parseInt(s1.replace(/[^0-9]/g,''));if(isNaN(base)||base<=0)return;if(SG('sh_CHFP').checked)base=3;for(let i=base;i<=100;i+=base){sh_addRow(i>=1&&i<=9?'0'+i:String(i),s2);sh_SubT();}sh_clearI();return;}
+  if(SG('sh_rAnder').checked){s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d+d;if(n==='0000')n='10000';sh_addRow(n,s2);sh_SubT();});sh_clearI();return;}
+  if(SG('sh_rBahar').checked){s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d;if(n==='000')n='1000';sh_addRow(n,s2);sh_SubT();});sh_clearI();return;}
+  if(SG('sh_rLaddi').checked){const from=parseInt(s1.replace(/[^0-9]/g,'')),to=parseInt(SG('sh_txtMsg2').value);if(!isNaN(from)&&!isNaN(to)&&parseInt(s2)>0&&from<to&&to<=100){for(let i=from;i<=to;i++){sh_addRow(i>=1&&i<=9?'0'+i:String(i),s2);sh_SubT();}sh_clearI();}else sh_toast2('Wrong Inputs!');return;}
+  if(SG('sh_rCross').checked){const dig=s1.replace(/[^0-9]/g,'').split(''),noJ=SG('sh_chkNoJode').checked;for(let i=0;i<dig.length;i++)for(let j=0;j<dig.length;j++){if(noJ&&i===j)continue;let p2=dig[i]+dig[j];if(p2==='00'||p2==='0')p2='100';sh_addRow(p2,s2);sh_SubT();}sh_clearI();return;}
+  if((s2!==''&&s2!=='0')&&/[aAbB]/.test(s1)){sh_parseAB(s1,s2);sh_clearI();return;}
+  if(s2!==''&&s2!=='0'&&s1!=='0'){sh_parseTyp(s1.replace(/[^0-9]/g,'')).forEach(n=>{if(n){sh_addRow(n,s2);sh_SubT();}});sh_clearI();}
+  else if(s2!==''&&s2==='0'&&s1!=='0'){sh_parsePaste(s1);sh_clearI();}else sh_toast2('Wrong Inputs!');
+}
+function sh_parseAB(s1,s2){if(s1.match(/ab/i)){const str=s1.replace(/[aAbB]/g,'');str.split('').forEach(d=>{let n=d+d+d+d;if(n==='0000')n='10000';sh_addRow(n,s2);sh_SubT();});str.split('').forEach(d=>{let n=d+d+d;if(n==='000')n='1000';sh_addRow(n,s2);sh_SubT();});}else if(/[aA]/.test(s1)){s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d+d;if(n==='0000')n='10000';sh_addRow(n,s2);sh_SubT();});}else{s1.replace(/[^0-9]/g,'').split('').forEach(d=>{let n=d+d+d;if(n==='000')n='1000';sh_addRow(n,s2);sh_SubT();});}}
+function sh_parseTyp(raw){if(!raw)return[];const v=parseInt(raw);if(raw.length===1)return[v>=1&&v<=9?'0'+v:v===0?'100':String(v)];if(raw.length%2===0){const r=[];for(let i=0;i<raw.length;i+=2){let c2=raw.substr(i,2);if(c2==='00')c2='100';r.push(c2);}return r;}if(v>=1&&v<=9)return['0'+v];return[String(v)];}
+function sh_parsePaste(s1){let str=s1.replace(/ /g,'');const parts=str.split(/[\n),+$#@\\_]/);let pend='';parts.forEach(part=>{const segs=part.split(/[=(]/);let num=(segs[0]||'').replace(/[^0-9]/g,'');const amt=segs[1];if(!amt){pend+=num;return;}let fn=num+pend;pend='';sh_parseTyp(fn).forEach(n=>{if(n&&amt){sh_addRow(n,amt);sh_SubT();}});});}
+function sh_allSame(s){return s.split('').every(c2=>c2===s[0]);}
+function sh_addRow(s1,s2){if(!s1||!s2)return;const valid=((parseInt(s1)<=100&&parseInt(s1)>0)||(s1.length>=3&&sh_allSame(s1))||s1==='1000'||s1==='10000');if(!valid)return;const amt=parseFloat(s2)||0;if(amt===0)return;const fa=sh_isUttar?-Math.abs(amt):Math.abs(amt);if(isNaN(fa)||fa===0)return;const tb=SG('sh_tableBody'),tr=document.createElement('tr');tr.innerHTML=`<td style="width:48px;text-align:center;font-size:13px;font-weight:bold;">${s1}</td><td style="width:75px;text-align:center;font-size:13px;font-weight:bold;">${fa}</td><td style="width:45px;text-align:center;"><button onclick="sh_delTR(this)" style="width:17px;height:17px;background:red;color:#fff;border:2px solid red;border-radius:4px;font-size:9px;font-weight:bold;">X</button></td>`;tb.appendChild(tr);sh_Amount+=fa;SG('sh_SpanClear').style.display='block';SG('sh_tableWrap').style.display='block';}
+function sh_delTR(btn){const row=btn.closest('tr');sh_Amount-=parseFloat(row.cells[1].textContent)||0;row.remove();sh_SubT();}
+function sh_SubT(){const tb=SG('sh_tableBody');let sum=0;Array.from(tb.rows).forEach(r=>{sum+=parseFloat(r.cells[1]?.textContent)||0;});sh_Amount=sum;SG('sh_totAmt').textContent=sum?sum:'';SG('sh_totShow').textContent=sum?'Total Amount:':'';if(!sum){SG('sh_tableWrap').style.display='none';SG('sh_SpanClear').style.display='none';}}
+function sh_myFunc(){const tb=SG('sh_tableBody');let f='';for(let i=0;i<tb.rows.length;i++)f+=tb.rows[i].cells[0].innerHTML+'='+tb.rows[i].cells[1].innerHTML+',';if(f)f=f.slice(0,-1);SG('sh_lblMsg').innerHTML=f;}
+function sh_cleartable(){SG('sh_tableBody').innerHTML='';sh_Amount=0;sh_SubT();}
+function sh_ClearNew(){sh_cleartable();SG('sh_isBulk').innerText='1';SG('sh_txtAmt').style.display='block';SG('sh_txtAmt').value='';SG('sh_lblMsg').innerHTML='';sh_Amount=0;sh_clearI();SG('sh_chatid').innerText='';SG('sh_btnSave').textContent='Save(F2)';SG('sh_SpanClear').style.display='none';sh_focusMsg();}
+function sh_clearI(){['sh_txtMsg2','sh_txtMsg','sh_txtAmt','sh_txtText','sh_txtAmtP'].forEach(id=>SG(id).value='');SG('sh_txtMsg').maxLength=50000;SG('sh_CHFP').checked=false;sh_BulkClick();}
+async function sh_sendMsg(){sh_myFunc();const msg=SG('sh_lblMsg').innerHTML,tot=sh_Amount;if(!msg||tot===0){sh_toast2('Sorry Please Check Value !');sh_focusMsg();return;}const eid=SG('sh_chatid').innerText,isY=SG('sh_isBulk').innerText==='1'?'True':'False';const r=await API.post('/api/chat/save-receiver-message',{gameId:SH_P.gameId,message:msg,totalAmount:tot,isYantriStyle:isY,checkAcceptedStatus:isY==='True',fUserID:SH_P.selUID,date:sh_currentDate,chatId:eid||'',btnText:eid?'Update(Insert)':'Send(Insert)',D_PComm:SH_P.dPComm,D_Amt:SH_P.dAmt,A_PComm:SH_P.aPComm,A_Amt:SH_P.aAmt,Pati_PComm:SH_P.pati,fHissaPartyID:SH_P.hissaID,HissaPerc:SH_P.hissaPer,ThirdPartyCommID:SH_P.tpCommID,ThirdPartyDaraComm:SH_P.tpDara,ThirdPartyAkharComm:SH_P.tpAkhar});if(r?.success||r?.message==='SuccessFully'){SG('sh_lblMsg').innerHTML='';sh_Amount=0;sh_cleartable();sh_clearI();SG('sh_chatid').innerText='';SG('sh_btnSave').textContent='Save(F2)';SG('sh_SpanClear').style.display='none';sh_getTime();}else{sh_toast2(r?.message||'Error!');sh_focusMsg();}}
+async function sh_sendPlain(){const msg=SG('sh_txtText').value.trim();if(!msg){SG('sh_txtText').focus();return;}const r=await API.post('/api/chat/save-receiver-message',{gameId:SH_P.gameId,message:msg,totalAmount:0,isYantriStyle:'False',checkAcceptedStatus:false,fUserID:SH_P.selUID,date:sh_currentDate,chatId:'',btnText:'Send(Insert)',D_PComm:'0',D_Amt:'100',A_PComm:'0',A_Amt:'10',Pati_PComm:'0',fHissaPartyID:'0',HissaPerc:'0',ThirdPartyCommID:'0',ThirdPartyDaraComm:'0',ThirdPartyAkharComm:'0'});if(r?.success||r?.message==='SuccessFully'){SG('sh_txtText').value='';sh_getTime();sh_ChatClick();}else sh_toast2(r?.message||'Error!');}
+function sh_btnSaveClick(){if(SG('sh_isBulk').innerText==='1'){sh_myFunc();const msg=SG('sh_lblMsg').innerHTML;if(msg&&sh_Amount!==0)sh_sendMsg();else{sh_toast2('Sorry Please Check Value !');sh_focusMsg();}}else sh_sendPlain();}
+function sh_amtKD(e){if(e.keyCode===13){const num=SG('sh_txtMsg').value,amt=SG('sh_txtAmt').value;if(amt){const pV=window.getComputedStyle(SG('sh_txtAmtP')).display!=='none';if(!pV){sh_SaveBulk(num,amt);return false;}else SG('sh_txtAmtP').focus();}e.preventDefault();}}
+function sh_msgKD(e){if(e.keyCode===13){if(SG('sh_txtMsg2').style.display!=='none'&&SG('sh_txtMsg').value)SG('sh_txtMsg2').focus();else if(SG('sh_txtAmt').style.display!=='none'&&SG('sh_txtMsg').value)SG('sh_txtAmt').focus();e.preventDefault();}}
+function sh_pasteMsg(e){e.preventDefault();let t=e.clipboardData.getData('text').replace(/(\r\n|\n|\r)/gm,',');SG('sh_txtMsg').value+=t;sh_procSpl(SG('sh_txtMsg'));return false;}
+function sh_isNum(e){const c2=(e.which||e.keyCode);return!(c2>31&&(c2<48||c2>57));}
+function sh_isNumSpl(e){const c2=(e.which||e.keyCode);if((c2>64&&c2<91)||(c2>96&&c2<123)&&c2!==13)return false;return true;}
+function sh_proc(i){i.value=i.value.replace(/[^0-9]/g,'');}
+function sh_procSpl(i){i.value=i.value.replace(/[a-zA-Z]/g,'');}
+function sh_focusMsg(){setTimeout(()=>{const el=SG('sh_txtMsg');el.focus();el.select();},50);}
+function sh_scrollBottom(){setTimeout(()=>{const w=SG('sh_scroll');if(w)w.scrollTop=w.scrollHeight;},80);}
+function sh_setI(){['sh_Bulk','sh_Laddi','sh_Jode','sh_Cross','sh_Pahada','sh_Ander','sh_Bahar','sh_Yantri','sh_57','sh_43','sh_Palat','sh_Chat'].forEach(id=>SG(id)?.classList.remove('active'));}
+function sh_BulkClick(){sh_setI();SG('sh_Bulk').classList.add('active');['sh_rJode','sh_rBahar','sh_rAnder','sh_rCross','sh_rLaddi','sh_rPahada','sh_r57','sh_r43','sh_rPalat'].forEach(id=>SG(id).checked=false);SG('sh_WithOutJode').style.display='none';SG('sh_Add3').style.display='none';SG('sh_isBulk').innerText='1';SG('sh_txtAmt').style.display='block';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtMsg').value='';SG('sh_txtAmt').value='';SG('sh_txtMsg').maxLength=50000;sh_focusMsg();}
+function sh_LaddiClick(){sh_setI();SG('sh_Laddi').classList.add('active');SG('sh_rLaddi').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='block';SG('sh_txtAmt').style.display='block';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtMsg').maxLength=2;SG('sh_txtMsg2').maxLength=3;sh_focusMsg();}
+function sh_JodeClick(){sh_setI();SG('sh_Jode').classList.add('active');SG('sh_rJode').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='none';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtAmt').focus();SG('sh_txtAmt').select();}
+function sh_CrossClick(){sh_setI();SG('sh_Cross').classList.add('active');SG('sh_rCross').checked=true;SG('sh_WithOutJode').style.display='block';SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtMsg').maxLength=50000;sh_focusMsg();}
+function sh_PahadaClick(){sh_setI();SG('sh_Pahada').classList.add('active');SG('sh_rPahada').checked=true;SG('sh_Add3').style.display='block';SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtMsg').maxLength=2;sh_focusMsg();}
+function sh_AnderClick(){sh_setI();SG('sh_Ander').classList.add('active');SG('sh_rAnder').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtMsg').maxLength=50000;sh_focusMsg();}
+function sh_BaharClick(){sh_setI();SG('sh_Bahar').classList.add('active');SG('sh_rBahar').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtMsg').maxLength=50000;sh_focusMsg();}
+function sh_YantriClick(){sh_setI();SG('sh_Yantri').classList.add('active');sh_cleartable();window.location.href=`/pages/yantri.html?GameID=${SH_P.gameId}&SelectedUID=${SH_P.selUID}&Date=${sh_currentDate}&Rates=${SH_P.rates}&SelectedPage=3`;}
+function sh_57Click(){sh_setI();SG('sh_57').classList.add('active');SG('sh_r57').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='none';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtAmt').focus();SG('sh_txtAmt').select();}
+function sh_43Click(){sh_setI();SG('sh_43').classList.add('active');SG('sh_r43').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='none';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtAmt').style.display='block';SG('sh_txtAmt').focus();SG('sh_txtAmt').select();}
+function sh_PalatClick(){sh_setI();SG('sh_Palat').classList.add('active');SG('sh_rPalat').checked=true;SG('sh_isBulk').innerText='1';SG('sh_txtMsg').style.display='block';SG('sh_txtMsg2').style.display='none';SG('sh_txtText').style.display='none';SG('sh_txtAmtP').style.display='block';SG('sh_txtAmtP').value='';SG('sh_txtAmt').style.display='block';SG('sh_txtMsg').maxLength=50000;sh_focusMsg();}
+function sh_ChatClick(){sh_setI();SG('sh_Chat').classList.add('active');['sh_rJode','sh_rBahar','sh_rAnder','sh_rCross','sh_rLaddi','sh_rPahada','sh_r57','sh_r43','sh_rPalat'].forEach(id=>SG(id).checked=false);SG('sh_isBulk').innerText='0';SG('sh_txtAmt').style.display='none';SG('sh_txtMsg2').style.display='none';SG('sh_txtMsg').style.display='none';SG('sh_txtAmtP').style.display='none';SG('sh_txtText').style.display='block';SG('sh_txtText').focus();SG('sh_txtText').select();}
+function shEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shEscJs(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"');}
+function shToast(msg){SG('sh_toast').textContent=msg;SG('sh_toast').style.display='block';setTimeout(()=>SG('sh_toast').style.display='none',2500);}
+function sh_toast2(msg){const t=SG('sh_toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',2800);}
+window.__escPageHandler=function(){
+  if(SG('chatView').style.display!=='none'){sh_back();return true;}
+  return false;
+};
+document.addEventListener('keyup',e=>{
+  if(SG('chatView').style.display==='none')return;
+  const k=e.keyCode||e.which;
+  if(k===65&&SG('sh_isBulk').innerText==='1')sh_AnderClick();
+  if(k===66&&SG('sh_isBulk').innerText==='1')sh_BaharClick();
+  if(k===80&&SG('sh_isBulk').innerText==='1')sh_PahadaClick();
+  if(k===115)sh_LaddiClick();if(k===119)sh_JodeClick();if(k===120)sh_CrossClick();
+  if(k===36)sh_BulkClick();if(k===35)sh_YantriClick();
+  if(k===113){SG('sh_btnSave').click();sh_scrollBottom();}
+});
+init();
+</script>
+</body>
+</html>

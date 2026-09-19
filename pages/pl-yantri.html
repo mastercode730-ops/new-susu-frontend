@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL Yantri - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<script>
+// PLYantriRMsg.aspx = same as YantriRMsg.aspx (yantri.html) but opened
+// with SelectedUID and Rates from agent context
+// Simply redirect to yantri.html with all params preserved
+(function() {
+  const p = new URLSearchParams(location.search);
+  const gameID    = p.get('GameID') || p.get('GID') || '';
+  const selUID    = p.get('SelectedUID') || '';
+  const date      = p.get('Date') || '';
+  const rates     = p.get('Rates') || '';
+
+  const out = new URLSearchParams({ GameID: gameID });
+  if (selUID) out.set('SelectedUID', selUID);
+  if (date)   out.set('Date', date);
+  if (rates)  out.set('Rates', rates);
+  // Set to agent mode so yantri.html auto-selects agent tab
+  out.set('mode', 'agent');
+
+  window.location.replace('/pages/yantri.html?' + out.toString());
+})();
+</script>
+</head>
+<body></body>
+</html>

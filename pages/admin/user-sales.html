@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Sales - Admin</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.sel-row{background:rgba(37,211,102,.08);border-left:3px solid var(--green);}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:.83rem;}
+.tbl-wrap thead th{background:var(--panel2);color:var(--muted);font-size:.67rem;text-transform:uppercase;letter-spacing:1px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.tbl-wrap tbody tr{border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .1s;}
+.tbl-wrap tbody tr:hover{background:var(--panel2);}
+.tbl-wrap td{padding:8px 10px;color:var(--text2);}
+.tbl-wrap tfoot td{background:var(--panel2);font-weight:700;color:var(--text);padding:9px 10px;}
+.pos{color:var(--green);}
+.tbl-wrap{overflow-x:auto;}
+</style>
+</head>
+<body>
+<script src="/js/api.js"></script><script src="/js/nav.js"></script>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            &#128176; User Sales
+            <a href="/pages/admin/dashboard.html" class="btn btn-secondary btn-sm" style="float:right;">&#8592; Dashboard</a>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap">
+            <div class="form-group" style="max-width:160px;">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" id="txtDate" onchange="loadSales()">
+            </div>
+            <button class="btn btn-success" onclick="loadSales()">Search</button>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <!-- All Users Summary -->
+              <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:600">All Users</div>
+              <div class="tbl-wrap" id="summaryWrap">
+                <div class="emsg">Loading...</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <!-- Game-wise for selected user -->
+              <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:600">
+                Game-wise: <span id="lblUser" style="color:var(--green)">Select a user &#8594;</span>
+              </div>
+              <div class="tbl-wrap" id="gamewiseWrap">
+                <div class="emsg">Click a user row to view game-wise details</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function init() {
+  const u = await initAdminPage('user-sales');
+  if (!u) return;
+  const ist = new Date(new Date().getTime() + 5.5*3600000);
+  document.getElementById('txtDate').value = ist.toISOString().split('T')[0];
+  loadSales();
+}
+
+function fmtDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }).replace(/ /g, '/');
+}
+
+async function loadSales() {
+  const date = document.getElementById('txtDate').value;
+  document.getElementById('summaryWrap').innerHTML = '<div class="emsg"><span class="spin"></span></div>';
+  document.getElementById('gamewiseWrap').innerHTML = '<div class="emsg">Click a user row</div>';
+  document.getElementById('lblUser').textContent = 'Select a user →';
+
+  const r = await API.get(`/api/admin/user-sales-list?date=${encodeURIComponent(fmtDate(date))}`);
+  const data = r?.data || [];
+  if (!data.length) {
+    document.getElementById('summaryWrap').innerHTML = '<div class="emsg">No sales found</div>';
+    return;
+  }
+
+  let total = 0;
+  const rows = data.map(d => {
+    total += parseFloat(d.TotalAmount || 0);
+    return `<tr onclick="loadGamewise('${d.UID}','${d.Mobile||d.UID}','${fmtDate(date)}')" title="Click for game-wise">
+      <td>${d.Mobile || d.UID}</td>
+      <td class="pos">${d.TotalAmount || 0}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('summaryWrap').innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead><tr style="background-color:LightGray;"><th>User</th><th>Total Sale</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot style="background-color:LightGray;font-weight:bold;"><tr><td>Total (${data.length})</td><td class="pos">${total.toFixed(0)}</td></tr></tfoot>
+    </table>`;
+}
+
+async function loadGamewise(uid, mobile, date) {
+  document.getElementById('lblUser').textContent = mobile;
+  document.getElementById('gamewiseWrap').innerHTML = '<div class="emsg"><span class="spin"></span></div>';
+
+  const r = await API.get(`/api/admin/user-sales-gamewise?uid=${uid}&date=${encodeURIComponent(date)}`);
+  const data = r?.data || [];
+  if (!data.length) {
+    document.getElementById('gamewiseWrap').innerHTML = '<div class="emsg">No game data</div>';
+    return;
+  }
+
+  let total = 0;
+  const rows = data.map(d => {
+    total += parseFloat(d.TotalAmount || 0);
+    return `<tr>
+      <td>${d.GameName || ''}</td>
+      <td>${d.CustomerName || ''}</td>
+      <td class="pos">${d.TotalAmount || 0}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('gamewiseWrap').innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead><tr style="background-color:LightGray;"><th>Game</th><th>Customer</th><th>Amount</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot style="background-color:LightGray;font-weight:bold;"><tr><td colspan="2">Total</td><td class="pos">${total.toFixed(0)}</td></tr></tfoot>
+    </table>`;
+}
+
+init();
+</script>
+</body>
+</html>

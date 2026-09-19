@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Susu9 — Complete UI Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --g:#25d366;--g2:#128c7e;--g3:#075e54;--g4:#053f39;
+  --bg:#f0f2f5;--panel:#fff;--p2:#f8fafb;--p3:#eef1f5;
+  --bdr:#e4e7eb;--text:#1a202c;--t2:#4a5568;--muted:#718096;
+  --red:#e53e3e;--blue:#3182ce;--yellow:#d69e2e;
+  --nav-h:54px;--gb-h:44px;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* ═══ NAVBAR ═══ */
+.navbar{background:linear-gradient(90deg,var(--g3) 0%,var(--g2) 100%);height:var(--nav-h);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.18);position:relative;z-index:100;}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-size:1.45rem;font-weight:700;color:#fff;letter-spacing:3px;display:flex;align-items:center;gap:8px;}
+.logo-mark{width:30px;height:30px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;box-shadow:0 2px 6px rgba(37,211,102,.4);}
+.nav-links{display:flex;gap:2px;flex:1;margin:0 12px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-a{color:rgba(255,255,255,.78);text-decoration:none;padding:5px 10px;border-radius:6px;font-size:.78rem;font-weight:500;white-space:nowrap;cursor:pointer;transition:all .15s;}
+.nav-a:hover,.nav-a.on{background:rgba(255,255,255,.18);color:#fff;}
+.nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.nav-uid{color:rgba(255,255,255,.75);font-size:.76rem;background:rgba(0,0,0,.15);padding:3px 10px;border-radius:20px;}
+.nav-logout{background:rgba(255,82,82,.25);color:#fff;border:1px solid rgba(255,82,82,.4);padding:4px 11px;border-radius:6px;cursor:pointer;font-size:.74rem;transition:all .15s;}
+.nav-logout:hover{background:rgba(255,82,82,.4);}
+.nav-hb{display:none;background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;padding:4px;min-width:36px;}
+
+/* ═══ GAMES BAR ═══ */
+.gbar{background:var(--panel);border-bottom:1px solid var(--bdr);height:var(--gb-h);display:flex;align-items:center;gap:8px;padding:0 14px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.gbar::-webkit-scrollbar{display:none;}
+.gb-lbl{color:var(--muted);font-size:.66rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;flex-shrink:0;}
+.gpill{display:inline-flex;align-items:center;gap:5px;background:var(--p2);border:1px solid var(--bdr);border-radius:20px;padding:4px 13px;cursor:pointer;transition:all .2s;flex-shrink:0;white-space:nowrap;}
+.gpill:hover{background:rgba(18,140,126,.08);border-color:var(--g2);}
+.gpill.on{background:var(--g2);border-color:var(--g2);}
+.gpill.on .gp-name{color:#fff;}
+.gpill.on .gp-time{color:rgba(255,255,255,.75);}
+.gp-name{font-weight:600;font-size:.8rem;color:var(--text);}
+.gp-time{font-size:.68rem;color:var(--muted);}
+.gp-dot{width:7px;height:7px;border-radius:50%;background:#ff4757;flex-shrink:0;}
+.gbar-find{background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:var(--g2);text-decoration:none;padding:4px 12px;border-radius:20px;font-size:.74rem;font-weight:600;white-space:nowrap;flex-shrink:0;cursor:pointer;transition:all .15s;}
+.gbar-find:hover{background:rgba(37,211,102,.22);}
+
+/* ═══ MAIN LAYOUT ═══ */
+.mlayout{display:flex;flex:1;overflow:hidden;}
+
+/* ═══ SIDEBAR ═══ */
+.sb{width:310px;min-width:240px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;}
+.sb-search{padding:10px;border-bottom:1px solid var(--bdr);display:flex;gap:6px;background:var(--p2);}
+.sb-inp{flex:1;background:#fff;border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;font-size:.84rem;color:var(--text);outline:none;font-family:'Inter',sans-serif;transition:all .2s;}
+.sb-inp:focus{border-color:var(--g2);box-shadow:0 0 0 3px rgba(18,140,126,.1);}
+.sb-btn{background:var(--g2);color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .15s;}
+.sb-btn:hover{background:var(--g3);}
+.clist{flex:1;overflow-y:auto;scrollbar-width:thin;}
+.sec-lbl{padding:5px 14px;background:var(--p3);color:var(--muted);font-size:.63rem;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:1;}
+.citem{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,.04);transition:all .15s;position:relative;}
+.citem:hover{background:var(--p2);}
+.citem.on{background:rgba(18,140,126,.06);border-left:3px solid var(--g2);}
+.c-av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;color:#fff;flex-shrink:0;text-transform:uppercase;}
+.c-av.a1{background:linear-gradient(135deg,#128c7e,#075e54);}
+.c-av.a2{background:linear-gradient(135deg,#3182ce,#2c5282);}
+.c-av.a3{background:linear-gradient(135deg,#d69e2e,#b7791f);}
+.c-av.a4{background:linear-gradient(135deg,#e53e3e,#9b2335);}
+.c-av.a5{background:linear-gradient(135deg,#6f42c1,#553c9a);}
+.c-inf{flex:1;min-width:0;}
+.c-name{font-weight:600;font-size:.86rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c-mob{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.c-badge{background:rgba(229,62,62,.12);color:#9b2335;font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0;}
+
+/* ═══ RIGHT PANEL ═══ */
+.rpanel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+
+/* Welcome */
+.ws{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='1' fill='%23e4e7eb'/%3E%3C/svg%3E");}
+.ws-ic{font-size:5rem;opacity:.12;}
+.ws-t{font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;color:var(--t2);letter-spacing:.5px;}
+.ws-s{font-size:.84rem;color:var(--muted);}
+
+/* Panel header */
+.ph{background:var(--panel);padding:10px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.bk{background:rgba(0,0,0,.06);border:1px solid var(--bdr);color:var(--t2);cursor:pointer;font-size:1rem;padding:5px 10px;border-radius:7px;min-width:34px;min-height:34px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.bk:hover{background:var(--p2);border-color:var(--g2);color:var(--g2);}
+.ph-av{width:36px;height:36px;border-radius:50%;background:var(--g2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.88rem;color:#fff;text-transform:uppercase;flex-shrink:0;}
+.ph-name{font-weight:700;font-size:.9rem;color:var(--text);}
+.ph-sub{font-size:.7rem;color:var(--muted);}
+
+/* Game select */
+.ggrid{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;overflow-y:auto;align-content:start;}
+.gcrd{background:var(--panel);border:1px solid var(--bdr);border-radius:12px;padding:18px 12px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.gcrd:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.1);border-color:var(--g2);}
+.gcrd.active{background:var(--g2);border-color:var(--g2);}
+.gcrd.active .gc-name{color:#fff;}
+.gcrd.active .gc-time{color:rgba(255,255,255,.75);}
+.gcrd.done{opacity:.6;}
+.gc-ic{font-size:1.8rem;margin-bottom:6px;}
+.gc-name{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--g2);letter-spacing:.5px;}
+.gc-time{font-size:.7rem;color:var(--muted);margin-top:3px;}
+.gc-dot{width:8px;height:8px;border-radius:50%;background:var(--g);margin:4px auto 0;}
+.gc-dot.red{background:var(--red);}
+.gc-dot.grey{background:#cbd5e0;}
+
+/* Rate panel */
+.rlist{padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.ritem{background:var(--panel);border:1px solid var(--bdr);border-radius:10px;padding:13px 16px;cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.ritem:hover{background:rgba(18,140,126,.04);border-color:var(--g2);transform:translateX(3px);}
+.rv{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.05rem;color:var(--g2);}
+.rd{font-size:.72rem;color:var(--muted);}
+
+/* ═══ CHAT PANEL ═══ */
+.cp{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#fff;}
+
+.chat-hdr{background:#fff;border-bottom:2px solid var(--bdr);padding:8px 12px 6px;flex-shrink:0;}
+.ch-row1{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+.c-gname{color:var(--g3);font-weight:700;font-size:.92rem;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
+.c-date{width:108px;height:28px;border:1px solid var(--bdr);border-radius:6px;padding:0 8px;font-size:.78rem;color:var(--text);outline:none;text-align:center;background:var(--p2);transition:border-color .2s;}
+.c-date:focus{border-color:var(--g2);}
+.c-yantri{background:none;border:none;cursor:pointer;color:var(--g2);font-size:1.1rem;padding:0 3px;}
+.c-balance{font-weight:700;color:#276749;margin-left:auto;font-size:.88rem;background:rgba(37,211,102,.1);padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.c-back{background:var(--p2);border:1px solid var(--bdr);padding:3px 9px;border-radius:5px;cursor:pointer;font-size:.76rem;font-weight:600;color:var(--t2);transition:all .15s;}
+.c-back:hover{border-color:var(--g2);color:var(--g2);}
+.ch-row2{font-size:.76rem;color:var(--t2);margin-top:4px;display:flex;align-items:center;gap:6px;}
+.ch-row2 span{color:var(--muted);}
+
+/* Chat messages */
+.chat-scroll{flex:1;overflow-y:auto;background:#f0ece0;padding:8px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;}
+.chat-row{border-radius:8px;padding:4px 10px;margin:1px 0;font-size:13px;font-family:Arial,sans-serif;position:relative;}
+.chat-row.sent{background:#dcf8c6;align-self:flex-end;max-width:85%;border-radius:8px 0 8px 8px;}
+.chat-row.recv{background:#fff;align-self:flex-start;max-width:85%;border-radius:0 8px 8px 8px;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.msg-txt{font-weight:700;font-size:13px;color:#111;word-break:break-word;}
+.msg-meta{font-size:10px;color:#888;text-align:right;margin-top:2px;}
+.msg-status{font-size:.75rem;display:inline-block;padding:1px 6px;border-radius:3px;font-weight:700;}
+.s-sent{color:#555;}
+.s-ok{color:#276749;background:rgba(39,103,73,.08);}
+.s-cancel{color:var(--red);background:rgba(229,62,62,.08);}
+.msg-total{background:rgba(18,140,126,.06);border:1px solid rgba(18,140,126,.15);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--g3);font-weight:700;margin-top:2px;display:inline-block;}
+.chat-dateline{text-align:center;margin:8px 0;font-size:.68rem;color:var(--muted);background:rgba(0,0,0,.05);border-radius:20px;padding:3px 12px;align-self:center;}
+
+/* Grand total bar */
+.grand-total{padding:4px 12px;background:#f9f9f9;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;font-size:.82rem;font-weight:700;color:var(--text);min-height:26px;text-align:center;}
+
+/* Chat input */
+.chat-input{background:#fff;border-top:1px solid var(--bdr);padding:6px 8px;flex-shrink:0;}
+.input-row{display:flex;align-items:stretch;gap:0;margin-bottom:4px;}
+.i-num{flex:3;height:38px;border:1.5px solid #ccc;border-radius:7px 0 0 7px;padding:0 10px;font-size:.9rem;color:#000;outline:none;font-family:Arial;transition:border-color .2s;}
+.i-num:focus{border-color:var(--g2);}
+.i-amt{flex:1.5;height:38px;border:1.5px solid #ccc;border-left:none;padding:0 8px;font-size:.9rem;color:#000;outline:none;font-family:Arial;text-align:center;min-width:56px;transition:border-color .2s;}
+.i-amt:focus{border-color:var(--g2);}
+.i-save{background:var(--g2);color:#fff;font-weight:700;border:none;padding:0 16px;height:38px;font-size:.86rem;cursor:pointer;white-space:nowrap;border-radius:0 7px 7px 0;transition:background .15s;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
+.i-save:hover{background:var(--g3);}
+.pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.pill{display:inline-block;padding:4px 10px;border-radius:16px;font-size:.7rem;font-weight:600;cursor:pointer;color:var(--muted);border:1px solid var(--bdr);background:var(--p2);transition:all .15s;}
+.pill:hover{border-color:var(--g2);color:var(--g2);}
+.pill.on{background:var(--g2);color:#fff;border-color:var(--g2);}
+
+/* ═══ OTHER PAGES ═══ */
+.page{display:none;flex:1;overflow-y:auto;padding:22px 26px;}
+.page.on{display:block;}
+
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.sgrid.c3{grid-template-columns:repeat(3,1fr);}
+.sc{background:var(--panel);border-radius:13px;padding:17px 18px;border:1px solid var(--bdr);position:relative;overflow:hidden;transition:all .2s;cursor:default;}
+.sc:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.07);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--g2);}
+.sc.r::before{background:var(--red);}
+.sc.b::before{background:var(--blue);}
+.sc.y::before{background:var(--yellow);}
+.sc-top{display:flex;justify-content:space-between;margin-bottom:8px;}
+.sc-lbl{font-size:.66rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600;}
+.sc-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.ic-g{background:rgba(37,211,102,.12);}
+.ic-r{background:rgba(229,62,62,.1);}
+.ic-b{background:rgba(49,130,206,.1);}
+.ic-y{background:rgba(214,158,46,.1);}
+.sc-val{font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;line-height:1;letter-spacing:-1px;}
+.sc-sub{font-size:.7rem;color:var(--muted);margin-top:4px;}
+.tr.up{color:#276749;font-size:.7rem;font-weight:600;}
+.tr.dn{color:var(--red);font-size:.7rem;font-weight:600;}
+
+.card{background:var(--panel);border-radius:13px;border:1px solid var(--bdr);overflow:hidden;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.ch{padding:13px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.ch-l{display:flex;align-items:center;gap:9px;}
+.ch-ic{width:30px;height:30px;border-radius:7px;background:rgba(18,140,126,.1);display:flex;align-items:center;justify-content:center;font-size:.82rem;}
+.ch-t{font-family:'Rajdhani',sans-serif;font-size:.98rem;font-weight:700;letter-spacing:.3px;}
+.ch-s{font-size:.7rem;color:var(--muted);}
+.cb{padding:14px 18px;}
+.fbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--p2);border-bottom:1px solid var(--bdr);}
+.flbl{font-size:.67rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
+.fi{background:#fff;border:1px solid var(--bdr);border-radius:7px;padding:6px 11px;font-size:.82rem;color:var(--text);outline:none;transition:all .2s;}
+.fi:focus{border-color:var(--g2);}
+.fb{padding:7px 16px;background:var(--g2);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.82rem;font-weight:600;font-family:'Rajdhani',sans-serif;display:flex;align-items:center;gap:5px;transition:background .15s;}
+.fb:hover{background:var(--g3);}
+.fb.sec{background:#fff;border:1px solid var(--bdr);color:var(--t2);}
+.fb.sec:hover{border-color:var(--g2);color:var(--g2);}
+.sw{padding:9px 14px;border-bottom:1px solid var(--bdr);}
+.si{width:100%;background:var(--p2);border:1px solid var(--bdr);border-radius:7px;padding:7px 11px 7px 34px;font-size:.82rem;color:var(--text);outline:none;transition:all .2s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center;}
+.si:focus{border-color:var(--g2);background-color:#fff;}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--p2);padding:9px 14px;text-align:left;font-size:.64rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:2px solid var(--bdr);white-space:nowrap;}
+tbody tr{transition:background .12s;}
+tbody tr:hover td{background:rgba(18,140,126,.04);}
+tbody tr:nth-child(even) td{background:#fafbfc;}
+td{padding:10px 14px;border-bottom:1px solid #f0f2f5;font-size:.82rem;color:var(--t2);}
+tfoot td{background:var(--g3);color:#fff;padding:10px 14px;font-size:.82rem;font-weight:700;}
+.am{font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:700;}
+.am.p{color:#276749;}
+.am.n{color:var(--red);}
+.am.z{color:var(--muted);}
+.cl{color:var(--g2);font-weight:600;cursor:pointer;}
+.cl:hover{text-decoration:underline;}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:16px;font-size:.66rem;font-weight:600;}
+.badge::before{content:'●';font-size:.5rem;}
+.bg{background:rgba(37,211,102,.1);color:#276749;}
+.br{background:rgba(229,62,62,.08);color:#9b2335;}
+.by{background:rgba(214,158,46,.1);color:#7d5a14;}
+.bb{background:rgba(49,130,206,.08);color:#1a4a7a;}
+.frow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.fg{flex:1;min-width:130px;display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:.65rem;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600;}
+.inp{background:var(--p2);border:1px solid var(--bdr);border-radius:7px;padding:8px 11px;font-size:.86rem;color:var(--text);outline:none;font-family:'Inter',sans-serif;transition:all .2s;width:100%;}
+.inp:focus{border-color:var(--g2);background:#fff;box-shadow:0 0 0 3px rgba(18,140,126,.1);}
+
+/* ═══ MOBILE ═══ */
+.demo-note{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(7,94,84,.95);color:#fff;padding:6px 20px;border-radius:20px;font-size:.73rem;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25);pointer-events:none;border:1px solid rgba(255,255,255,.15);}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:4px;}
+
+@media(max-width:768px){
+  .nav-links{display:none;}
+  .nav-uid{display:none;}
+  .nav-hb{display:flex;}
+  .sb{width:100%;border-right:none;border-bottom:1px solid var(--bdr);max-height:220px;}
+  .sb.hide{display:none;}
+  .mlayout{flex-direction:column;}
+  .sgrid,.sgrid.c3{grid-template-columns:repeat(2,1fr);}
+  .page{padding:12px;}
+  .ggrid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <div class="logo-mark">S9</div>
+    SUSU9
+  </div>
+  <div class="nav-links">
+    <span class="nav-a on" onclick="showPage('home')">🏠 Home</span>
+    <span class="nav-a" onclick="showPage('balance')">⚖️ Balance</span>
+    <span class="nav-a" onclick="showPage('hisab')">📋 Hisab</span>
+    <span class="nav-a" onclick="showPage('results')">🎯 Results</span>
+    <span class="nav-a" onclick="showPage('lc')">📊 LC</span>
+    <span class="nav-a" onclick="showPage('subusers')">👥 Sub Users</span>
+    <span class="nav-a" onclick="showPage('yantri')">🎲 Yantri</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-uid">Admin · 1001</span>
+    <button class="nav-logout">Logout</button>
+    <button class="nav-hb" onclick="toggleSb()">☰</button>
+  </div>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="home-wrap" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+
+  <!-- ═══ GAMES BAR ═══ -->
+  <div class="gbar">
+    <span class="gb-lbl">Games:</span>
+    <span class="gbar-find">🔍 Find</span>
+    <div class="gpill on" onclick="selGame(this,'Morning','07:00–11:00')">
+      <div class="gp-dot"></div><span class="gp-name">Morning</span><span class="gp-time">07:00–11:00</span>
+    </div>
+    <div class="gpill" onclick="selGame(this,'Afternoon','12:00–15:00')">
+      <div class="gp-dot" style="background:#ffa502"></div><span class="gp-name">Afternoon</span><span class="gp-time">12:00–15:00</span>
+    </div>
+    <div class="gpill" onclick="selGame(this,'Evening','16:00–19:00')">
+      <div class="gp-dot" style="background:#ff6b35"></div><span class="gp-name">Evening</span><span class="gp-time">16:00–19:00</span>
+    </div>
+    <div class="gpill" onclick="selGame(this,'Night','21:00–23:00')">
+      <div class="gp-dot" style="background:#5352ed"></div><span class="gp-name">Night</span><span class="gp-time">21:00–23:00</span>
+    </div>
+    <div class="gpill" onclick="selGame(this,'Lucky','10:00–22:00')">
+      <div class="gp-dot" style="background:#ff4757"></div><span class="gp-name">Lucky</span><span class="gp-time">10:00–22:00</span>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN LAYOUT ═══ -->
+  <div class="mlayout">
+
+    <!-- SIDEBAR -->
+    <div class="sb" id="sb">
+      <div class="sb-search">
+        <input class="sb-inp" id="srch" placeholder="Search name / mobile..." oninput="filterC()">
+        <button class="sb-btn">🔍</button>
+      </div>
+      <div class="clist" id="clist">
+        <div class="sec-lbl">All Customers (8)</div>
+        <!-- customers injected by JS -->
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="rpanel" id="rpanel">
+
+      <!-- Welcome -->
+      <div class="ws" id="ws" style="display:flex;">
+        <div class="ws-ic">💬</div>
+        <div class="ws-t">Welcome to Susu9</div>
+        <div class="ws-s">Customer select karo shuru karne ke liye</div>
+      </div>
+
+      <!-- Game Select -->
+      <div id="gp" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+        <div class="ph">
+          <button class="bk" onclick="showW()">←</button>
+          <div class="ph-av" id="gp-av">R</div>
+          <div>
+            <div class="ph-name" id="gp-name">Ramesh Kumar</div>
+            <div class="ph-sub" id="gp-mob">Select a game</div>
+          </div>
+        </div>
+        <div class="ggrid" id="ggrid"></div>
+      </div>
+
+      <!-- Rate Select -->
+      <div id="rp" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+        <div class="ph">
+          <button class="bk" onclick="showPanel('gp')">←</button>
+          <div class="ph-av" id="rp-av">R</div>
+          <div>
+            <div class="ph-name" id="rp-name">Ramesh Kumar</div>
+            <div class="ph-sub" id="rp-game">Morning</div>
+          </div>
+        </div>
+        <div class="rlist" id="rlist"></div>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div id="cp" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+        <div class="chat-hdr">
+          <div class="ch-row1">
+            <button class="c-back" onclick="showPanel('gp')">← Back</button>
+            <span style="font-size:1rem;cursor:pointer;">🎮</span>
+            <span class="c-gname" id="cp-game">Morning</span>
+            <input type="text" class="c-date" id="cp-date" value="02/Jul/2026">
+            <button class="c-yantri" title="Open Yantri">📅</button>
+            <span class="c-balance" id="cp-bal">Bal: ₹12,400</span>
+          </div>
+          <div class="ch-row2">
+            <span id="cp-cust">Ramesh Kumar</span>
+            <span>·</span>
+            <span id="cp-rate">Rate: D=80 A=90</span>
+          </div>
+        </div>
+        <div class="chat-scroll" id="chat-scroll">
+          <!-- messages injected by JS -->
+        </div>
+        <div class="grand-total" id="grand-total"></div>
+        <div class="chat-input">
+          <div class="input-row">
+            <input type="text" class="i-num" id="i-num" placeholder="Number (e.g. 34)" onkeydown="if(event.key==='Enter')i_save()">
+            <input type="tel" class="i-amt" id="i-amt" placeholder="Amt" onkeydown="if(event.key==='Enter')i_save()">
+            <button class="i-save" onclick="i_save()">Save (F2)</button>
+          </div>
+          <div class="pills">
+            <span class="pill on" id="pill-typing" onclick="setPill(this)">Typing</span>
+            <span class="pill" onclick="setPill(this)">Laddi</span>
+            <span class="pill" onclick="setPill(this)">Jode</span>
+            <span class="pill" onclick="setPill(this)">Cross</span>
+            <span class="pill" onclick="setPill(this)">Pahada</span>
+            <span class="pill" onclick="setPill(this)">Ander</span>
+            <span class="pill" onclick="setPill(this)">Bahar</span>
+            <span class="pill" onclick="setPill(this)">Yantri</span>
+            <span class="pill" onclick="setPill(this)">57</span>
+            <span class="pill" onclick="setPill(this)">43</span>
+            <span class="pill" onclick="setPill(this)">Palat</span>
+            <span class="pill" onclick="setPill(this)">Chat</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /rpanel -->
+  </div><!-- /mlayout -->
+</div><!-- /home-wrap -->
+
+<!-- ═══ OTHER PAGES ═══ -->
+
+<!-- BALANCE -->
+<div class="page" id="page-balance">
+  <div class="sgrid c3">
+    <div class="sc"><div class="sc-top"><div class="sc-lbl">Total Outstanding</div><div class="sc-ic ic-g">💵</div></div><div class="sc-val">₹2,84,500</div><div class="sc-sub">128 customers</div></div>
+    <div class="sc r"><div class="sc-top"><div class="sc-lbl">Total Due</div><div class="sc-ic ic-r">📤</div></div><div class="sc-val">₹48,200</div><div class="sc-sub">32 accounts</div></div>
+    <div class="sc b"><div class="sc-top"><div class="sc-lbl">Net Balance</div><div class="sc-ic ic-b">⚖️</div></div><div class="sc-val">₹2,36,300</div><div class="sc-sub">Receivable</div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ch-l"><div class="ch-ic">⚖️</div><div><div class="ch-t">Balance Sheet — All Customers</div><div class="ch-s">Full balance view</div></div></div><div style="display:flex;gap:8px"><button class="fb sec">📥 Export</button></div></div>
+    <div class="sw"><input class="si" placeholder="Customer naam ya mobile se search karo..."></div>
+    <div class="tw"><table><thead><tr><th>#</th><th>Customer</th><th>Mobile</th><th>Sale</th><th>Received</th><th>Balance</th><th>Status</th></tr></thead><tbody>
+      <tr><td>1</td><td><span class="cl">Ramesh Kumar</span></td><td>98765XXXXX</td><td class="am">₹52,000</td><td class="am p">₹39,600</td><td class="am p">₹12,400</td><td><span class="badge bg">Active</span></td></tr>
+      <tr><td>2</td><td><span class="cl">Suresh Patel</span></td><td>87654XXXXX</td><td class="am">₹34,000</td><td class="am p">₹25,800</td><td class="am p">₹8,200</td><td><span class="badge bg">Active</span></td></tr>
+      <tr><td>3</td><td><span class="cl">Mohan Singh</span></td><td>76543XXXXX</td><td class="am">₹89,000</td><td class="am p">₹68,000</td><td class="am p">₹21,000</td><td><span class="badge by">Pending</span></td></tr>
+      <tr><td>4</td><td><span class="cl">Priya Sharma</span></td><td>98123XXXXX</td><td class="am">₹1,26,000</td><td class="am p">₹94,500</td><td class="am p">₹31,500</td><td><span class="badge bg">Active</span></td></tr>
+      <tr><td>5</td><td><span class="cl">Anil Verma</span></td><td>95432XXXXX</td><td class="am">₹22,000</td><td class="am p">₹16,500</td><td class="am n">-₹5,500</td><td><span class="badge br">Due</span></td></tr>
+      <tr><td>6</td><td><span class="cl">Vijay Mehta</span></td><td>91234XXXXX</td><td class="am">₹64,800</td><td class="am p">₹48,600</td><td class="am p">₹16,200</td><td><span class="badge bg">Active</span></td></tr>
+      <tr><td>7</td><td><span class="cl">Kavita Rao</span></td><td>97654XXXXX</td><td class="am">₹18,500</td><td class="am p">₹18,500</td><td class="am z">₹0</td><td><span class="badge bb">Settled</span></td></tr>
+    </tbody><tfoot><tr><td colspan="3">Total — 7 customers</td><td>₹4,06,300</td><td>₹3,11,500</td><td>₹83,300</td><td></td></tr></tfoot></table></div>
+  </div>
+</div>
+
+<!-- HISAB -->
+<div class="page" id="page-hisab">
+  <div class="card">
+    <div class="ch"><div class="ch-l"><div class="ch-ic">📋</div><div><div class="ch-t">Hisab — Date Wise</div></div></div></div>
+    <div class="fbar"><span class="flbl">From</span><input class="fi" value="01/Jul/2026" style="width:128px"><span class="flbl">To</span><input class="fi" value="02/Jul/2026" style="width:128px"><button class="fb">🔍 Search</button><button class="fb sec">📅 Today</button></div>
+    <div class="tw"><table><thead><tr><th>Customer</th><th>Total Sale</th><th>Dara</th><th>Akhar</th><th>Commission</th><th>Win</th><th>Net Balance</th></tr></thead><tbody>
+      <tr><td><span class="cl">Ramesh Kumar</span></td><td class="am">₹5,200</td><td>₹3,100</td><td>₹2,100</td><td>₹260</td><td class="am n">-₹800</td><td class="am p">₹4,140</td></tr>
+      <tr><td><span class="cl">Suresh Patel</span></td><td class="am">₹1,800</td><td>₹1,200</td><td>₹600</td><td>₹90</td><td>₹0</td><td class="am p">₹1,710</td></tr>
+      <tr><td><span class="cl">Mohan Singh</span></td><td class="am">₹3,000</td><td>₹2,000</td><td>₹1,000</td><td>₹150</td><td class="am n">-₹1,200</td><td class="am p">₹1,650</td></tr>
+      <tr><td><span class="cl">Priya Sharma</span></td><td class="am">₹7,500</td><td>₹4,500</td><td>₹3,000</td><td>₹375</td><td>₹0</td><td class="am p">₹7,125</td></tr>
+      <tr><td><span class="cl">Anil Verma</span></td><td class="am">₹2,500</td><td>₹1,500</td><td>₹1,000</td><td>₹125</td><td class="am n">-₹2,500</td><td class="am n">-₹125</td></tr>
+    </tbody><tfoot><tr><td>Total</td><td>₹20,000</td><td>₹12,300</td><td>₹7,700</td><td>₹1,000</td><td>-₹4,500</td><td>₹14,500</td></tr></tfoot></table></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="page" id="page-results">
+  <div class="card">
+    <div class="ch"><div class="ch-l"><div class="ch-ic">🎯</div><div><div class="ch-t">Game Results</div></div></div></div>
+    <div class="fbar"><span class="flbl">Date</span><input class="fi" value="02/Jul/2026" style="width:138px"><button class="fb">🔍 Search</button></div>
+    <div class="tw"><table><thead><tr><th>Game</th><th>Open (Dara)</th><th>Jodi</th><th>Close (Akhar)</th><th>Status</th></tr></thead><tbody>
+      <tr><td><b>Morning</b></td><td class="am" style="color:var(--g2)">3</td><td class="am" style="color:var(--g2)">34</td><td class="am" style="color:var(--g2)">4</td><td><span class="badge bg">Done</span></td></tr>
+      <tr><td><b>Afternoon</b></td><td class="am" style="color:var(--g2)">7</td><td class="am" style="color:var(--g2)">78</td><td class="am" style="color:var(--g2)">8</td><td><span class="badge bg">Done</span></td></tr>
+      <tr><td><b>Evening</b></td><td class="am z">—</td><td class="am z">—</td><td class="am z">—</td><td><span class="badge by">Pending</span></td></tr>
+      <tr><td><b>Night</b></td><td class="am z">—</td><td class="am z">—</td><td class="am z">—</td><td><span class="badge by">Pending</span></td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+
+<!-- LC -->
+<div class="page" id="page-lc">
+  <div class="card">
+    <div class="ch"><div class="ch-l"><div class="ch-ic">📊</div><div><div class="ch-t">LC Management</div><div class="ch-s">Lena / Dena records</div></div></div></div>
+    <div class="cb">
+      <div class="frow">
+        <div class="fg"><label>Customer</label><select class="inp"><option>-- Select --</option><option>Ramesh Kumar</option><option>Suresh Patel</option><option>Mohan Singh</option></select></div>
+        <div class="fg"><label>Amount (₹)</label><input class="inp" type="number" placeholder="0"></div>
+        <div class="fg"><label>Type</label><select class="inp"><option>Lena (Unse Lena)</option><option>Dena (Unhe Dena)</option></select></div>
+        <div class="fg"><label>Date</label><input class="inp" type="text" value="02/Jul/2026"></div>
+      </div>
+      <button class="fb">+ Add LC Entry</button>
+    </div>
+    <div class="tw"><table><thead><tr><th>Customer</th><th>Date</th><th>Type</th><th>Amount</th><th>Remarks</th></tr></thead><tbody>
+      <tr><td><span class="cl">Ramesh Kumar</span></td><td>02 Jul</td><td><span class="badge bg">Lena</span></td><td class="am p">₹5,000</td><td>Commission pending</td></tr>
+      <tr><td><span class="cl">Mohan Singh</span></td><td>01 Jul</td><td><span class="badge br">Dena</span></td><td class="am n">₹2,500</td><td>Win amount</td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+
+<!-- SUB USERS -->
+<div class="page" id="page-subusers">
+  <div class="card">
+    <div class="ch"><div class="ch-l"><div class="ch-ic">👥</div><div><div class="ch-t">Sub Users</div></div></div><button class="fb">+ Add</button></div>
+    <div class="cb">
+      <div class="frow">
+        <div class="fg"><label>Name</label><input class="inp" placeholder="User ka naam"></div>
+        <div class="fg"><label>Mobile</label><input class="inp" placeholder="10 digit"></div>
+        <div class="fg"><label>Password</label><input class="inp" type="password" placeholder="Password"></div>
+      </div>
+      <button class="fb">💾 Save</button>
+    </div>
+    <div class="tw"><table><thead><tr><th>Edit</th><th>Name</th><th>Mobile</th><th>Status</th></tr></thead><tbody>
+      <tr><td><button style="background:var(--p2);border:1px solid var(--bdr);border-radius:5px;padding:3px 10px;cursor:pointer;font-size:.74rem;color:var(--g2)">✏ Edit</button></td><td>Raj Staff</td><td>98765XXXXX</td><td><span class="badge bg">Active</span></td></tr>
+      <tr><td><button style="background:var(--p2);border:1px solid var(--bdr);border-radius:5px;padding:3px 10px;cursor:pointer;font-size:.74rem;color:var(--g2)">✏ Edit</button></td><td>Priya Staff</td><td>87654XXXXX</td><td><span class="badge br">Inactive</span></td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+
+<!-- YANTRI -->
+<div class="page" id="page-yantri">
+  <div class="card">
+    <div class="ch">
+      <div class="ch-l"><div class="ch-ic">🎲</div><div><div class="ch-t">Yantri Entry</div><div class="ch-s">D=Dara · A=Akhar</div></div></div>
+      <div style="display:flex;gap:8px;align-items:center"><input class="fi" value="02/Jul/2026" style="width:128px"><button class="fb">💾 Save</button></div>
+    </div>
+    <div class="fbar" style="gap:6px;overflow-x:auto">
+      <span class="pill on" style="flex-shrink:0">Morning</span>
+      <span class="pill" style="flex-shrink:0">Afternoon</span>
+      <span class="pill" style="flex-shrink:0">Evening</span>
+      <span class="pill" style="flex-shrink:0">Night</span>
+    </div>
+    <div style="padding:8px 16px;background:var(--p2);border-bottom:1px solid var(--bdr);display:flex;gap:18px;font-size:.78rem;color:var(--muted)">
+      <span>Total: <b id="yt" style="color:var(--text)">₹0</b></span>
+      <span>Dara: <b id="yd" style="color:var(--text)">₹0</b></span>
+      <span>Akhar: <b id="ya" style="color:var(--text)">₹0</b></span>
+    </div>
+    <div id="ygrid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px 16px;"></div>
+  </div>
+</div>
+
+<div class="demo-note">🎨 Susu9 Complete UI Demo — Click customer → game → chat!</div>
+
+<script>
+/* ═══════════════════════════════════
+   DATA
+═══════════════════════════════════ */
+const customers=[
+  {id:1,name:'Ramesh Kumar',mob:'98765XXXXX',bal:'₹12,400',av:'RK',cls:'a1',badge:3,msgs:[
+    {t:'sent',txt:'34 200\n12 100',total:'D:300',time:'09:12',status:'ok'},
+    {t:'recv',txt:'Theek hai bhai',total:'',time:'09:14',status:''},
+    {t:'sent',txt:'56 150\n78 100',total:'D:250',time:'10:30',status:'ok'},
+    {t:'recv',txt:'Done ✓',total:'',time:'10:31',status:''},
+  ]},
+  {id:2,name:'Suresh Patel',mob:'87654XXXXX',bal:'₹8,200',av:'SP',cls:'a2',badge:0,msgs:[
+    {t:'sent',txt:'12 500\n23 300',total:'D:800',time:'08:45',status:'ok'},
+  ]},
+  {id:3,name:'Mohan Singh',mob:'76543XXXXX',bal:'₹21,000',av:'MS',cls:'a3',badge:1,msgs:[
+    {t:'sent',txt:'45 1000',total:'D:1000',time:'11:00',status:'sent'},
+  ]},
+  {id:4,name:'Priya Sharma',mob:'98123XXXXX',bal:'₹31,500',av:'PS',cls:'a4',badge:0,msgs:[
+    {t:'recv',txt:'Bhai aaj kitna hoga?',total:'',time:'07:30',status:''},
+    {t:'sent',txt:'11 200\n22 300\n33 100',total:'D:600',time:'07:35',status:'ok'},
+    {t:'recv',txt:'Ok bhai 👍',total:'',time:'07:36',status:''},
+  ]},
+  {id:5,name:'Anil Verma',mob:'95432XXXXX',bal:'-₹5,500',av:'AV',cls:'a5',badge:2,msgs:[]},
+  {id:6,name:'Vijay Mehta',mob:'91234XXXXX',bal:'₹16,200',av:'VM',cls:'a1',badge:0,msgs:[]},
+  {id:7,name:'Deepak Joshi',mob:'88900XXXXX',bal:'₹9,800',av:'DJ',cls:'a2',badge:0,msgs:[]},
+  {id:8,name:'Kavita Rao',mob:'97654XXXXX',bal:'₹0',av:'KR',cls:'a3',badge:0,msgs:[]},
+];
+const games=[
+  {name:'Morning',time:'07:00–11:00',ic:'🌅',status:'open'},
+  {name:'Afternoon',time:'12:00–15:00',ic:'☀️',status:'open'},
+  {name:'Evening',time:'16:00–19:00',ic:'🌆',status:'done'},
+  {name:'Night',time:'21:00–23:00',ic:'🌙',status:'done'},
+  {name:'Lucky',time:'10:00–22:00',ic:'⭐',status:'open'},
+];
+const rates=[
+  {label:'D=80 · A=90 (Standard)',sub:'Default rate'},
+  {label:'D=85 · A=95 (Special)',sub:'VIP rate'},
+  {label:'D=75 · A=85 (Discount)',sub:'Regular offer'},
+];
+
+let selC=null, selG=null, selR=null;
+let chatMsgs=[];
+
+/* ═══════════════════════════════════
+   INIT
+═══════════════════════════════════ */
+window.onload=function(){
+  buildClist(customers);
+  buildYantri();
+  document.getElementById('cp-date').value=fmt(new Date());
+};
+
+function fmt(d){
+  const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return (d.getDate()+'').padStart(2,'0')+'/'+m[d.getMonth()]+'/'+d.getFullYear();
+}
+
+/* ═══ CUSTOMER LIST ═══ */
+function buildClist(list){
+  const cl=document.getElementById('clist');
+  cl.innerHTML='<div class="sec-lbl">All Customers ('+list.length+')</div>';
+  list.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='citem'+(selC&&selC.id===c.id?' on':'');
+    d.innerHTML=`<div class="c-av ${c.cls}">${c.av}</div>
+    <div class="c-inf"><div class="c-name">${c.name}</div><div class="c-mob">${c.mob} · Bal: <b style="color:${c.bal.startsWith('-')?'#e53e3e':'#276749'}">${c.bal}</b></div></div>
+    ${c.badge?`<div class="c-badge">${c.badge}</div>`:''}`;
+    d.onclick=()=>openC(c);
+    cl.appendChild(d);
+  });
+}
+
+function filterC(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const f=q?customers.filter(c=>c.name.toLowerCase().includes(q)||c.mob.includes(q)):customers;
+  buildClist(f);
+}
+
+/* ═══ CUSTOMER SELECT → GAME PANEL ═══ */
+function openC(c){
+  selC=c;
+  buildClist(customers.filter(x=>true));// rebuild to update sel
+  // update .on
+  document.querySelectorAll('.citem').forEach((el,i)=>{
+    el.classList.toggle('on',customers[i]&&customers[i].id===c.id);
+  });
+
+  // Set game panel
+  document.getElementById('gp-av').textContent=c.av;
+  document.getElementById('gp-av').className='ph-av '+c.cls;
+  document.getElementById('gp-name').textContent=c.name;
+  document.getElementById('gp-mob').textContent=c.mob+' · Bal: '+c.bal;
+
+  // Build game grid
+  const grid=document.getElementById('ggrid');
+  grid.innerHTML='';
+  games.forEach(g=>{
+    const el=document.createElement('div');
+    el.className='gcrd'+(g.status==='done'?' done':'');
+    el.innerHTML=`<div class="gc-ic">${g.ic}</div>
+    <div class="gc-name">${g.name}</div>
+    <div class="gc-time">${g.time}</div>
+    <div class="gc-dot ${g.status==='done'?'grey':''}"></div>`;
+    el.onclick=()=>openG(g);
+    grid.appendChild(el);
+  });
+
+  showPanel('gp');
+}
+
+/* ═══ GAME SELECT → RATE/CHAT ═══ */
+function openG(g){
+  selG=g;
+  // Build rate panel
+  document.getElementById('rp-av').textContent=selC.av;
+  document.getElementById('rp-av').className='ph-av '+selC.cls;
+  document.getElementById('rp-name').textContent=selC.name;
+  document.getElementById('rp-game').textContent='Game: '+g.name+' · '+g.time;
+  const rl=document.getElementById('rlist');
+  rl.innerHTML='';
+  rates.forEach(r=>{
+    const el=document.createElement('div');
+    el.className='ritem';
+    el.innerHTML=`<div><div class="rv">${r.label}</div><div class="rd">${r.sub}</div></div><span style="color:var(--muted);font-size:1rem;">→</span>`;
+    el.onclick=()=>openChat(r);
+    rl.appendChild(el);
+  });
+  showPanel('rp');
+}
+
+/* ═══ RATE SELECT → CHAT ═══ */
+function openChat(r){
+  selR=r;
+  document.getElementById('cp-game').textContent=selG.name;
+  document.getElementById('cp-cust').textContent=selC.name;
+  document.getElementById('cp-rate').textContent='Rate: '+r.label.split(' (')[0];
+  document.getElementById('cp-bal').textContent='Bal: '+selC.bal;
+
+  chatMsgs=[...selC.msgs];
+  renderChat();
+  showPanel('cp');
+  setTimeout(()=>{
+    const s=document.getElementById('chat-scroll');
+    s.scrollTop=s.scrollHeight;
+    document.getElementById('i-num').focus();
+  },50);
+}
+
+/* ═══ CHAT RENDER ═══ */
+function renderChat(){
+  const sc=document.getElementById('chat-scroll');
+  sc.innerHTML='<div class="chat-dateline">02 Jul 2026</div>';
+  let totD=0,totA=0;
+  chatMsgs.forEach(m=>{
+    const el=document.createElement('div');
+    el.className='chat-row '+m.t;
+    let status='';
+    if(m.status==='ok')status='<span class="msg-status s-ok">✓ Accepted</span>';
+    else if(m.status==='cancel')status='<span class="msg-status s-cancel">✕ Cancelled</span>';
+    else if(m.status==='sent')status='<span class="msg-status s-sent">⏳ Sent</span>';
+    el.innerHTML=`<div class="msg-txt">${m.txt.replace(/\n/g,'<br>')}</div>
+    ${m.total?`<div class="msg-total">${m.total}</div>`:''}
+    <div class="msg-meta">${m.time} ${status}</div>`;
+    sc.appendChild(el);
+    if(m.total&&m.t==='sent'){
+      const parts=m.total.split(',');
+      parts.forEach(p=>{
+        if(p.includes('D:'))totD+=parseInt(p.replace('D:',''))||0;
+        if(p.includes('A:'))totA+=parseInt(p.replace('A:',''))||0;
+      });
+    }
+  });
+  const tot=totD+totA;
+  document.getElementById('grand-total').textContent=tot>0?`Total: D=${totD}  A=${totA}  Grand=${tot}`:'';
+  setTimeout(()=>sc.scrollTop=sc.scrollHeight,10);
+}
+
+/* ═══ SAVE MESSAGE ═══ */
+function i_save(){
+  const num=document.getElementById('i-num').value.trim();
+  const amt=document.getElementById('i-amt').value.trim();
+  if(!num&&!amt)return;
+  const now=new Date();
+  const time=(now.getHours()+'').padStart(2,'0')+':'+(now.getMinutes()+'').padStart(2,'0');
+  const txt=num+(amt?' '+amt:'');
+  const total=amt?'D:'+amt:'';
+  chatMsgs.push({t:'sent',txt,total,time,status:'sent'});
+  renderChat();
+  document.getElementById('i-num').value='';
+  document.getElementById('i-amt').value='';
+  document.getElementById('i-num').focus();
+  // Simulate accept after 1.5s
+  setTimeout(()=>{
+    chatMsgs[chatMsgs.length-1].status='ok';
+    renderChat();
+  },1500);
+}
+
+/* ═══ PANEL SHOW ═══ */
+function showPanel(id){
+  ['ws','gp','rp','cp'].forEach(p=>{
+    const el=document.getElementById(p);
+    if(el)el.style.display=(p===id)?'flex':'none';
+  });
+}
+function showW(){selC=null;showPanel('ws');buildClist(customers);}
+function back(){showPanel('gp');}
+
+/* ═══ PAGE SWITCH ═══ */
+function showPage(pg){
+  const hw=document.getElementById('home-wrap');
+  const pages=document.querySelectorAll('.page');
+  document.querySelectorAll('.nav-a').forEach(a=>a.classList.remove('on'));
+  if(pg==='home'){
+    hw.style.display='flex';
+    pages.forEach(p=>p.classList.remove('on'));
+  } else {
+    hw.style.display='none';
+    pages.forEach(p=>p.classList.remove('on'));
+    const tp=document.getElementById('page-'+pg);
+    if(tp)tp.classList.add('on');
+  }
+  // Mark active nav
+  document.querySelectorAll('.nav-a').forEach(a=>{
+    if(a.textContent.toLowerCase().includes(pg)||
+       (pg==='home'&&a.textContent.includes('Home'))||
+       (pg==='subusers'&&a.textContent.includes('Sub'))||
+       (pg==='yantri'&&a.textContent.includes('Yantri')))
+      a.classList.add('on');
+  });
+}
+
+/* ═══ GAMES BAR PILL ═══ */
+function selGame(el,name,time){
+  document.querySelectorAll('.gpill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ═══ PILL TYPE ═══ */
+function setPill(el){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+}
+
+/* ═══ MOBILE SIDEBAR ═══ */
+function toggleSb(){
+  document.getElementById('sb').classList.toggle('hide');
+}
+
+/* ═══ YANTRI ═══ */
+function buildYantri(){
+  const g=document.getElementById('ygrid');
+  if(!g)return;
+  g.innerHTML='';
+  for(let i=0;i<=9;i++){
+    const c=document.createElement('div');
+    c.style.cssText='background:var(--p2);border:1px solid var(--bdr);border-radius:9px;padding:10px 8px;text-align:center;';
+    c.innerHTML=`<div style="font-family:Rajdhani,sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:5px">${i}</div>
+    <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px;text-align:left">Dara</div>
+    <input type="number" placeholder="0" oninput="calcY()" style="width:100%;background:#fff;border:1px solid var(--bdr);border-radius:5px;padding:4px;font-size:.82rem;text-align:center;outline:none;margin-bottom:3px;font-weight:700;font-family:Rajdhani,sans-serif;">
+    <div style="font-size:.6rem;color:var(--muted);margin-bottom:2px;text-align:left">Akhar</div>
+    <input type="number" placeholder="0" oninput="calcY()" style="width:100%;background:#fff;border:1px solid var(--bdr);border-radius:5px;padding:4px;font-size:.82rem;text-align:center;outline:none;font-weight:700;font-family:Rajdhani,sans-serif;">`;
+    g.appendChild(c);
+  }
+}
+function calcY(){
+  const ins=[...document.querySelectorAll('#ygrid input')];
+  let d=0,a=0;
+  ins.forEach((inp,i)=>{if(i%2===0)d+=Number(inp.value)||0;else a+=Number(inp.value)||0;});
+  document.getElementById('yd').textContent='₹'+d.toLocaleString('en-IN');
+  document.getElementById('ya').textContent='₹'+a.toLocaleString('en-IN');
+  document.getElementById('yt').textContent='₹'+(d+a).toLocaleString('en-IN');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Users - Admin - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Users</div>
+        </div>
+        <div class="card-body">
+
+          <!-- Add / Edit -->
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mobile (Username)</label>
+              <input type="text" id="txtMobile" class="form-control" placeholder="Mobile number">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="text" id="txtPassword" class="form-control" placeholder="Password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Validity Date</label>
+              <input type="date" id="txtValidity" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select id="ddlActive" class="form-control">
+                <option value="True">Active</option>
+                <option value="False">Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:18px;">
+            <button class="btn btn-success" onclick="saveUser()" id="btnSave">Save</button>
+            <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+          </div>
+          <input type="hidden" id="editUID">
+
+          <!-- Grid -->
+          <input type="text" id="srchUser" class="form-control" placeholder="Filter by Mobile/UID..." oninput="filterUsers()" style="margin-bottom:12px;">
+          <div class="table-responsive">
+            <div id="usersTable" class="loading"><span class="spinner"></span>Loading...</div>
+          </div>
+
+          <!-- Block / Unblock -->
+          <div class="row mt-4" style="margin-top:18px;">
+            <div class="col-md-6 text-center">
+              <button class="btn btn-danger btn-lg m-2" onclick="blockAll()" title="Block all users">&#128274; Block All Users</button>
+              <button class="btn btn-success btn-lg m-2" onclick="unblockAll()" title="Unblock all users">&#9989; Unblock All Users</button>
+            </div>
+            <div class="col-md-6 text-center">
+              <div class="input-group mb-3" style="display:flex;gap:8px;">
+                <input type="text" id="blockMobile" class="form-control" placeholder="Enter Mobile Number">
+                <button class="btn btn-warning" onclick="blockOne()" title="Block single user">&#128274; Block</button>
+                <button class="btn btn-primary" onclick="unblockOne()" title="Unblock single user">&#9989; Unblock</button>
+              </div>
+              <div class="col-md-6 text-center mb-2">
+                <label class="form-label">Validity Date for Unblock</label>
+                <input type="date" id="bulkValidity" class="form-control" title="Validity date for unblock">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let allUsers = [];
+
+async function init() {
+  const u = await initAdminPage('users');
+  if (!u) return;
+
+  // Default validity - 1 year from now
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  document.getElementById('txtValidity').value = nextYear.toISOString().split('T')[0];
+
+  await loadUsers();
+}
+
+async function loadUsers() {
+  const res = await API.get('/api/admin/users');
+  if (!res || !res.success) return;
+  allUsers = res.data;
+  filterUsers();
+}
+
+function filterUsers() {
+  const q = document.getElementById('srchUser').value.toLowerCase();
+  const filtered = allUsers.filter(u =>
+    (u.UID || '').toLowerCase().includes(q) ||
+    (u.Mobile || '').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+function renderTable(users) {
+  const el = document.getElementById('usersTable');
+  if (!users.length) { el.innerHTML = '<div class="empty-state">No users</div>'; return; }
+
+  el.innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead>
+        <tr style="background-color:LightGray;"><th>#</th><th>UID</th><th>Mobile</th><th>Password</th><th>Validity</th><th>Status</th><th>Registered</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        ${users.map((u, i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td style="font-weight:600;">${u.UID}</td>
+            <td>${u.Mobile}</td>
+            <td style="color:var(--muted); font-size:0.8rem;">${u.Password || '-'}</td>
+            <td>${u.ValidityDate ? new Date(u.ValidityDate).toLocaleDateString('en-IN') : '-'}</td>
+            <td><span class="badge ${u.IsActive === 'True' || u.IsActive === true ? 'badge-accepted' : 'badge-rejected'}">${u.IsActive === 'True' || u.IsActive === true ? 'Active' : 'Inactive'}</span></td>
+            <td style="font-size:0.75rem; color:var(--muted);">${u.RegisteredOn ? new Date(u.RegisteredOn).toLocaleDateString('en-IN') : '-'}</td>
+            <td>
+              <img src="/vendor/images/edit-icon-orange-pencil-0.png" width="25" height="25" style="cursor:pointer;" title="Edit"
+                onclick="editUser('${u.UID}','${u.Mobile}','${u.Password}','${u.ValidityDate}','${u.IsActive}')">
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function saveUser() {
+  const mobile = document.getElementById('txtMobile').value.trim();
+  const password = document.getElementById('txtPassword').value.trim();
+  const validity = document.getElementById('txtValidity').value;
+  const isActive = document.getElementById('ddlActive').value;
+  const uid = document.getElementById('editUID').value;
+
+  if (!mobile || !validity) {
+    showToast('Mobile and validity required', true);
+    return;
+  }
+
+  let res;
+  if (uid) {
+    res = await API.put(`/api/admin/users/${uid}`, { isActive, validityDate: validity, password });
+  } else {
+    res = await API.post('/api/admin/users', { mobile, validityDate: validity });
+  }
+
+  if (res && res.success) {
+    showToast(uid ? 'User updated!' : 'User created!');
+    resetForm();
+    await loadUsers();
+  } else {
+    showToast(res?.message || 'Error', true);
+  }
+}
+
+function editUser(uid, mobile, password, validity, isActive) {
+  document.getElementById('editUID').value = uid;
+  document.getElementById('txtMobile').value = mobile;
+  document.getElementById('txtPassword').value = password || '';
+  document.getElementById('txtValidity').value = validity ? new Date(validity).toISOString().split('T')[0] : '';
+  document.getElementById('ddlActive').value = isActive === 'True' || isActive === true ? 'True' : 'False';
+  document.getElementById('btnSave').textContent = 'Update User';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  document.getElementById('editUID').value = '';
+  document.getElementById('txtMobile').value = '';
+  document.getElementById('txtPassword').value = '';
+  document.getElementById('btnSave').textContent = 'Save';
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+  document.getElementById('txtValidity').value = nextYear.toISOString().split('T')[0];
+}
+
+async function blockAll() {
+  if (!confirm('Block ALL users? They will not be able to login.')) return;
+  const r = await API.post('/api/admin/block-all', {});
+  if (r?.success) { showToast('All users blocked'); loadUsers(); }
+  else showToast(r?.message || 'Error', true);
+}
+
+async function unblockAll() {
+  const validity = document.getElementById('bulkValidity').value;
+  if (!validity) { showToast('Select validity date first', true); return; }
+  if (!confirm('Unblock ALL users?')) return;
+  const r = await API.post('/api/admin/unblock-all', { validityDate: validity });
+  if (r?.success) { showToast('All users unblocked'); loadUsers(); }
+  else showToast(r?.message || 'Error', true);
+}
+
+async function blockOne() {
+  const mobile = document.getElementById('blockMobile').value.trim();
+  if (!mobile) { showToast('Enter mobile to block', true); return; }
+  if (!confirm('Block user: ' + mobile + '?')) return;
+  const r = await API.post('/api/admin/block-user', { mobile });
+  if (r?.success) { showToast('User blocked'); loadUsers(); }
+  else showToast(r?.message || 'Error', true);
+}
+
+async function unblockOne() {
+  const mobile   = document.getElementById('blockMobile').value.trim();
+  const validity = document.getElementById('bulkValidity').value;
+  if (!mobile)   { showToast('Enter mobile', true); return; }
+  if (!validity) { showToast('Select validity date', true); return; }
+  const r = await API.post('/api/admin/unblock-user', { mobile, validityDate: validity });
+  if (r?.success) { showToast('User unblocked'); loadUsers(); }
+  else showToast(r?.message || 'Error', true);
+}
+
+// ── SweetAlert-based feedback (matches other converted admin pages) ──
+function showToast(msg, err=false) {
+  swal(err ? 'Wrong Inputs!' : 'Sucess!', msg, {
+    icon: err ? 'error' : 'success',
+    timer: 900,
+    buttons: false
+  });
+}
+
+init();
+</script>
+</body>
+</html>

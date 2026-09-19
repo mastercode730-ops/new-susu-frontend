@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Susu9 - Login</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #128c7e; --green-dark: #075e54;
+    --bg: #f4f6f9; --card: #ffffff; --border: #dee2e6;
+    --text: #212529; --muted: #6c757d; --error: #dc3545;
+  }
+  body { font-family: 'Noto Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .bg-grid { position: fixed; inset: 0; z-index: 0; background-image: linear-gradient(rgba(18,140,126,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(18,140,126,0.06) 1px, transparent 1px); background-size: 40px 40px; }
+  .glow { position: fixed; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(18,140,126,0.08) 0%, transparent 70%); top: -100px; left: -100px; animation: float 8s ease-in-out infinite; }
+  .glow2 { position: fixed; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(18,140,126,0.06) 0%, transparent 70%); bottom: -80px; right: -80px; animation: float 10s ease-in-out infinite reverse; }
+  @keyframes float { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(30px,30px); } }
+  .login-box { position: relative; z-index: 1; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 40px 40px 32px; width: 100%; max-width: 420px; box-shadow: 0 0 0 1px rgba(18,140,126,0.06), 0 4px 6px -1px rgba(0,0,0,0.06), 0 16px 48px rgba(0,0,0,0.1); animation: slideUp 0.5s ease; }
+  .login-footer { text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.5px; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  .logo-wrap { text-align: center; margin-bottom: 24px; }
+  .logo { font-family: 'Rajdhani', sans-serif; font-size: 2.8rem; font-weight: 700; color: var(--green); letter-spacing: 4px; display: block; line-height: 1; }
+  .logo-icon { font-size: 2.2rem; display: block; margin-bottom: 4px; }
+  .logo-sub { font-size: 0.72rem; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; margin-top: 6px; display: block; }
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 4px 0 20px; }
+  .tabs { display: flex; margin: 0 0 24px; background: #f1f3f5; border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+  .tab-btn { flex: 1; background: transparent; border: none; color: var(--muted); padding: 9px 0; border-radius: 7px; font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .tab-btn.active { background: var(--green); color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .form-group { margin-bottom: 18px; }
+  label { display: block; color: var(--muted); font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 7px; }
+  input { width: 100%; background: #f8f9fa; border: 1px solid var(--border); border-radius: 8px; padding: 13px 16px; color: var(--text); font-family: 'Noto Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(18,140,126,0.1); }
+  input::placeholder { color: #adb5bd; }
+  .btn-login { width: 100%; background: var(--green); color: #fff; border: none; border-radius: 8px; padding: 14px; font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 2px; cursor: pointer; margin-top: 4px; transition: all 0.2s; }
+  .btn-login:hover { background: var(--green-dark); box-shadow: 0 4px 20px rgba(18,140,126,0.25); }
+  .btn-login:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+  .error-msg { display: none; background: rgba(220,53,69,0.08); border: 1px solid var(--error); border-radius: 8px; padding: 11px 16px; color: var(--error); font-size: 0.85rem; margin-top: 14px; text-align: center; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Bottom links: Change Password / New User ── */
+  .link-row { display: flex; justify-content: space-between; margin-top: 16px; }
+  .link-btn { background: none; border: none; color: var(--green); font-size: 0.8rem; font-weight: 600; cursor: pointer; padding: 4px 0; }
+  .link-btn:hover { text-decoration: underline; }
+
+  /* ── Modal ── */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+  .modal-bg.show { display: flex; }
+  .modal-box { background: var(--card); border-radius: 16px; width: 100%; max-width: 400px; padding: 28px 28px 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
+  .modal-title { font-family: 'Rajdhani', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .modal-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 18px; }
+  .modal-close { float: right; background: none; border: none; font-size: 1.3rem; color: var(--muted); cursor: pointer; line-height: 1; }
+  .success-msg { display: none; background: rgba(18,140,126,0.08); border: 1px solid var(--green); border-radius: 8px; padding: 11px 16px; color: var(--green-dark); font-size: 0.85rem; margin-top: 14px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="glow"></div>
+<div class="glow2"></div>
+<div class="login-box">
+  <div class="logo-wrap">
+    <span class="logo-icon">🎯</span>
+    <span class="logo">SUSU9</span>
+    <span class="logo-sub">Game Management Platform</span>
+  </div>
+  <div class="divider"></div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('user')">User Login</button>
+    <button class="tab-btn" onclick="switchTab('subuser')">Staff Login</button>
+  </div>
+
+  <!-- Normal User -->
+  <div class="tab-content active" id="tab-user">
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="text" id="mobile" placeholder="10 digit mobile number" maxlength="10">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">LOGIN</button>
+    <div class="error-msg" id="loginError"></div>
+    <div class="link-row">
+      <button class="link-btn" onclick="openModal('cp-user')">Change Password</button>
+      <button class="link-btn" onclick="openModal('newuser')">New User? Register</button>
+    </div>
+  </div>
+
+  <!-- SubUser / Staff -->
+  <div class="tab-content" id="tab-subuser">
+    <div class="form-group">
+      <label>Staff / Sub User ID</label>
+      <input type="text" id="subUserID" placeholder="Enter SubUser ID" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="subPassword" placeholder="Enter password">
+    </div>
+    <button class="btn-login" id="btnSubLogin" onclick="doSubLogin()">STAFF LOGIN</button>
+    <div class="error-msg" id="subLoginError"></div>
+    <div class="link-row">
+      <button class="link-btn" onclick="openModal('cp-sub')">Change Password</button>
+      <span></span>
+    </div>
+  </div>
+  <div class="login-footer">© 2025 Susu9 &nbsp;·&nbsp; Secure Login</div>
+</div>
+
+<!-- Change Password Modal — User -->
+<div class="modal-bg" id="modal-cp-user">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('cp-user')">&times;</button>
+    <div class="modal-title">Change Password</div>
+    <div class="modal-sub">User account ke liye — mobile number aur current password se verify karein</div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="text" id="cpu-mobile" placeholder="10 digit mobile number" maxlength="10">
+    </div>
+    <div class="form-group">
+      <label>Current Password</label>
+      <input type="password" id="cpu-current" placeholder="Current password">
+    </div>
+    <div class="form-group">
+      <label>New Password</label>
+      <input type="password" id="cpu-new" placeholder="New password">
+    </div>
+    <div class="form-group">
+      <label>Confirm New Password</label>
+      <input type="password" id="cpu-confirm" placeholder="Re-enter new password">
+    </div>
+    <button class="btn-login" id="btn-cpu" onclick="doResetPassword()">CHANGE PASSWORD</button>
+    <div class="error-msg" id="cpu-error"></div>
+    <div class="success-msg" id="cpu-success"></div>
+  </div>
+</div>
+
+<!-- Change Password Modal — SubUser/Staff -->
+<div class="modal-bg" id="modal-cp-sub">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('cp-sub')">&times;</button>
+    <div class="modal-title">Change Password</div>
+    <div class="modal-sub">Staff / Sub User account ke liye — SubUser ID aur current password se verify karein</div>
+    <div class="form-group">
+      <label>Staff / Sub User ID</label>
+      <input type="text" id="cps-id" placeholder="Enter SubUser ID" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Current Password</label>
+      <input type="password" id="cps-current" placeholder="Current password">
+    </div>
+    <div class="form-group">
+      <label>New Password</label>
+      <input type="password" id="cps-new" placeholder="New password">
+    </div>
+    <div class="form-group">
+      <label>Confirm New Password</label>
+      <input type="password" id="cps-confirm" placeholder="Re-enter new password">
+    </div>
+    <button class="btn-login" id="btn-cps" onclick="doResetSubPassword()">CHANGE PASSWORD</button>
+    <div class="error-msg" id="cps-error"></div>
+    <div class="success-msg" id="cps-success"></div>
+  </div>
+</div>
+
+<!-- New User Registration Modal -->
+<div class="modal-bg" id="modal-newuser">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('newuser')">&times;</button>
+    <div class="modal-title">New User Registration</div>
+    <div class="modal-sub">Apna mobile number aur password dalkar naya account banayein</div>
+    <div class="form-group">
+      <label>Mobile Number</label>
+      <input type="text" id="nu-mobile" placeholder="10 digit mobile number" maxlength="10">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="nu-password" placeholder="Choose a password">
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" id="nu-confirm" placeholder="Re-enter password">
+    </div>
+    <button class="btn-login" id="btn-nu" onclick="doRegister()">CREATE ACCOUNT</button>
+    <div class="error-msg" id="nu-error"></div>
+    <div class="success-msg" id="nu-success"></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='user')||(i===1&&tab==='subuser')));
+  document.getElementById('tab-user').classList.toggle('active', tab==='user');
+  document.getElementById('tab-subuser').classList.toggle('active', tab==='subuser');
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('subLoginError').style.display='none';
+}
+
+async function doLogin() {
+  const mobile = document.getElementById('mobile').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const btn = document.getElementById('btnLogin');
+  const err = document.getElementById('loginError');
+  if (!mobile || !password) { showErr(err,'Mobile and password required'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Logging in...'; err.style.display='none';
+  try {
+    const res = await fetch(getApiUrl('/api/auth/login'), { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body:JSON.stringify({mobile,password}) 
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('susu9_token', data.token);
+      localStorage.setItem('susu9_user', JSON.stringify(data.user));
+      window.location.href = '/pages/home.html';
+    }
+    else { showErr(err, data.message||'Invalid credentials'); btn.disabled=false; btn.textContent='LOGIN'; }
+  } catch(e) { showErr(err,'Server error. Try again.'); btn.disabled=false; btn.textContent='LOGIN'; }
+}
+
+async function doSubLogin() {
+  const subUserID = document.getElementById('subUserID').value.trim();
+  const password = document.getElementById('subPassword').value.trim();
+  const btn = document.getElementById('btnSubLogin');
+  const err = document.getElementById('subLoginError');
+  if (!subUserID || !password) { showErr(err,'SubUser ID and password required'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Logging in...'; err.style.display='none';
+  try {
+    const res = await fetch(getApiUrl('/api/auth/subuser-login'), { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body:JSON.stringify({subUserID,password}) 
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('susu9_token', data.token);
+      localStorage.setItem('susu9_user', JSON.stringify(data.user));
+      window.location.href = '/pages/home.html';
+    }
+    else { showErr(err, data.message||'Invalid or inactive'); btn.disabled=false; btn.textContent='STAFF LOGIN'; }
+  } catch(e) { showErr(err,'Server error. Try again.'); btn.disabled=false; btn.textContent='STAFF LOGIN'; }
+}
+
+function showErr(el,msg) { el.textContent=msg; el.style.display='block'; }
+function showOk(el,msg) { el.textContent=msg; el.style.display='block'; }
+
+document.addEventListener('keydown', (e) => {
+  if (e.key==='Enter') {
+    if (document.querySelector('.modal-bg.show')) return; // modal ke andar Enter se login trigger na ho
+    if (document.getElementById('tab-user').classList.contains('active')) doLogin();
+    else doSubLogin();
+  }
+});
+
+// ── Modals ──
+function openModal(name) {
+  document.getElementById('modal-' + name).classList.add('show');
+}
+function closeModal(name) {
+  document.getElementById('modal-' + name).classList.remove('show');
+}
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-bg')) e.target.classList.remove('show');
+});
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-bg.show').forEach(m => m.classList.remove('show'));
+});
+
+// ── Change Password (User) ──
+async function doResetPassword() {
+  const mobile = document.getElementById('cpu-mobile').value.trim();
+  const currentPassword = document.getElementById('cpu-current').value.trim();
+  const newPassword = document.getElementById('cpu-new').value.trim();
+  const confirm = document.getElementById('cpu-confirm').value.trim();
+  const btn = document.getElementById('btn-cpu');
+  const err = document.getElementById('cpu-error');
+  const ok = document.getElementById('cpu-success');
+  err.style.display='none'; ok.style.display='none';
+  if (!mobile || !currentPassword || !newPassword) { showErr(err,'Saare fields bharna zaroori hai'); return; }
+  if (newPassword !== confirm) { showErr(err,'New password match nahi kar raha'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Changing...';
+  try {
+    const res = await fetch(getApiUrl('/api/auth/reset-password'), { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body:JSON.stringify({mobile,currentPassword,newPassword}) 
+    });
+    const data = await res.json();
+    btn.disabled=false; btn.textContent='CHANGE PASSWORD';
+    if (data.success) {
+      showOk(ok, data.message || 'Password change ho gaya!');
+      document.getElementById('cpu-current').value=''; document.getElementById('cpu-new').value=''; document.getElementById('cpu-confirm').value='';
+    } else showErr(err, data.message||'Kuch galat ho gaya');
+  } catch(e) { btn.disabled=false; btn.textContent='CHANGE PASSWORD'; showErr(err,'Server error. Try again.'); }
+}
+
+// ── Change Password (SubUser/Staff) ──
+async function doResetSubPassword() {
+  const subUserID = document.getElementById('cps-id').value.trim();
+  const currentPassword = document.getElementById('cps-current').value.trim();
+  const newPassword = document.getElementById('cps-new').value.trim();
+  const confirm = document.getElementById('cps-confirm').value.trim();
+  const btn = document.getElementById('btn-cps');
+  const err = document.getElementById('cps-error');
+  const ok = document.getElementById('cps-success');
+  err.style.display='none'; ok.style.display='none';
+  if (!subUserID || !currentPassword || !newPassword) { showErr(err,'Saare fields bharna zaroori hai'); return; }
+  if (newPassword !== confirm) { showErr(err,'New password match nahi kar raha'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Changing...';
+  try {
+    const res = await fetch(getApiUrl('/api/auth/reset-subuser-password'), { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body:JSON.stringify({subUserID,currentPassword,newPassword}) 
+    });
+    const data = await res.json();
+    btn.disabled=false; btn.textContent='CHANGE PASSWORD';
+    if (data.success) {
+      showOk(ok, data.message || 'Password change ho gaya!');
+      document.getElementById('cps-current').value=''; document.getElementById('cps-new').value=''; document.getElementById('cps-confirm').value='';
+    } else showErr(err, data.message||'Kuch galat ho gaya');
+  } catch(e) { btn.disabled=false; btn.textContent='CHANGE PASSWORD'; showErr(err,'Server error. Try again.'); }
+}
+
+// ── New User Registration ──
+async function doRegister() {
+  const mobile = document.getElementById('nu-mobile').value.trim();
+  const password = document.getElementById('nu-password').value.trim();
+  const confirm = document.getElementById('nu-confirm').value.trim();
+  const btn = document.getElementById('btn-nu');
+  const err = document.getElementById('nu-error');
+  const ok = document.getElementById('nu-success');
+  err.style.display='none'; ok.style.display='none';
+  if (!mobile || !password) { showErr(err,'Mobile aur password required hai'); return; }
+  if (password !== confirm) { showErr(err,'Password match nahi kar raha'); return; }
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Creating...';
+  try {
+    const res = await fetch(getApiUrl('/api/auth/register'), { 
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
+      body:JSON.stringify({mobile,password}) 
+    });
+    const data = await res.json();
+    btn.disabled=false; btn.textContent='CREATE ACCOUNT';
+    if (data.success) {
+      showOk(ok, data.message || 'Account create ho gaya! Ab login karein.');
+      document.getElementById('nu-mobile').value=''; document.getElementById('nu-password').value=''; document.getElementById('nu-confirm').value='';
+    } else showErr(err, data.message||'Kuch galat ho gaya');
+  } catch(e) { btn.disabled=false; btn.textContent='CREATE ACCOUNT'; showErr(err,'Server error. Try again.'); }
+}
+</script>
+</body>
+</html>

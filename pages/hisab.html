@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="/css/main.css">
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hisab - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<style>
+.selected-row{background-color:#d3d3d3;}
+tbody tr{cursor:pointer;}
+.content table td.link-cell{color:#1572E8!important;font-weight:900!important;cursor:pointer;}
+.link-cell:hover{color:#1269DB;}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emsg{padding:20px;text-align:center;color:var(--muted);font-size:.82rem;}
+.flatpickr-input{cursor:pointer;background:#F8F9FA;}
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;}
+/* Compact form — smaller fields/spacing, text stays bold/clear */
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:8px 16px!important;}
+.content .form-group{margin-bottom:4px!important;}
+.content .form-group label{font-size:.76rem!important;margin-bottom:2px!important;display:block;}
+.content .form-control{padding:.25rem .5rem!important;height:auto!important;font-size:.82rem!important;}
+#txtStartDate{max-width:220px;}
+/* Data grids: bold bordered header instead of the faint Bootstrap table look */
+.content table,#histModal table{border-collapse:collapse!important;}
+.content table th,#histModal table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 14px!important;font-size:.85rem!important;}
+.content table td,#histModal table td{border:1px solid #ccc!important;padding:6px 14px!important;font-weight:900!important;color:#000!important;font-size:.95rem!important;}
+.content table tfoot td,#histModal table tfoot td{background:#eee!important;}
+.content table tbody tr:hover td,#histModal table tbody tr:hover td{background:#eef3ff!important;}
+#histModal table th,#histModal table td{white-space:nowrap;}
+#histModal .table-responsive{overflow-x:auto;}
+#histModal .modal-title{font-weight:800!important;}
+/* Widen the modal so the 11-column history table fits without scrolling */
+#histModal .modal-dialog{max-width:95vw!important;width:95vw!important;margin:1.75rem auto;}
+#histModal table{width:100%;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtStartDate">Date</label>
+                <input type="text" class="form-control" id="txtStartDate" readonly placeholder="dd/MMM/yyyy"
+                  onfocus="this.select()" onchange="bindGrid()">
+              </div>
+            </div>
+            <div class="col-md-9" style="display:flex;align-items:flex-end;gap:8px;margin-bottom:1rem;">
+              <button class="btn btn-success" onclick="bindGrid()">Search</button>
+              <button class="btn btn-success" style="margin-left:auto;" onclick="exportHisab()">Export Excel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY GAME HISAB (grvGameHisab) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">My Game Hisab</div>
+        </div>
+        <div class="card-body">
+          <input type="text" class="form-control" id="txtsearch"
+            placeholder="Filter Name / Mobile"
+            oninput="filterGameHisab(this.value)"
+            onfocus="this.select()">
+        </div>
+        <div class="table-responsive">
+          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+            <thead>
+              <tr style="background-color:LightGray;">
+                <th>SRNo</th>
+                <th>Customer</th>
+                <th>Sale</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="bodyGameHisab">
+              <tr><td colspan="4" class="emsg"><span class="spin"></span> Loading...</td></tr>
+            </tbody>
+            <tfoot style="background-color:LightGray;font-weight:bold;">
+              <tr>
+                <td>SRNo</td>
+                <td>Total</td>
+                <td id="ft_gh_sale">&ndash;</td>
+                <td id="ft_gh_bal">&ndash;</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- MY HISAB (grvgames) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">My Hisab</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+            <thead>
+              <tr style="background-color:LightGray;">
+                <th>Mobile</th>
+                <th>Sale</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody id="bodyMyHisab">
+              <tr><td colspan="3" class="emsg"><span class="spin"></span> Loading...</td></tr>
+            </tbody>
+            <tfoot style="background-color:LightGray;font-weight:bold;">
+              <tr>
+                <td>Total</td>
+                <td id="ft_mh_sale">&ndash;</td>
+                <td id="ft_mh_bal">&ndash;</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL (divGameHisabHistory) -->
+<div class="modal fade" id="histModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="histTitle">Game Hisab History</h5>
+        <button type="button" class="close" onclick="closeHist()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+            <thead>
+              <tr style="background-color:LightGray;">
+                <th>Game</th>
+                <th>Rates</th>
+                <th>T_Sale</th>
+                <th>D_Sale</th>
+                <th>A_Sale</th>
+                <th>Comm</th>
+                <th>O_Dara</th>
+                <th>O_Akhar</th>
+                <th>WinAmt</th>
+                <th>Hissa</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="bodyHist">
+              <tr><td colspan="11" class="emsg">Loading...</td></tr>
+            </tbody>
+            <tfoot id="footHist" style="display:none;background-color:LightGray;font-weight:bold;">
+              <tr>
+                <td>&ndash;</td>
+                <td>Total</td>
+                <td id="ft_h_tsale">&ndash;</td>
+                <td id="ft_h_dsale">&ndash;</td>
+                <td id="ft_h_asale">&ndash;</td>
+                <td id="ft_h_comm">&ndash;</td>
+                <td id="ft_h_odara">&ndash;</td>
+                <td id="ft_h_oakhar">&ndash;</td>
+                <td id="ft_h_win">&ndash;</td>
+                <td id="ft_h_pati">&ndash;</td>
+                <td id="ft_h_bal">&ndash;</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+let myUID = null;
+let _vsGameHisab = [];
+let _vsMyHisab   = [];
+let _currentDate = '';
+let _currentHistMode = '';
+
+// ── INIT ──
+async function init() {
+  const u = await initPage('hisab');
+  if (!u) return;
+  myUID = u.UID;
+
+  await setLatestDate();
+  await bindGrid();
+  document.getElementById('txtsearch').focus();
+}
+
+// ── BindLastedDate ──
+async function setLatestDate() {
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    if (r?.success && r.data) {
+      document.getElementById('txtStartDate').value = r.data;
+      _currentDate = r.data;
+    } else {
+      const d = fmtDate(new Date(Date.now() + 5.5*3600000));
+      document.getElementById('txtStartDate').value = d;
+      _currentDate = d;
+    }
+  } catch(e) {
+    const d = fmtDate(new Date(Date.now() + 5.5*3600000));
+    document.getElementById('txtStartDate').value = d;
+    _currentDate = d;
+  }
+}
+
+// ── BindGrid() — calls both SPs ──
+async function bindGrid() {
+  _currentDate = document.getElementById('txtStartDate').value || _currentDate;
+
+  // Reset search
+  document.getElementById('txtsearch').value = '';
+
+  // Parallel: GetDateWiseMyHisab + GetDateWiseWinAmount
+  const [r1, r2] = await Promise.all([
+    API.get(`/api/hisab/game-hisab?date=${encodeURIComponent(_currentDate)}&filter=`),
+    API.get(`/api/hisab/win-amount?date=${encodeURIComponent(_currentDate)}&filter=`)
+  ]);
+
+  // grvGameHisab — GetDateWiseMyHisab
+  _vsGameHisab = (r1?.success) ? (r1.data || []) : [];
+  renderGameHisab(_vsGameHisab);
+
+  // grvgames — GetDateWiseWinAmount
+  _vsMyHisab = (r2?.success) ? (r2.data || []) : [];
+  renderMyHisab(_vsMyHisab);
+
+  document.getElementById('txtStartDate').focus();
+}
+
+// ── Render grvGameHisab ──
+// ASPX: Sorted CMobile ASC, Footer: SRNo|Total|Sum(TotalAmount)|Sum(Balance)
+function renderGameHisab(rows) {
+  const tbody = document.getElementById('bodyGameHisab');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="emsg">No Data Found!</td></tr>';
+    setText('ft_gh_sale','–'); setText('ft_gh_bal','–');
+    return;
+  }
+  const sorted = [...rows].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+  tbody.innerHTML = sorted.map((r,i) => `
+    <tr onclick="selectRow(this,'bodyGameHisab')" tabindex="0"
+        onkeydown="arrowNav(event,this,'bodyGameHisab')">
+      <td>${i+1}</td>
+      <td class="link-cell" onclick="event.stopPropagation();showHistory('${r.UID}','game')">${r.CMobile||r.UID}</td>
+      <td>${r.TotalAmount||0}</td>
+      <td>${r.Balance||0}</td>
+    </tr>`).join('');
+
+  const totSale = rows.reduce((s,r)=>s+(parseFloat(r.TotalAmount)||0),0);
+  const totBal  = rows.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0);
+  setText('ft_gh_sale', totSale.toString());
+  setText('ft_gh_bal',  totBal.toString());
+}
+
+// ── Render grvgames ──
+// ASPX: Footer: [0]=Total,[1]=TotalSale,[2]=TotalBalance
+function renderMyHisab(rows) {
+  const tbody = document.getElementById('bodyMyHisab');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="emsg">No Data Found!</td></tr>';
+    setText('ft_mh_sale','–'); setText('ft_mh_bal','–');
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr onclick="selectRow(this,'bodyMyHisab')" tabindex="0"
+        onkeydown="arrowNav(event,this,'bodyMyHisab')">
+      <td class="link-cell" onclick="event.stopPropagation();showHistory('${r.UID}','myhisab')">${r.Mobile||r.UID}</td>
+      <td>${r.TotalAmount||0}</td>
+      <td>${r.Balance||0}</td>
+    </tr>`).join('');
+
+  const totSale = rows.reduce((s,r)=>s+(parseFloat(r.TotalAmount)||0),0);
+  const totBal  = rows.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0);
+  setText('ft_mh_sale', totSale.toString());
+  setText('ft_mh_bal',  totBal.toString());
+}
+
+// ── txtsearch_TextChanged → filter on CMobile ──
+function filterGameHisab(term) {
+  const t = term.toLowerCase();
+  const filtered = !t ? _vsGameHisab
+    : _vsGameHisab.filter(r => (r.CMobile||'').toLowerCase().includes(t));
+  renderGameHisab(filtered);
+  document.getElementById('txtsearch').focus();
+}
+
+// ── grvGameHisab_RowCommand "History" → SP GetDateWiseMyHisabHistory ──
+// ── grvgames_RowCommand "History" → SP GetDateWiseWinAmountHistory ──
+async function showHistory(uid, mode) {
+  _currentHistMode = mode;
+  $('#histModal').modal('show');
+  document.getElementById('histTitle').textContent = mode === 'game'
+    ? `${_currentDate} Hisab History`
+    : 'My Hisab History';
+  document.getElementById('bodyHist').innerHTML =
+    '<tr><td colspan="11" class="emsg"><span class="spin"></span> Loading...</td></tr>';
+  document.getElementById('footHist').style.display = 'none';
+
+  try {
+    const endpoint = mode === 'game'
+      ? `/api/hisab/game-hisab-history?date=${encodeURIComponent(_currentDate)}&uid=${uid}`
+      : `/api/hisab/win-amount-history?date=${encodeURIComponent(_currentDate)}&uid=${uid}`;
+
+    const r = await API.get(endpoint);
+    if (!r?.success || !r.data?.length) {
+      document.getElementById('bodyHist').innerHTML =
+        '<tr><td colspan="11" class="emsg">No Data Found!</td></tr>';
+      return;
+    }
+
+    const data = r.data;
+
+    // ASPX: h4Title = CustomerName + date + "All Game History" (from first row)
+    if (mode === 'game' && data[0]?.CustomerName) {
+      document.getElementById('histTitle').textContent =
+        `${data[0].CustomerName}  ${_currentDate}  All Game History`;
+    }
+
+    document.getElementById('bodyHist').innerHTML = data.map(d => `
+      <tr>
+        <td>${d.GameName||'–'}</td>
+        <td>${d.Rates||'–'}</td>
+        <td>${d.Total_Amount||0}</td>
+        <td>${d.D_Sale||0}</td>
+        <td>${d.A_Sale||0}</td>
+        <td>${d.Commision||0}</td>
+        <td>${d.O_Dara||0}</td>
+        <td>${d.O_Akhar||0}</td>
+        <td>${d.WinAmount||0}</td>
+        <td>${d.Pati||0}</td>
+        <td>${d.Balance||0}</td>
+      </tr>`).join('');
+
+    // ASPX Footer sums — exact cell order
+    const sum = f => data.reduce((s,d)=>s+(parseFloat(d[f])||0),0).toString();
+    setText('ft_h_tsale',  sum('Total_Amount'));
+    setText('ft_h_dsale',  sum('D_Sale'));
+    setText('ft_h_asale',  sum('A_Sale'));
+    setText('ft_h_comm',   sum('Commision'));
+    setText('ft_h_odara',  sum('O_Dara'));
+    setText('ft_h_oakhar', sum('O_Akhar'));
+    setText('ft_h_win',    sum('WinAmount'));
+    setText('ft_h_pati',   sum('Pati'));
+    setText('ft_h_bal',    sum('Balance'));
+    document.getElementById('footHist').style.display = '';
+
+  } catch(e) {
+    document.getElementById('bodyHist').innerHTML =
+      '<tr><td colspan="11" class="emsg">Error loading</td></tr>';
+  }
+}
+
+function closeHist() {
+  $('#histModal').modal('hide');
+}
+
+// ── Arrow nav (MyfunctionUpDown) ──
+function selectRow(row, tbodyId) {
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(r=>r.classList.remove('selected-row'));
+  row.classList.add('selected-row');
+}
+
+function arrowNav(e, row, tbodyId) {
+  if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  e.preventDefault();
+  const rows = [...document.querySelectorAll(`#${tbodyId} tr`)];
+  const idx = rows.indexOf(row);
+  const next = e.key === 'ArrowUp' ? rows[idx-1] : rows[idx+1];
+  if (next) { next.focus(); selectRow(next, tbodyId); }
+}
+
+// ── Utils ──
+function fmtDate(d) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2,'0')}/${months[d.getMonth()]}/${d.getFullYear()}`;
+}
+function setText(id,val) { const el=document.getElementById(id); if(el) el.textContent=val; }
+// ── SweetAlert-based feedback (matches original ASPX SucessMessage/ErrorMessage) ──
+function showToast(msg, err=false) {
+  swal(err ? 'Wrong Inputs!' : 'Sucess!', msg, {
+    icon: err ? 'error' : 'success',
+    timer: 900,
+    buttons: false
+  });
+}
+init();
+</script>
+
+<script>
+// Flatpickr calendar for date inputs
+// ── Export to Excel ──
+function exportHisab() {
+  if (!_vsGameHisab.length && !_vsMyHisab.length) {
+    showToast('No data to export!', true); return;
+  }
+  const wb = XLSX.utils.book_new();
+
+  if (_vsGameHisab.length) {
+    const sorted = [..._vsGameHisab].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+    const rows = [['SRNo','Customer','Sale','Balance']];
+    sorted.forEach((r,i) => rows.push([i+1, r.CMobile||r.UID, parseFloat(r.TotalAmount)||0, parseFloat(r.Balance)||0]));
+    rows.push(['','Total',
+      sorted.reduce((s,r)=>s+(parseFloat(r.TotalAmount)||0),0),
+      sorted.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0)]);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'My Game Hisab');
+  }
+
+  if (_vsMyHisab.length) {
+    const rows = [['Mobile','Sale','Amount']];
+    _vsMyHisab.forEach(r => rows.push([r.Mobile||r.UID, parseFloat(r.TotalAmount)||0, parseFloat(r.Balance)||0]));
+    rows.push(['Total',
+      _vsMyHisab.reduce((s,r)=>s+(parseFloat(r.TotalAmount)||0),0),
+      _vsMyHisab.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0)]);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'My Hisab');
+  }
+
+  XLSX.writeFile(wb, 'Hisab_' + (_currentDate||'').replace(/\//g,'-') + '.xlsx');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  ["txtStartDate"].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    flatpickr(el, {
+      dateFormat: 'd/M/Y',
+      allowInput: false,
+      disableMobile: true,
+      onChange: function(selectedDates, dateStr, instance) {
+        // Trigger change event for any onchange handlers
+        el.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

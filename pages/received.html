@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Received Chat</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;}
+
+/* ── Select2 override — vendor theme bundles Select2 v3.5.2 (old API/class
+   names, NOT v4's select2-selection--single etc.) — style the real v3 markup ── */
+.select2-container{width:100%!important;}
+.select2-container .select2-choice{
+  height:42px;line-height:40px;border:1px solid #ced4da;border-radius:4px;
+  padding:0 8px;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;
+  background:#fff;
+}
+.select2-container .select2-choice .select2-chosen{
+  color:#000;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;
+}
+.select2-container .select2-choice .select2-arrow{height:40px;}
+.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;}
+.select2-drop .select2-search{padding:8px;}
+.select2-drop .select2-search input{
+  width:100%!important;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:1rem;
+}
+.select2-results{width:100%;max-height:360px;}
+.select2-results .select2-highlighted{background-color:#128c7e!important;}
+.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:4px 10px;line-height:1.5;}
+
+/* ── Dropdown wrap ── */
+.ddl-wrap{padding:6px 10px;background:#fff;border-bottom:1px solid #dee2e6;}
+
+/* ── Rate buttons (GridViewRates) ── */
+.rates-wrap{display:none;padding:6px 10px;background:#fff;border-bottom:1px solid #dee2e6;}
+.btn-rate{
+  background:#31ce36;color:#fff;border:none;border-radius:2px;
+  font-size:1rem;height:40px;width:100%;text-align:center;
+  font-weight:bold;cursor:pointer;margin-bottom:5px;display:block;
+}
+.btn-rate:hover,.btn-rate.selected{opacity:.85;}
+
+/* ── Top bar — Yantri | GameName | Result ── */
+.top-bar{background:#fff;padding:4px 10px;border-bottom:1px solid #dee2e6;}
+.top-bar-inner{min-height:38px;display:flex;align-items:center;justify-content:space-between;gap:6px;}
+
+/* Yantri button (left, float:left like ASPX) */
+.btn-yantri{
+  background:#fff;border:none;color:green;font-size:.95rem;font-weight:bold;
+  cursor:pointer;display:none;white-space:nowrap;flex-shrink:0;
+  font-family:Arial,sans-serif;
+}
+/* Game name (center, green bold h4) */
+#lblMYGameName{
+  color:green;font-size:1.3rem;font-weight:bold;
+  font-family:Arial,sans-serif;text-align:center;flex:1;
+}
+/* Result button (right) */
+.btn-result{
+  background:#fff;border:none;color:green;font-size:.9rem;font-weight:bold;
+  cursor:pointer;display:none;white-space:nowrap;flex-shrink:0;
+  font-family:Arial,sans-serif;
+}
+
+/* ── Auto Accept (below top bar, float:left like ASPX) ── */
+.auto-bar{
+  display:none;align-items:center;gap:6px;
+  padding:3px 10px 5px;background:#fff;border-bottom:1px solid #dee2e6;
+}
+.auto-bar label{color:#000;font-weight:bold;font-family:Arial,sans-serif;font-size:.82rem;}
+.Myswitch{position:relative;display:inline-block;width:40px;height:23px;}
+.Myswitch input{opacity:0;width:0;height:0;}
+.Myslider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:.4s;border-radius:34px;}
+.Myslider:before{position:absolute;content:"";height:15px;width:15px;border-radius:50%;left:5px;bottom:4px;background:#fff;transition:.4s;}
+input:checked+.Myslider{background:#2196F3;}
+input:checked+.Myslider:before{transform:translateX(15px);}
+
+/* ── Today / View All buttons ── */
+.search-row{display:flex;gap:6px;padding:6px 10px;background:#fff;border-bottom:1px solid #dee2e6;}
+.button2{
+  background:#fff;color:#000;border:2px solid #25d366;
+  font-family:Arial,sans-serif;font-weight:bold;padding:4px 0;
+  border-radius:5px;cursor:pointer;width:100%;height:30px;
+  font-size:.85rem;text-transform:capitalize;
+}
+.button2:hover{background:#25d366;color:#fff;}
+.button2.btn-active{background:#25d366!important;color:#fff!important;}
+
+/* ── Search input ── */
+.search-head{padding:4px 10px 6px;background:#fff;border-bottom:1px solid #dee2e6;display:none;}
+.search-head input{
+  width:100%;border:1px solid #ced4da;border-radius:4px;
+  padding:7px 10px;font-size:.9rem;font-family:Arial,sans-serif;
+  text-transform:capitalize;outline:none;color:#000;display:block;margin-top:5px;
+}
+.search-head input:focus{border-color:#25d366;}
+
+/* ── Contact list area ── */
+#SeachingResultDiv{display:block;padding:6px 10px;}
+
+/* ── Contact card (ASPX: col-stats button1, border-radius 15px) ── */
+.contact-card{
+  background:#fff;margin-bottom:6px;border-radius:15px;cursor:pointer;
+  border:2px solid #d1d7db;overflow:hidden;transition:background .12s;
+  text-decoration:none;display:block;
+}
+.contact-card:hover{background:#f8f8f8;}
+
+/* ASPX: card-body padding:0, col-stats margin-left:28px */
+.card-inner-wrap{
+  padding:8px 10px 8px 0;
+  position:relative;display:flex;align-items:center;
+  margin-left:0;
+}
+
+/* ASPX: flaticon-chat-7 float:left font-size:40px margin-right:30px margin-top:5px color:#25d366 */
+.chat-icon{
+  font-size:2.4rem;color:#25d366;flex-shrink:0;
+  margin-left:10px;margin-right:14px;margin-top:3px;line-height:1;
+}
+
+.card-content{flex:1;min-width:0;}
+
+/* ASPX: h4 card-title font-size:medium font-family:Arial Black color:#25d366 */
+.cust-name{
+  font-size:1rem;font-family:'Arial Black',Arial,sans-serif;
+  color:#25d366;text-transform:capitalize;margin:0;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:bold;
+}
+/* ASPX: h4 card-title color:Black font-size:small Arial bold */
+.cust-mobile{
+  font-family:Arial,sans-serif;font-size:.82rem;font-weight:bold;
+  color:#000;margin:2px 0 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* ASPX: h6 card-title color:Green font-size:12px Arial italic */
+.cust-rate{
+  font-family:Arial,sans-serif;font-size:.75rem;color:green;
+  font-style:italic;margin:1px 0 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* ASPX: text-span — red circle badge float:right */
+.text-span{
+  background:red;border-radius:50%;height:25px;width:25px;min-width:25px;
+  line-height:25px;display:inline-flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:bold;font-size:.72rem;font-family:'Arial Black',Arial;
+  flex-shrink:0;margin-right:8px;
+}
+
+/* ── Result modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:10px;}
+.modal-bg.show{display:flex;}
+.modal-box{background:#fff;border-radius:8px;width:100%;max-width:500px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.modal-hd{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #dee2e6;}
+.modal-hd h4{font-size:1.1rem;font-weight:bold;}
+.modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:#000;}
+.modal-body-inner{padding:16px;}
+.form-group{margin-bottom:14px;}
+.form-group label{font-size:.85rem;color:#555;display:block;margin-bottom:4px;}
+.form-control{width:100%;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:.9rem;outline:none;}
+.form-control:focus{border-color:#25d366;}
+.btn-success{background:#28a745;color:#fff;border:none;border-radius:4px;padding:7px 18px;font-size:.88rem;font-weight:bold;cursor:pointer;margin-right:8px;}
+.btn-danger-modal{background:#dc3545;color:#fff;border:none;border-radius:4px;padding:7px 14px;font-size:.88rem;font-weight:bold;cursor:pointer;}
+
+.spin{display:inline-block;width:13px;height:13px;border:2px solid #dee2e6;border-top-color:#25d366;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.emsg{padding:20px;text-align:center;color:#6c757d;font-size:.85rem;}
+</style>
+</head>
+<body>
+
+<div class="content">
+<!-- Hidden labels -->
+<span id="lblSenderUserID" style="display:none;"></span>
+<span id="lblRatesTrue"    style="display:none;"></span>
+<span id="lblGameID"       style="display:none;"></span>
+<span id="lblCustomerNameMobile" style="display:none;"></span>
+
+<!-- 1. ddlSrchCustomers — TOP, full width, Select2 searchable (ASPX: page-title) -->
+<div class="ddl-wrap">
+  <select id="ddlSrchCustomers">
+    <option value="">Select Customer Name</option>
+  </select>
+</div>
+
+<!-- 2. GridViewRates — rate buttons (hidden until multi-rate) -->
+<div class="rates-wrap" id="ratesWrap">
+  <div id="ratesBtnWrap"></div>
+</div>
+
+<!-- 3. UpdatePanel2 — Yantri | GameName | Result -->
+<div class="top-bar" id="topBar">
+  <div class="top-bar-inner">
+    <!-- BtnYantri float:left -->
+    <button class="btn-yantri" id="BtnYantri" onclick="openYantri()">Yantri &#128197;</button>
+    <!-- lblMYGameName center green bold -->
+    <span id="lblMYGameName"></span>
+    <!-- BtnResult float:right -->
+    <button class="btn-result" id="BtnResult" onclick="openResult()">&#xf545; Result</button>
+  </div>
+</div>
+
+<!-- Auto Accept (below game bar, left aligned) -->
+<div class="auto-bar" id="autoWrap">
+  <label>Auto Accept</label>
+  <label class="Myswitch">
+    <input type="checkbox" id="chkAutoAccept" onchange="toggleAutoAccept()">
+    <span class="Myslider"></span>
+  </label>
+</div>
+
+<!-- 4. SearchingDiv — Today + View All -->
+<div class="search-row" id="SearchingDiv">
+  <div style="flex:1;">
+    <button class="button2 btn-active" id="BtnToday" onclick="BtnSearch1_Click()">Today</button>
+  </div>
+  <div style="flex:1;">
+    <button class="button2" id="BtnSearch" onclick="BtnSearch_Click()">View All</button>
+  </div>
+</div>
+
+<!-- 5. Search text input -->
+<div id="SearchHead" class="search-head">
+  <input type="text" id="txtSearchatHead"
+    placeholder="Search Name / Mobile.."
+    oninput="txtSearchatHead_TextChanged()" autocomplete="off">
+</div>
+
+<!-- 6. rptSendMessages — contact cards -->
+<div id="SeachingResultDiv">
+  <div class="emsg"><span class="spin"></span> Loading...</div>
+</div>
+
+</div><!-- /.content -->
+
+<!-- Result Modal -->
+<div class="modal-bg" id="divAddResult">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <h4>Result</h4>
+      <button class="modal-close" onclick="closeResult()">&times;</button>
+    </div>
+    <div class="modal-body-inner">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" class="form-control" id="txtDate"
+          onchange="loadResult()" style="cursor:pointer;">
+      </div>
+      <div class="form-group">
+        <label>Result</label>
+        <input type="tel" class="form-control" id="txtResult" maxlength="2"
+          placeholder="Enter Result" onfocus="this.select()"
+          onkeypress="return ValidNumeric(event)"
+          onkeydown="if(event.key==='Enter'){BtnSubmit_Click();return false;}">
+      </div>
+      <button class="btn-success" onclick="BtnSubmit_Click()">Submit</button>
+      <button class="btn-danger-modal" onclick="closeResult()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- jQuery + Select2 come from nav.js's vendor bundle (loaded inside initPage()) — don't
+     load a second CDN copy here, two jQuery instances fight over window.$/jQuery and
+     break Select2 init silently. -->
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+const QS    = new URLSearchParams(location.search);
+const _GID  = QS.get('GID') || '';
+const _Game = QS.get('Game') || '';
+
+let _uid = null;
+let _allContacts     = [];
+let _allContactsPool = [];
+let _viewAll         = false;
+let _todayDate       = '';
+let _gameDate        = '';
+let _lblRatesTrue    = '';
+let _pendingRates    = [];
+let _pendingLastDate = '';
+
+// Select2 v3.5.2 fires plain "change" (bound below) — resetting the widget's
+// value also needs to fire "change" so Select2 redraws itself, but that would
+// re-enter onCustSelect/closeRates. Guard so a silent reset doesn't recurse.
+let _selResetGuard = false;
+function resetSelect2Silently(){
+  _selResetGuard = true;
+  $('#ddlSrchCustomers').val('').trigger('change');
+  _selResetGuard = false;
+}
+
+/* ── IST helpers ── */
+// Returns YYYY-MM-DD (for type="date" input and API calls)
+function getISTiso(){
+  const ist = new Date(Date.now() + 5.5*3600000);
+  const y = ist.getUTCFullYear();
+  const m = String(ist.getUTCMonth()+1).padStart(2,'0');
+  const d = String(ist.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+// Returns DD/MM/YYYY (for display only)
+function getIST(){
+  const iso = getISTiso();
+  return isoToDisplay(iso);
+}
+// YYYY-MM-DD → DD/MM/YYYY
+function isoToDisplay(iso){
+  const p = String(iso||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(p) return `${p[3]}/${p[2]}/${p[1]}`;
+  return iso;
+}
+// Any date string → YYYY-MM-DD (for API)
+function fmtDate(d){
+  if(d instanceof Date){
+    return d.toISOString().split('T')[0];
+  }
+  const s=String(d||'').trim();
+  // Already ISO
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0,10);
+  // dd/MMM/yyyy → YYYY-MM-DD
+  const mth={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const m2=s.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/);
+  if(m2) return `${m2[3]}-${mth[m2[2]]||'01'}-${String(m2[1]).padStart(2,'0')}`;
+  // DD/MM/YYYY
+  const m3=s.match(/^(\d{1,2})\/(\d{2})\/(\d{4})/);
+  if(m3) return `${m3[3]}-${String(m3[2]).padStart(2,'0')}-${String(m3[1]).padStart(2,'0')}`;
+  return s;
+}
+function xss(s){return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ── Game date from SP ── */
+async function fetchGameDate(){
+  try{
+    const j=await API.get(`/api/chat/date?gameId=${_GID}`);
+    if(j?.date) return fmtDate(j.date); // returns YYYY-MM-DD
+  }catch(e){}
+  return getISTiso();
+}
+
+/* ── INIT ── */
+async function init(){
+  const u = await initPage('received');
+  if(!u) return;
+  _uid = u.UID;
+  document.getElementById('lblSenderUserID').innerText = _uid;
+  document.getElementById('lblGameID').innerText       = _GID;
+
+  _todayDate = getISTiso();      // YYYY-MM-DD for API calls
+  if(_GID) _gameDate = await fetchGameDate();
+  else     _gameDate = _todayDate;
+
+  // GID available hai to Yantri button turant show karo (contacts load hone ka wait nahi)
+  if(_GID) document.getElementById('BtnYantri').style.display = 'block';
+
+  // type="date" needs YYYY-MM-DD format
+  document.getElementById('txtDate').value = _gameDate || _todayDate;
+  document.getElementById('lblMYGameName').textContent = _Game;
+
+  // Load receiver list first (for select2)
+  await loadReceiverList();
+
+  // Init Select2 — vendor bundle is v3.5.2, uses formatX callbacks not `language`
+  $('#ddlSrchCustomers').select2({
+    placeholder: 'Select Customer Name',
+    allowClear:  true,
+    width:       '100%',
+    minimumInputLength: 1,   // list tab aaye jab 1+ char type karo
+    formatInputTooShort: function(){ return ''; },  // empty msg — koi "type karo" message nahi
+    formatNoMatches:     function(){ return 'No customer found'; }
+  });
+
+  // Dropdown open hone par — search field mein focus (v3 event name: select2-open)
+  // + drop ka width force karo taaki wahi wide bar jaisa dikhe jaisa closed
+  // "Select Customer Name" bar dikhta hai. Select2 v3.5.2 apna khud ka width
+  // calculation kabhi sahi nahi kar raha (already 2 tareeko se try kiya, dono
+  // fail) — ab bas seedha ".ddl-wrap" (jo hamesha sahi, poori width ka hota
+  // hai) ka exact pixel width copy karke drop par force lagao, Select2 khud
+  // apna kaam kar chuke uske BAAD (setTimeout se), taaki ye jeete.
+  function fixDropWidth(){
+    const wrap = document.querySelector('.ddl-wrap');
+    if(!wrap) return;
+    const w = Math.round(wrap.getBoundingClientRect().width);
+    if(!w) return;
+    const target = w + 'px';
+    document.querySelectorAll('.select2-drop-active').forEach(drop => {
+      // Skip the no-op write when it's already correct — the observer also
+      // watches the style attribute now, so writing the same value again
+      // would still fire another mutation and loop forever.
+      if (drop.offsetParent !== null && drop.style.width !== target) drop.style.width = target;
+    });
+  }
+  // Fixed timeouts (0/30/100ms) helped for normal results, lekin jab search
+  // "No matches found" state mein jaata hai (koi result nahi milta), Select2
+  // apna re-render kisi later/debounced tick par karta hai jo un fixed
+  // timeouts ke baad aata hai — isliye wahi purana chota width reh jaata
+  // tha. Ab MutationObserver se drop ke andar KOI BHI DOM change turant
+  // pakad ke width dubara force karte hain — chahe result mile ya "no
+  // results" dikhe, kabhi bhi render ho, hamesha sahi width lagegi.
+  let dropObserver = null;
+  function watchDropWidth(){
+    const drop = document.querySelector('.select2-drop-active');
+    if (!drop) return;
+    if (dropObserver) dropObserver.disconnect();
+    dropObserver = new MutationObserver(() => fixDropWidth());
+    // attributes:true + attributeFilter:['style'] — Select2's own
+    // positionDropdown() repositions itself via a direct style-attribute
+    // write ($dropdown.css(...)), which childList/characterData alone
+    // doesn't catch. Missing this was the actual gap that let it win the
+    // race intermittently on slower machines even though a clean/fast test
+    // environment rarely triggered it.
+    dropObserver.observe(drop, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style'] });
+  }
+  $('#ddlSrchCustomers').on('select2-open', function(){
+    const sf = document.querySelector('.select2-drop-active .select2-input');
+    if(sf) sf.focus();
+    fixDropWidth();
+    watchDropWidth();
+  });
+  $('#ddlSrchCustomers').on('select2-close', function(){
+    if (dropObserver) { dropObserver.disconnect(); dropObserver = null; }
+  });
+  document.addEventListener('keyup', function(e){
+    if(e.target.classList.contains('select2-input')) fixDropWidth();
+  });
+
+  // Select2 v3.5.2 fires plain "change" on both select and clear — no
+  // select2:select/select2:clear (those are v4-only events).
+  $('#ddlSrchCustomers').on('change', function(){
+    if(_selResetGuard) return;
+    if($(this).val()) onCustSelect(); else closeRates();
+  });
+
+  // Fix 1: Page load par reset — back aane par purana value na dikhe
+  resetSelect2Silently();
+
+  if(_GID){
+    await loadAutoAcceptStatus();
+    await loadContacts(false);
+    loadAllContactsPool();
+  }
+
+  await loadResult();
+
+  // Page par pohanchte hi search ready — bina click ke seedha type karo
+  openSearchReady();
+}
+
+function openSearchReady(){
+  // select2 open karo — minimumInputLength:1 ke karan sirf search field dikhega,
+  // customer list tab tak nahi aayegi jab tak type na karo
+  setTimeout(()=>{
+    try{
+      $('#ddlSrchCustomers').select2('open');
+    }catch(e){}
+  }, 350);
+}
+
+/* ── Auto Accept status load ── */
+async function loadAutoAcceptStatus(){
+  try{
+    const r=await API.get(`/api/game/auto-accept-status?gid=${_GID}`);
+    if(r?.success){
+      const v=r.data?.IsAcceptedStatus;
+      document.getElementById('chkAutoAccept').checked=(v===true||v==='True'||v==='true'||v===1);
+    }
+  }catch(e){}
+}
+async function toggleAutoAccept(){
+  const status=document.getElementById('chkAutoAccept').checked;
+  try{ await API.post('/api/received/accept-status',{gid:_GID,status}); }catch(e){}
+}
+
+/* ── Load all contacts for search pool ── */
+async function loadAllContactsPool(){
+  try{
+    const r=await API.get(`/api/received/contacts?gid=${_GID}&viewAll=true`);
+    if(r?.success&&r.data?.length) _allContactsPool=r.data;
+  }catch(e){ _allContactsPool=_allContacts; }
+}
+
+/* ── FetchReceiverList → ddlSrchCustomers ── */
+async function loadReceiverList(){
+  try{
+    const r=await API.get('/api/received/receiver-list');
+    if(!r?.success||!r.data?.length) return;
+    const sel=document.getElementById('ddlSrchCustomers');
+    (r.data||[]).forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c.CID;
+      o.textContent=c.CustomerName;
+      o.dataset.mobile=c.Mobile||'';
+      sel.appendChild(o);
+    });
+  }catch(e){}
+}
+
+/* ── BindGrid → GetMyReceivedMessageWhatsAppLike ── */
+async function loadContacts(viewAll){
+  const el=document.getElementById('SeachingResultDiv');
+  el.innerHTML='<div class="emsg"><span class="spin"></span> Loading...</div>';
+  document.getElementById('txtSearchatHead').value='';
+  _lblRatesTrue='';
+  document.getElementById('lblRatesTrue').innerText='';
+
+  // Button styling — ASPX exact
+  if(viewAll){
+    document.getElementById('BtnSearch').classList.add('btn-active');
+    document.getElementById('BtnToday').classList.remove('btn-active');
+  } else {
+    document.getElementById('BtnToday').classList.add('btn-active');
+    document.getElementById('BtnSearch').classList.remove('btn-active');
+  }
+
+  try{
+    const dateParam=encodeURIComponent(_gameDate||_todayDate||getIST());
+    const r=await API.get(`/api/received/contacts?gid=${_GID}&viewAll=${viewAll}&date=${dateParam}`);
+    if(!r?.success||!r.data?.length){
+      _allContacts=[];
+      el.innerHTML='<div class="emsg">No Data Found!</div>';
+      document.getElementById('lblMYGameName').textContent=_Game||'No Data Found!';
+      setGameBarVisible(false);
+      return;
+    }
+    document.getElementById('lblMYGameName').textContent=r.data[0].GameName||_Game;
+    _allContacts=r.data;
+    renderContacts(r.data);
+    setGameBarVisible(true);
+  }catch(e){
+    el.innerHTML='<div class="emsg">Error loading contacts</div>';
+  }
+}
+
+function setGameBarVisible(v){
+  // Yantri button — GID hone par hamesha visible, data load ho ya na ho
+  document.getElementById('BtnYantri').style.display = _GID ? 'block' : 'none';
+  document.getElementById('BtnResult').style.display = v ? 'block' : 'none';
+  document.getElementById('SearchHead').style.display = v ? 'block' : 'none';
+  document.getElementById('autoWrap').style.display   = v ? 'flex'  : 'none';
+}
+
+/* ── Render contact cards — ASPX repeater exact ── */
+let _contactsData=[];
+function renderContacts(list){
+  const el=document.getElementById('SeachingResultDiv');
+  _contactsData=list;
+  if(!list.length){ el.innerHTML='<div class="emsg">No Data Found!</div>'; return; }
+  el.innerHTML=list.map((c,i)=>{
+    const unread=parseInt(c.UnReadTotal)||0;
+    const name  =c.CustomerName||'';
+    const mob   =c.Mobile||'';
+    const lastAmt=c.LastMsgDateAmount||'';
+    const rate  =c.Rate||'';
+    const lt    =c.LT||'';
+    return `<div class="contact-card" onclick="onContactClick(${i})" style="margin:0 0 4px 0;text-transform:capitalize;">
+      <div class="card-inner-wrap">
+        <span class="chat-icon">&#128172;</span>
+        <div class="card-content">
+          ${name?`<h4 class="cust-name">${xss(name)}</h4>`:''}
+          <h4 class="cust-mobile">${xss(mob)}&nbsp;<span style="font-weight:normal;font-size:.75rem;font-style:normal;">(${xss(lastAmt)})</span></h4>
+          ${rate?`<h6 class="cust-rate">${xss(rate)}&nbsp;<span style="color:#000;font-style:normal;font-size:.75rem;">Last Update :${xss(lt)}</span></h6>`:''}
+        </div>
+        ${unread>0?`<span class="text-span">${unread}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Contact card click ── */
+// SP GetMyReceivedMessageWhatsAppLike ek customer ki har rate ke liye alag row return karta hai
+// isliye har card mein us specific rate ka data already hota hai
+// → seedha us rate se chat open karo, rate selection popup ki zaroorat nahi
+function onContactClick(i){
+  const c=_contactsData[i];
+  if(!c) return;
+  if(c.CustomerName==='ADD Contact'){
+    window.location.href=`/pages/customer.html?Mobile=${c.Mobile}`; return;
+  }
+  const lastDate=c.LastMsgDate?fmtDate(c.LastMsgDate):getIST();
+
+  // Card ka rate directly use karo — no API call, no rate selection
+  redirectToChat(
+    c.Mobile, c.GID||_GID, c.GameName||_Game, c.fSenderID,
+    lastDate, c.Rate, c.D_PComm, c.D_Amt, c.A_PComm, c.A_Amt, c.Pati_PComm,
+    c.ThirdPartyHissaID, c.ThirdPartyHissaPer,
+    c.ThirdPartyCommID, c.ThirdPartyDaraComm, c.ThirdPartyAkharComm
+  );
+}
+
+/* ── ddlSrchCustomers select (Select2) ── */
+async function onCustSelect(){
+  const sel=document.getElementById('ddlSrchCustomers');
+  const cid=sel.value;
+  if(!cid) return;
+  try{
+    const r=await API.get(`/api/received/customer-rates?cid=${cid}`);
+    if(!r?.success||!r.data?.length) return;
+    const dt=r.data;
+    if(dt.length===1){
+      const d=dt[0];
+      const pati=d.Patti||d.Pati_PComm||d.patti||'0';
+      redirectToChat(d.MobileNo,_GID,_Game,d.fUID,getIST(),d.Rate,
+        d.D_PComm,d.D_Amt,d.A_PComm,d.A_Amt,pati,
+        d.ThirdPartyHissaID,d.ThirdPartyHissaPer,
+        d.ThirdPartyCommID,d.ThirdPartyDaraComm,d.ThirdPartyAkharComm);
+    } else {
+      document.getElementById('lblCustomerNameMobile').innerText=
+        sel.options[sel.selectedIndex]?.text||'';
+      BlockSeaching();
+      _lblRatesTrue='Yes';
+      document.getElementById('lblRatesTrue').innerText='Yes';
+      _pendingRates=dt;
+      showRatesGrid(dt);
+    }
+  }catch(e){ console.error(e); }
+}
+
+/* ── BlockSeaching — hide search UI ── */
+function BlockSeaching(){
+  document.getElementById('txtSearchatHead').style.display='none';
+  document.getElementById('SearchHead').style.display='none';
+  document.getElementById('BtnSearch').style.display='none';
+  document.getElementById('BtnToday').style.display='none';
+  document.getElementById('SearchingDiv').style.display='none';
+  document.getElementById('SeachingResultDiv').style.display='none';
+}
+
+/* ── GridViewRates — show rate buttons ── */
+function showRatesGrid(rates){
+  const wrap=document.getElementById('ratesBtnWrap');
+  wrap.innerHTML=rates.map((d,i)=>
+    `<button class="btn-rate" id="rateBtn${i}" tabindex="${i+1}" onclick="onRateClick(${i})">${xss(d.Rate)}</button>`
+  ).join('');
+  document.getElementById('ratesWrap').style.display='block';
+  setTimeout(()=>document.getElementById('rateBtn0')?.focus(),100);
+}
+
+/* ── GridViewRates row click ── */
+async function onRateClick(i){
+  const d=_pendingRates[i];
+  const pati=d.Patti||d.Pati_PComm||d.patti||'0';
+  const lastDate=_pendingLastDate||getIST();
+  _pendingLastDate='';
+  closeRates();
+  redirectToChat(d.MobileNo,_GID,_Game,d.fUID,lastDate,d.Rate,
+    d.D_PComm,d.D_Amt,d.A_PComm,d.A_Amt,pati,
+    d.ThirdPartyHissaID,d.ThirdPartyHissaPer,
+    d.ThirdPartyCommID,d.ThirdPartyDaraComm,d.ThirdPartyAkharComm);
+}
+
+/* ── Close rates, restore UI ── */
+function closeRates(){
+  _lblRatesTrue='';
+  document.getElementById('lblRatesTrue').innerText='';
+  document.getElementById('ratesWrap').style.display='none';
+  document.getElementById('ratesBtnWrap').innerHTML='';
+  document.getElementById('txtSearchatHead').style.display='block';
+  document.getElementById('SearchHead').style.display='block';
+  document.getElementById('BtnSearch').style.display='block';
+  document.getElementById('BtnToday').style.display='block';
+  document.getElementById('SearchingDiv').style.display='flex';
+  document.getElementById('SeachingResultDiv').style.display='block';
+  // Reset select2 (silently — don't recurse back into closeRates)
+  resetSelect2Silently();
+}
+
+/* ── Redirect to chat page ── */
+function redirectToChat(mobile,gid,game,selUID,lastDate,rates,dPC,dA,aPC,aA,pati,hID,hPer,tpCID,tpDara,tpAkhar){
+  const p=new URLSearchParams({
+    SelectedMobile:mobile||'',GameId:gid||_GID,GameName:game||_Game,
+    SelectedUID:selUID||'',Rates:rates||'0/100-0/10-0',
+    D_PComm:dPC||'0',D_Amt:dA||'100',A_PComm:aPC||'0',A_Amt:aA||'10',
+    Pati_PComm:pati||'0',ThirdPartyHissaID:hID||'0',ThirdPartyHissaPer:hPer||'0',
+    ThirdPartyCommID:tpCID||'0',ThirdPartyDaraComm:tpDara||'0',ThirdPartyAkharComm:tpAkhar||'0',
+    SelectedPage:'1'
+  });
+  if(lastDate) p.set('LastMsgDate',lastDate);
+  window.location.href=`/pages/chat.html?${p}`;
+}
+
+/* ── BtnSearch1 (Today) ── */
+async function BtnSearch1_Click(){
+  _viewAll=false;
+  resetSelect2Silently();
+  document.getElementById('ratesWrap').style.display='none';
+  await loadContacts(false);
+}
+
+/* ── BtnSearch (View All) ── */
+async function BtnSearch_Click(){
+  _viewAll=true;
+  resetSelect2Silently();
+  document.getElementById('ratesWrap').style.display='none';
+  await loadContacts(true);
+  _allContactsPool=_allContacts;
+}
+
+/* ── txtSearchatHead — filter from full pool ── */
+function txtSearchatHead_TextChanged(){
+  const q=document.getElementById('txtSearchatHead').value.toLowerCase().trim();
+  const source=_allContactsPool.length?_allContactsPool:_allContacts;
+  if(!q){
+    _contactsData=_allContacts;
+    renderContacts(_allContacts);
+  } else {
+    const filtered=source.filter(c=>
+      (c.CustomerName||'').toLowerCase().includes(q)||
+      (c.Mobile||'').toLowerCase().includes(q)
+    );
+    _contactsData=filtered;
+    renderContacts(filtered);
+  }
+  document.getElementById('txtSearchatHead').focus();
+}
+
+/* ── Result modal ── */
+function openResult(){
+  _lblRatesTrue='1';
+  document.getElementById('lblRatesTrue').innerText='1';
+  document.getElementById('divAddResult').classList.add('show');
+  setTimeout(()=>{document.getElementById('txtResult').focus();document.getElementById('txtResult').select();},300);
+}
+function closeResult(){
+  _lblRatesTrue='';
+  document.getElementById('lblRatesTrue').innerText='';
+  document.getElementById('divAddResult').classList.remove('show');
+}
+
+/* ── GetResult — SELECT Result FROM Result WHERE GID=X AND Date=today ── */
+async function loadResult(){
+  try{
+    const date=document.getElementById('txtDate').value;
+    const r=await API.get(`/api/game/result?gid=${_GID}&date=${encodeURIComponent(date)}`);
+    document.getElementById('txtResult').value=(r?.success&&r.data?.Result!=null)?r.data.Result:'';
+  }catch(e){}
+}
+
+/* ── SaveResult ── */
+async function BtnSubmit_Click(){
+  const result=document.getElementById('txtResult').value.trim();
+  const date=document.getElementById('txtDate').value.trim();
+  if(!result||!_GID||!date){ alert('Please Check Values !'); document.getElementById('txtResult').focus(); return; }
+  try{
+    const r=await API.post('/api/game/save-result',{result,gameID:_GID,date});
+    if(r?.success){ alert('Data Saved Sucessfully!'); closeResult(); }
+    else alert(r?.message||'Error');
+  }catch(e){ alert('Error saving'); }
+}
+
+function ValidNumeric(evt){
+  const c=(evt.which)?evt.which:evt.keyCode;
+  return c>=48&&c<=57;
+}
+
+/* ── Yantri ── */
+function openYantri(){ window.location.href=`/pages/yantri.html?GameID=${_GID}`; }
+
+/* ── ESC keyboard — ASPX exact ── */
+document.addEventListener('keyup',function(e){
+  const k=e.keyCode?e.keyCode:e.which;
+  if(k===27){
+    const lrt=document.getElementById('lblRatesTrue').innerText;
+    if(lrt==='')     window.location.href='/pages/home.html';
+    else if(lrt==='1') closeResult();
+    else if(lrt==='Yes') closeRates();
+  }
+});
+
+/* ── Arrow keys for rate buttons ── */
+document.addEventListener('keydown',function(e){
+  if(document.getElementById('ratesWrap').style.display==='none') return;
+  const btns=document.querySelectorAll('.btn-rate');
+  if(!btns.length) return;
+  const focused=[...btns].findIndex(b=>b===document.activeElement);
+  if(e.key==='ArrowDown'&&focused<btns.length-1){
+    btns[focused+1].focus();btns.forEach(b=>b.classList.remove('selected'));btns[focused+1].classList.add('selected');e.preventDefault();
+  }
+  if(e.key==='ArrowUp'&&focused>0){
+    btns[focused-1].focus();btns.forEach(b=>b.classList.remove('selected'));btns[focused-1].classList.add('selected');e.preventDefault();
+  }
+  if(e.key==='Enter'&&focused>=0) onRateClick(focused);
+});
+
+init();
+
+// Back aane par (chat.html se entry chadha ke ESC/back se yahan aana) —
+// bfcache se page ek FROZEN snapshot restore karta hai (jaisa navigate
+// karne se pehle tha), khud se dobara data fetch nahi karta. Isliye
+// abhi tak sirf Select2 reset hota tha, "Today" list purani/stale hi
+// dikhti thi jab tak ek aur baar back jaake fresh reload na ho. Ab
+// yahan turant "Today" ko force-refresh karte hain taaki abhi-abhi
+// chadhai entry turant dikhe, dobara back jaane ki zaroorat na pade.
+window.addEventListener('pageshow', function(e){
+  if(e.persisted && typeof $ !== 'undefined'){
+    resetSelect2Silently();
+    openSearchReady();
+    BtnSearch1_Click();
+  }
+});
+
+// ESC se agar search field band ho jaye to dobara open karo (user convenience)
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') return; // ESC handled separately
+  // Agar koi aur key press ho aur select2 search open nahi hai
+  // to ESC keyup se handle hoga
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assign Clients - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.hideGridColumn { display:none; }
+thead th.assign-hd { background-color:#1572e8; color:White; }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Access Right</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="ddlSrchCustomers">User</label>
+                <!-- ASPX: ddlSrchCustomers AutoPostBack → BindCustomerGrid() -->
+                <select class="form-control" id="ddlSrchCustomers" style="text-transform:capitalize;" onchange="loadClients()">
+                  <option value="">Select User</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="txtFilter">Filter</label>
+                <input type="text" id="txtFilter" class="form-control" onkeyup="filterGrid()"
+                  placeholder="Filter by Name...">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <div class="table-responsive" style="height:350px;width:100%;">
+                <table class="table-bordered-bd-primary table-hover" id="clientTable" cellpadding="4"
+                  style="text-align:center;font-weight:normal;text-transform:capitalize;width:100%;">
+                  <thead>
+                    <tr>
+                      <th class="assign-hd" style="width:100px;">SR</th>
+                      <th class="assign-hd" style="width:100px;">
+                        <input type="checkbox" id="chkAll" onclick="checkAll(this)">
+                      </th>
+                      <th class="assign-hd hideGridColumn">ID</th>
+                      <th class="assign-hd" style="width:500px;">Name</th>
+                    </tr>
+                  </thead>
+                  <tbody id="clientBody">
+                    <tr><td colspan="4">Select a user to load clients</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-action">
+          <!-- ASPX: MyButton — blue #1572e8 themed -->
+          <button class="btn btn-grd-success" id="MyButton" onclick="saveAssignments()"
+            style="background-color:#1572e8!important;border:#1572e8!important;color:White;">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let myUID = null;
+let _allClients = []; // for client-side filter (ASPX: filterGrid)
+
+async function init() {
+  const u = await initPage('assign-clients');
+  if (!u) return;
+  myUID = u.UID;
+  if (u.SubUID) { window.location.href = '/pages/home.html'; return; }
+
+  // ASPX: ShowAllSubUsers() → load subusers into ddlSrchCustomers
+  await loadSubUsers();
+
+  // ASPX: ddlSrchCustomers.Focus()
+  document.getElementById('ddlSrchCustomers').focus();
+
+  // ASPX: ESC → Subusers.aspx (always, regardless of history)
+  window.__escPageHandler = function() {
+    window.location.href = '/pages/subusers.html';
+    return true;
+  };
+}
+
+// ── ShowAllSubUsers() ──
+async function loadSubUsers() {
+  const r = await API.get('/api/admin/subusers');
+  const sel = document.getElementById('ddlSrchCustomers');
+  sel.innerHTML = '<option value="">Select User</option>';
+  (r?.data||[]).forEach(u => {
+    sel.innerHTML += `<option value="${u.SubUserID}">${u.subusername||u.SubUserID}</option>`;
+  });
+}
+
+// ── ddlSrchCustomers_SelectedIndexChanged → BindCustomerGrid() ──
+// ASPX: SP SelectClientForAssign(@fSenderID, @fStaffID)
+// Returns: CID, CustomerName, IsAssigned
+async function loadClients() {
+  const staffID = document.getElementById('ddlSrchCustomers').value;
+  const tbody = document.getElementById('clientBody');
+  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+  _allClients = [];
+
+  if (!staffID) {
+    tbody.innerHTML = '<tr><td colspan="4">Select a user</td></tr>';
+    return;
+  }
+
+  const r = await API.get(`/api/admin/assigned-clients?staffID=${staffID}`);
+  if (!r?.success || !r.data?.length) {
+    tbody.innerHTML = '<tr><td colspan="4">No clients found</td></tr>';
+    return;
+  }
+
+  _allClients = r.data;
+  renderClients(_allClients);
+
+  // Uncheck "Select All" header
+  document.getElementById('chkAll').checked = false;
+}
+
+function renderClients(data) {
+  const tbody = document.getElementById('clientBody');
+  tbody.innerHTML = data.map((c, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>
+        <!-- ASPX: ShiftCheck Checked=IsAssigned -->
+        <input type="checkbox" ${c.IsAssigned ? 'checked' : ''}>
+      </td>
+      <td class="hideGridColumn">${c.CID}</td>
+      <td>${c.CustomerName || c.CID}</td>
+    </tr>`).join('');
+}
+
+// ── filterGrid() — ASPX: filter by CustomerName column (index 3) ──
+function filterGrid() {
+  const filter = document.getElementById('txtFilter').value.toUpperCase();
+  const rows = document.querySelectorAll('#clientBody tr');
+  rows.forEach(tr => {
+    const td = tr.cells[3]; // CustomerName col index 3
+    if (td) {
+      const val = td.textContent || td.innerText;
+      tr.style.display = val.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+    }
+  });
+}
+
+// ── checkAll() — ASPX: header checkbox → check/uncheck all ──
+function checkAll(headerChk) {
+  const inputs = document.querySelectorAll('#clientBody input[type=checkbox]');
+  inputs.forEach(chk => { chk.checked = headerChk.checked; });
+}
+
+// ── GetSelectedRowValue → SaveCopyMessage → POST /api/admin/assign-clients ──
+// ASPX: reads checked rows → AllID = comma separated CIDs → AJAX call
+async function saveAssignments() {
+  const staffID = document.getElementById('ddlSrchCustomers').value;
+  if (!staffID) { showToast('User select karo!', true); return; }
+
+  // ASPX: collect checked CIDs from hidden column (index 2)
+  const checkedRows = document.querySelectorAll('#clientBody tr');
+  const customerIDs = [];
+  checkedRows.forEach(tr => {
+    const chk = tr.querySelector('input[type=checkbox]');
+    if (chk?.checked && tr.cells[2]) {
+      const cid = tr.cells[2].textContent.trim();
+      if (cid) customerIDs.push(cid);
+    }
+  });
+
+  try {
+    const r = await API.post('/api/admin/assign-clients', { staffID, customerIDs });
+    if (r?.success) {
+      showToast('Data Update Successfully!');
+      // Reload to show updated IsAssigned
+      await loadClients();
+    } else {
+      showToast('Something Wrong', true);
+    }
+  } catch(e) {
+    showToast('Something Wrong', true);
+  }
+}
+
+// ── SweetAlert-based feedback (matches original ASPX SucessMessage1/ErrorMessage) ──
+function showToast(msg, err=false) {
+  swal(err ? 'Wrong Inputs!' : 'Sucess!', msg, {
+    icon: err ? 'error' : 'success',
+    timer: 900,
+    buttons: false
+  });
+}
+
+init();
+</script>
+</body>
+</html>

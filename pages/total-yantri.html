@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Total Yantri - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<script>
+// TotalYantri.aspx = same grid as YantriRMsg but shows ALL customers
+// No fReceiverID filter, uses 'total' mode in /api/yantri/data
+// Redirect to yantri.html with mode=total
+(function() {
+  const p = new URLSearchParams(location.search);
+  const gameID = p.get('GameID') || p.get('GID') || '';
+  const date   = p.get('Date') || '';
+
+  const out = new URLSearchParams({ GameID: gameID, mode: 'total' });
+  if (date) out.set('Date', date);
+
+  window.location.replace('/pages/yantri.html?' + out.toString());
+})();
+</script>
+</head>
+<body></body>
+</html>

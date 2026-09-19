@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Games - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+/* ASPX ke Yes/No buttons exact replica (BackColor #31ce36 / #f25961) */
+.tog-yes { background:#31ce36; color:#fff; border:none; border-radius:2px; font-size:.8rem; height:30px; min-width:35px; cursor:pointer; font-weight:700; padding:0 8px; }
+.tog-no  { background:#f25961; color:#fff; border:none; border-radius:2px; font-size:.8rem; height:30px; min-width:35px; cursor:pointer; font-weight:700; padding:0 8px; }
+.tog-yes:hover { background:#28b52e; }
+.tog-no:hover  { background:#d9444e; }
+/* Bolder, higher-contrast text — visual only, no behavior change */
+.content .form-group label{font-weight:800!important;color:var(--text)!important;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;}
+/* Compact form — smaller fields/spacing, text stays bold/clear */
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:8px 16px!important;}
+.content .card-action{padding:8px 16px!important;}
+.content .form-group{margin-bottom:4px!important;}
+.content .form-group label{font-size:.76rem!important;margin-bottom:2px!important;display:block;}
+.content .form-control{padding:.25rem .5rem!important;height:auto!important;font-size:.82rem!important;}
+.content .row{margin-left:-6px;margin-right:-6px;}
+.content .row>[class*="col-"]{padding-left:6px;padding-right:6px;}
+.content .form-group input[type=checkbox]{width:16px;height:16px;}
+/* Games grid: proper bordered columns + horizontal scroll instead of squeezing */
+#gamesTable{overflow-x:auto;max-height:calc(100vh - 330px);overflow-y:auto;}
+#gamesTable table{width:auto!important;min-width:900px;border-collapse:collapse!important;}
+#gamesTable th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 14px!important;white-space:nowrap;font-size:.85rem!important;}
+#gamesTable td{border:1px solid #ccc!important;padding:6px 14px!important;white-space:nowrap;font-weight:700!important;color:var(--text)!important;font-size:.85rem!important;}
+#gamesTable tbody tr:hover td{background:#eef3ff!important;}
+/* Vendor theme reserves 62px above .content for a second header row this
+   app doesn't render — page-scoped so it doesn't affect other pages. */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="formTitle">Create Games</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtGameName">Game Name</label>
+                <input type="hidden" id="editGameID">
+                <input type="text" id="txtGameName" class="form-control" placeholder="Enter Game Name"
+                  onfocus="this.select()" autocomplete="off">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="form-group">
+                <label for="txtDrawTime">Draw Time</label>
+                <input type="text" id="txtDrawTime" class="form-control" placeholder="e.g. 06:00 PM" autocomplete="off">
+              </div>
+            </div>
+            <div class="col-md-1">
+              <div class="form-group">
+                <label>Next Day</label><br>
+                <input type="checkbox" id="chkNextDay">
+              </div>
+            </div>
+            <div class="col-md-1">
+              <div class="form-group">
+                <label>Active</label><br>
+                <input type="checkbox" id="chkIsActive" checked>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>Auto Accept</label><br>
+                <input type="checkbox" id="chkAcceptedStatus">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="form-group">
+                <label>Over Time Reject</label><br>
+                <input type="checkbox" id="chkRejectedMsg">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" onclick="submitGame()" id="btnSubmit">Submit</button>
+          <button class="btn btn-danger" onclick="resetForm()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Games</div>
+        </div>
+        <div id="gamesTable" class="table-responsive">
+          <div class="loading"><span class="spinner"></span>Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+async function init() {
+  const user = await initPage('game');
+  if (!user) return;
+  await loadGames();
+  // Enter key → next field (ASPX exact)
+  document.getElementById('txtGameName').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('txtDrawTime').focus(); }
+  });
+  document.getElementById('txtGameName').focus();
+}
+
+async function loadGames() {
+  const el = document.getElementById('gamesTable');
+  const res = await API.get('/api/game');
+  if (!res || !res.success || !res.data.length) {
+    el.innerHTML = '<div class="empty-state">No games found. Add your first game!</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+      <thead>
+        <tr>
+          <th>Edit</th>
+          <th>Game</th>
+          <th>Draw</th>
+          <th>Next&nbsp;Day</th>
+          <th>Auto&nbsp;Accept</th>
+          <th>Over&nbsp;Time&nbsp;Reject</th>
+          <th>Active</th>
+          <th>X</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${res.data.map(g => {
+          const nextDay   = g.IsNextDayResult   === true || g.IsNextDayResult   === 'True';
+          const active    = g.IsActive          === true || g.IsActive          === 'True';
+          const accepted  = g.IsAcceptedStatus  === true || g.IsAcceptedStatus  === 'True';
+          const rejected  = g.IsRejectedMsg     === true || g.IsRejectedMsg     === 'True';
+          return `<tr>
+            <td>
+              <img src="/vendor/images/edit-icon-orange-pencil-0.png" width="20" height="20" style="cursor:pointer;"
+                onclick="editGame('${g.GID}','${esc(g.GameName)}','${g.DrawTime||''}',${nextDay},${active},${accepted},${rejected})">
+            </td>
+            <td>${g.GameName}</td>
+            <td>${g.DrawTime || '-'}</td>
+            <!-- Next Day toggle -->
+            <td>
+              ${nextDay
+                ? `<button class="tog-yes" onclick="toggle('${g.GID}','IsNextDayResult',false)">Yes</button>`
+                : `<button class="tog-no"  onclick="toggle('${g.GID}','IsNextDayResult',true)">No</button>`}
+            </td>
+            <!-- Auto Accept toggle -->
+            <td>
+              ${accepted
+                ? `<button class="tog-yes" onclick="toggle('${g.GID}','IsAcceptedStatus',false)">Yes</button>`
+                : `<button class="tog-no"  onclick="toggle('${g.GID}','IsAcceptedStatus',true)">No</button>`}
+            </td>
+            <!-- OT Reject toggle -->
+            <td>
+              ${rejected
+                ? `<button class="tog-yes" onclick="toggle('${g.GID}','IsRejectedMsg',false)">Yes</button>`
+                : `<button class="tog-no"  onclick="toggle('${g.GID}','IsRejectedMsg',true)">No</button>`}
+            </td>
+            <!-- Active toggle -->
+            <td>
+              ${active
+                ? `<button class="tog-yes" onclick="toggle('${g.GID}','IsActive',false)">Yes</button>`
+                : `<button class="tog-no"  onclick="toggle('${g.GID}','IsActive',true)">No</button>`}
+            </td>
+            <td>
+              <img src="/vendor/images/delete.png" width="25" height="25" style="cursor:pointer;"
+                onclick="deleteGame('${g.GID}','${esc(g.GameName)}')">
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ASPX: Yes/No button click → UPDATE Game SET field=value
+async function toggle(gid, field, value) {
+  const r = await API.post('/api/game/toggle', { gid, field, value });
+  if (r && r.success) {
+    await loadGames(); // ASPX: BindGrid() ke baad page refresh hota tha
+  } else {
+    alert('Update failed');
+  }
+}
+
+async function submitGame() {
+  const gameName = document.getElementById('txtGameName').value.trim();
+  const drawTime = document.getElementById('txtDrawTime').value.trim();
+  const gid      = document.getElementById('editGameID').value;
+
+  if (!gameName || !drawTime) { showToast('Game name and draw time required', 'error'); return; }
+
+  const body = {
+    gameName, drawTime,
+    isNextDay:        document.getElementById('chkNextDay').checked,
+    isActive:         document.getElementById('chkIsActive').checked,
+    isAcceptedStatus: document.getElementById('chkAcceptedStatus').checked,
+    isRejectedMsg:    document.getElementById('chkRejectedMsg').checked
+  };
+
+  let res;
+  if (gid) {
+    res = await API.put(`/api/game/${gid}`, body);
+  } else {
+    res = await API.post('/api/game', body);
+  }
+
+  if (res && res.success) {
+    showToast(gid ? 'Data Updated Successfully!' : 'Data Saved Successfully!');
+    resetForm();
+    await loadGames();
+  } else {
+    showToast(res?.message || 'Error', 'error');
+  }
+}
+
+function editGame(gid, name, time, nextDay, active, accepted, rejected) {
+  document.getElementById('editGameID').value          = gid;
+  document.getElementById('txtGameName').value         = name;
+  document.getElementById('txtDrawTime').value         = time;
+  document.getElementById('chkNextDay').checked        = nextDay;
+  document.getElementById('chkIsActive').checked       = active;
+  document.getElementById('chkAcceptedStatus').checked = accepted;
+  document.getElementById('chkRejectedMsg').checked    = rejected;
+  document.getElementById('btnSubmit').textContent     = 'Update';
+  document.getElementById('formTitle').textContent     = 'Edit Game';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('txtGameName').focus();
+}
+
+async function deleteGame(gid, name) {
+  if (!confirm(`Delete game "${name}"?`)) return;
+  const res = await API.delete(`/api/game/${gid}`);
+  if (res && res.success) {
+    showToast('Data Deleted Successfully!');
+    await loadGames();
+  } else {
+    showToast(res?.message || 'Error', 'error');
+  }
+}
+
+// ASPX: Refresh() exact replica
+function resetForm() {
+  document.getElementById('editGameID').value          = '';
+  document.getElementById('txtGameName').value         = '';
+  document.getElementById('txtDrawTime').value         = '';
+  document.getElementById('chkNextDay').checked        = false;
+  document.getElementById('chkIsActive').checked       = true;
+  document.getElementById('chkAcceptedStatus').checked = false;
+  document.getElementById('chkRejectedMsg').checked    = false;
+  document.getElementById('btnSubmit').textContent     = 'Submit';
+  document.getElementById('formTitle').textContent     = 'Create Games';
+  document.getElementById('txtGameName').focus();
+}
+
+function esc(s) { return String(s||'').replace(/'/g,"\\'"); }
+
+init();
+</script>
+</body>
+</html>

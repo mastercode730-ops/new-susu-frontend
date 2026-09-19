@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Balance Sheet - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<style>
+.selected-row { background-color:#f4e9af; }
+/* ASPX UpdateProgress loader overlay — no Atlantis equivalent */
+.modal1 { position:fixed; z-index:999; height:100%; width:100%; top:0; left:0; background-color:Black; opacity:0.6; display:none; }
+.center1 { z-index:1000; margin:300px auto; padding:10px; width:130px; background-color:White; border-radius:10px; text-align:center; }
+.center1 img { height:128px; width:128px; }
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12" style="margin-top:0px;">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col">
+              <label for="txtStartDate">Date</label>
+              <input type="text" class="form-control" id="txtStartDate" placeholder="Enter Start Date"
+                onfocus="this.select()" onchange="bindGrid()">
+            </div>
+            <div class="col">
+              <br>
+              <button class="btn btn-success" onclick="bindGrid()">Find</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-12">
+      <div class="table-responsive" style="width:100%;">
+        <table class="table-bordered-bd-primary table-hover" cellpadding="4"
+          style="text-transform:capitalize;text-align:center;width:100%;">
+          <thead>
+            <tr style="background-color:LightGray;">
+              <th style="width:50px;">SRNo</th>
+              <th style="width:200px;">Sub User</th>
+              <th style="width:100px;">Balance</th>
+            </tr>
+          </thead>
+          <tbody id="bodyStaff">
+            <tr><td colspan="3">Loading...</td></tr>
+          </tbody>
+          <tfoot>
+            <tr style="background-color:LightGray;font-weight:bold;">
+              <td></td>
+              <td>Total</td>
+              <td id="ft_bal">–</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ASPX: UpdateProgress overlay with loader.gif -->
+<div class="modal1" id="loaderOverlay">
+  <div class="center1">
+    <img alt="" src="/vendor/images/loader.gif">
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let myUID = null;
+let _currentDate = '';
+
+// ── INIT ──
+async function init() {
+  const u = await initPage('staff-balance');
+  if (!u) return;
+  myUID = u.UID;
+
+  // ASPX: if Session["SubUID"] != null → Redirect("Home.aspx")
+  if (u.SubUID) { window.location.href = '/pages/home.html'; return; }
+
+  // ASPX: today IST
+  _currentDate = fmtDate(new Date(Date.now() + 5.5*3600000));
+  document.getElementById('txtStartDate').value = _currentDate;
+
+  // ASPX: BindGrid()
+  await bindGrid();
+}
+
+// ── BindGrid() → SP: StaffBalanceSheet(@fUID, @Date) ──
+// Sort: subusername ASC
+// Footer: Sum(Balance)
+async function bindGrid() {
+  _currentDate = document.getElementById('txtStartDate').value || _currentDate;
+  const tbody = document.getElementById('bodyStaff');
+  const overlay = document.getElementById('loaderOverlay');
+  overlay.style.display = 'block';
+  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+  setText('ft_bal', '–');
+
+  try {
+    const r = await API.get(`/api/balance/staff-grid?date=${encodeURIComponent(_currentDate)}`);
+
+    if (!r?.success || !r.data?.length) {
+      tbody.innerHTML = '<tr><td colspan="3">No Data Found!</td></tr>';
+      return;
+    }
+
+    const data = r.data;
+
+    // ASPX: dt.DefaultView.Sort = "subusername ASC"
+    const sorted = [...data].sort((a,b) => (a.subusername||'').localeCompare(b.subusername||''));
+
+    tbody.innerHTML = sorted.map((row, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td style="cursor:pointer;font-weight:bold;"
+            onclick="window.open('/pages/accounts.html?SUID=${row.SubUserID}','_blank')">
+          ${row.subusername || row.SubUserID}
+        </td>
+        <td>${row.Balance || 0}</td>
+      </tr>`).join('');
+
+    // ASPX: FooterRow.Cells[2] = Balance.ToString("")
+    setText('ft_bal', (r.totalBalance || 0).toString());
+
+    // Focus back to date after search (ASPX: txtStartDate.Focus())
+    document.getElementById('txtStartDate').focus();
+
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="3">Error loading data</td></tr>';
+  } finally {
+    overlay.style.display = 'none';
+  }
+}
+
+// ── Utils ──
+function fmtDate(d) {
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getDate()).padStart(2,'0')}/${m[d.getMonth()]}/${d.getFullYear()}`;
+}
+function setText(id, val) { const el = document.getElementById(id); if(el) el.textContent = val; }
+
+init();
+</script>
+</body>
+</html>

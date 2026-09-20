@@ -10,38 +10,282 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:Arial,sans-serif;}
 
-/* ── Select2 override — vendor theme bundles Select2 v3.5.2 (old API/class
-   names, NOT v4's select2-selection--single etc.) — style the real v3 markup ── */
-.select2-container{width:100%!important;}
-.select2-container .select2-choice{
-  height:42px;line-height:40px;border:1px solid #ced4da;border-radius:4px;
-  padding:0 8px;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;
-  background:#fff;
+/* ── Modern Customer Combobox Component ── */
+.ddl-wrap{
+  padding:8px 12px;
+  background:#ffffff;
+  border-bottom:1px solid #e2e8f0;
+  position:relative;
+  z-index:100;
 }
-.select2-container .select2-choice .select2-chosen{
-  color:#000;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;
+.cust-combo-box{
+  position:relative;
+  width:100%;
 }
-.select2-container .select2-choice .select2-arrow{height:40px;}
-.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;}
-.select2-drop .select2-search{padding:8px;}
-.select2-drop .select2-search input{
-  width:100%!important;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:1rem;
+.cust-combo-input-wrap{
+  display:flex;
+  align-items:center;
+  background:#f8fafc;
+  border:1.5px solid #cbd5e1;
+  border-radius:9px;
+  padding:0 12px;
+  height:44px;
+  transition:all 0.2s ease;
+  box-shadow:0 1px 2px rgba(0,0,0,0.04);
+  cursor:text;
 }
-.select2-results{width:100%;max-height:360px;}
-.select2-results .select2-highlighted{background-color:#128c7e!important;}
-.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:4px 10px;line-height:1.5;}
+.cust-combo-input-wrap:hover{
+  border-color:#94a3b8;
+  background:#ffffff;
+}
+.cust-combo-input-wrap.active{
+  border-color:#25d366;
+  background:#ffffff;
+  box-shadow:0 0 0 3px rgba(37,211,102,0.18);
+}
+.cust-combo-icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#25d366;
+  margin-right:8px;
+  flex-shrink:0;
+}
+.cust-combo-input{
+  flex:1;
+  border:none;
+  outline:none;
+  background:transparent;
+  font-family:inherit;
+  font-size:0.94rem;
+  font-weight:500;
+  color:#0f172a;
+  min-width:0;
+  padding:0;
+}
+.cust-combo-input::placeholder{
+  color:#64748b;
+  font-weight:400;
+  font-size:0.88rem;
+}
+.cust-combo-clear{
+  display:none;
+  background:#e2e8f0;
+  border:none;
+  color:#475569;
+  border-radius:50%;
+  width:20px;
+  height:20px;
+  font-size:11px;
+  line-height:20px;
+  text-align:center;
+  cursor:pointer;
+  padding:0;
+  margin-left:6px;
+  flex-shrink:0;
+  transition:all 0.15s ease;
+}
+.cust-combo-clear:hover{
+  background:#cbd5e1;
+  color:#0f172a;
+}
+.cust-combo-divider{
+  width:1px;
+  height:18px;
+  background:#cbd5e1;
+  margin:0 8px;
+  flex-shrink:0;
+}
+.cust-combo-toggle{
+  background:none;
+  border:none;
+  color:#64748b;
+  cursor:pointer;
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform 0.2s ease, color 0.15s ease;
+}
+.cust-combo-toggle:hover{
+  color:#0f172a;
+}
+.cust-combo-toggle.open{
+  transform:rotate(180deg);
+  color:#25d366;
+}
 
-/* ── Dropdown wrap ── */
-.ddl-wrap{padding:6px 10px;background:#fff;border-bottom:1px solid #dee2e6;}
+/* ── Dropdown Menu ── */
+.cust-combo-dropdown{
+  display:none;
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  background:#ffffff;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  box-shadow:0 12px 28px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.05);
+  z-index:1050;
+  overflow:hidden;
+  animation:comboSlideDown 0.15s ease-out;
+}
+@keyframes comboSlideDown{
+  from{opacity:0;transform:translateY(-4px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.cust-menu-hdr{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 14px;
+  background:#f8fafc;
+  border-bottom:1px solid #f1f5f9;
+  font-size:0.78rem;
+  color:#64748b;
+  font-weight:600;
+}
+.cust-menu-hint{
+  font-weight:400;
+  color:#94a3b8;
+  font-size:0.73rem;
+}
+.cust-menu-items{
+  max-height:320px;
+  overflow-y:auto;
+  padding:5px;
+}
+.cust-menu-items::-webkit-scrollbar{
+  width:6px;
+}
+.cust-menu-items::-webkit-scrollbar-thumb{
+  background:#cbd5e1;
+  border-radius:4px;
+}
+.cust-menu-items::-webkit-scrollbar-thumb:hover{
+  background:#94a3b8;
+}
 
-/* ── Rate buttons (GridViewRates) ── */
-.rates-wrap{display:none;padding:6px 10px;background:#fff;border-bottom:1px solid #dee2e6;}
+/* ── Customer Item ── */
+.cust-item{
+  display:flex;
+  align-items:center;
+  padding:9px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:all 0.12s ease;
+  margin-bottom:2px;
+  text-decoration:none;
+}
+.cust-item:hover,.cust-item.active{
+  background:#f0fdf4;
+}
+.cust-item-avatar{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  color:#ffffff;
+  font-weight:700;
+  font-size:0.82rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-right:12px;
+  flex-shrink:0;
+  text-transform:uppercase;
+  box-shadow:0 2px 4px rgba(37,211,102,0.25);
+}
+.cust-item-info{
+  flex:1;
+  min-width:0;
+}
+.cust-item-name{
+  font-size:0.92rem;
+  font-weight:700;
+  color:#0f172a;
+  text-transform:capitalize;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  line-height:1.3;
+}
+.cust-item-mobile{
+  font-size:0.79rem;
+  font-weight:500;
+  color:#64748b;
+  margin-top:1px;
+}
+.cust-item-rate{
+  font-size:0.73rem;
+  font-weight:600;
+  color:#166534;
+  background:#dcfce7;
+  padding:3px 8px;
+  border-radius:12px;
+  white-space:nowrap;
+  margin-left:8px;
+  flex-shrink:0;
+}
+.cust-empty-msg{
+  padding:24px 16px;
+  text-align:center;
+  color:#64748b;
+  font-size:0.88rem;
+}
+
+/* ── Modern Rates Wrap Modal/Card ── */
+.rates-wrap{
+  display:none;
+  padding:12px;
+  background:#ffffff;
+  border-bottom:1px solid #e2e8f0;
+  box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.rates-hdr{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.rates-title{
+  font-size:0.92rem;
+  font-weight:700;
+  color:#0f172a;
+}
+.rates-close-btn{
+  background:none;
+  border:none;
+  font-size:1.1rem;
+  color:#64748b;
+  cursor:pointer;
+  padding:2px 6px;
+  border-radius:4px;
+}
+.rates-close-btn:hover{
+  background:#f1f5f9;
+  color:#0f172a;
+}
 .btn-rate{
-  background:#31ce36;color:#fff;border:none;border-radius:2px;
-  font-size:1rem;height:40px;width:100%;text-align:center;
-  font-weight:bold;cursor:pointer;margin-bottom:5px;display:block;
+  background:linear-gradient(135deg, #25d366 0%, #1ea952 100%);
+  color:#ffffff;
+  border:none;
+  border-radius:8px;
+  font-size:0.95rem;
+  height:42px;
+  width:100%;
+  text-align:center;
+  font-weight:700;
+  cursor:pointer;
+  margin-bottom:8px;
+  display:block;
+  box-shadow:0 2px 4px rgba(37,211,102,0.25);
+  transition:transform 0.1s, box-shadow 0.1s;
 }
-.btn-rate:hover,.btn-rate.selected{opacity:.85;}
+.btn-rate:hover,.btn-rate.selected{
+  transform:translateY(-1px);
+  box-shadow:0 4px 8px rgba(37,211,102,0.35);
+}
 
 /* ── Top bar — Yantri | GameName | Result ── */
 .top-bar{background:#fff;padding:4px 10px;border-bottom:1px solid #dee2e6;}
@@ -58,6 +302,16 @@ body{font-family:Arial,sans-serif;}
   color:green;font-size:1.3rem;font-weight:bold;
   font-family:Arial,sans-serif;text-align:center;flex:1;
 }
+.game-selector-dropdown{
+  color:#25d366;font-size:1.3rem;font-weight:bold;
+  font-family:Arial,sans-serif;text-align:center;text-align-last:center;
+  background:transparent;border:1.5px solid transparent;border-radius:6px;
+  padding:3px 10px;cursor:pointer;outline:none;max-width:200px;
+}
+.game-selector-dropdown:hover,.game-selector-dropdown:focus{
+  border-color:#25d366;background:#f4fbf6;
+}
+.game-selector-dropdown option{color:#000;font-size:1rem;font-weight:bold;}
 /* Result button (right) */
 .btn-result{
   background:#fff;border:none;color:green;font-size:.9rem;font-weight:bold;
@@ -180,15 +434,54 @@ input:checked+.Myslider:before{transform:translateX(15px);}
 <span id="lblGameID"       style="display:none;"></span>
 <span id="lblCustomerNameMobile" style="display:none;"></span>
 
-<!-- 1. ddlSrchCustomers — TOP, full width, Select2 searchable (ASPX: page-title) -->
+<!-- 1. Modern Customer Search Combobox -->
 <div class="ddl-wrap">
-  <select id="ddlSrchCustomers">
+  <div class="cust-combo-box" id="custComboBox">
+    <div class="cust-combo-input-wrap" id="custComboInputWrap">
+      <span class="cust-combo-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <input type="text" id="txtCustSearchInput" class="cust-combo-input"
+        placeholder="Select or Search Customer Name / Mobile..."
+        autocomplete="off"
+        oninput="onCustSearchInput(this.value)"
+        onfocus="openCustDropdown()"
+        onkeydown="onCustKeydown(event)" />
+      <button type="button" id="btnCustClear" class="cust-combo-clear" title="Clear selection" onclick="clearCustSelection(event)">✕</button>
+      <span class="cust-combo-divider"></span>
+      <button type="button" id="btnCustToggle" class="cust-combo-toggle" title="Toggle list" tabindex="-1" onclick="toggleCustDropdown(event)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Dropdown Menu -->
+    <div class="cust-combo-dropdown" id="custDropdownMenu">
+      <div class="cust-menu-hdr">
+        <span id="custCountBadge">0 Customers</span>
+        <span class="cust-menu-hint">Type to filter or use ↑↓</span>
+      </div>
+      <div class="cust-menu-items" id="custDropdownItems">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+  <!-- Hidden select kept for backwards compatibility -->
+  <select id="ddlSrchCustomers" style="display:none;">
     <option value="">Select Customer Name</option>
   </select>
 </div>
 
 <!-- 2. GridViewRates — rate buttons (hidden until multi-rate) -->
 <div class="rates-wrap" id="ratesWrap">
+  <div class="rates-hdr">
+    <span class="rates-title" id="ratesTitle">Select Rate</span>
+    <button type="button" class="rates-close-btn" onclick="closeRates()" title="Cancel">✕</button>
+  </div>
   <div id="ratesBtnWrap"></div>
 </div>
 
@@ -197,8 +490,12 @@ input:checked+.Myslider:before{transform:translateX(15px);}
   <div class="top-bar-inner">
     <!-- BtnYantri float:left -->
     <button class="btn-yantri" id="BtnYantri" onclick="openYantri()">Yantri &#128197;</button>
-    <!-- lblMYGameName center green bold -->
-    <span id="lblMYGameName"></span>
+    <!-- Game selector dropdown / lblMYGameName center green bold -->
+    <div style="flex:1;text-align:center;min-width:0;display:flex;align-items:center;justify-content:center;">
+      <select id="ddlGameSelector" class="game-selector-dropdown" onchange="onGameChange(this.value)" title="Choose Game">
+      </select>
+      <span id="lblMYGameName" style="display:none;"></span>
+    </div>
     <!-- BtnResult float:right -->
     <button class="btn-result" id="BtnResult" onclick="openResult()">&#xf545; Result</button>
   </div>
@@ -270,8 +567,9 @@ input:checked+.Myslider:before{transform:translateX(15px);}
 <script src="/js/nav.js"></script>
 <script>
 const QS    = new URLSearchParams(location.search);
-const _GID  = QS.get('GID') || '';
-const _Game = QS.get('Game') || '';
+let _GID    = QS.get('GID') || '';
+let _Game   = QS.get('Game') || '';
+let _gamesList = [];
 
 let _uid = null;
 let _allContacts     = [];
@@ -283,14 +581,12 @@ let _lblRatesTrue    = '';
 let _pendingRates    = [];
 let _pendingLastDate = '';
 
-// Select2 v3.5.2 fires plain "change" (bound below) — resetting the widget's
-// value also needs to fire "change" so Select2 redraws itself, but that would
-// re-enter onCustSelect/closeRates. Guard so a silent reset doesn't recurse.
-let _selResetGuard = false;
+let _receiverList = [];
+let _selectedCustomer = null;
+let _activeDropdownIdx = -1;
+
 function resetSelect2Silently(){
-  _selResetGuard = true;
-  $('#ddlSrchCustomers').val('').trigger('change');
-  _selResetGuard = false;
+  clearCustSelection();
 }
 
 /* ── IST helpers ── */
@@ -341,11 +637,73 @@ async function fetchGameDate(){
   return getISTiso();
 }
 
+/* ── Load User Games (for game selector & missing GID fallback) ── */
+async function loadUserGames(){
+  try{
+    const r = await API.get('/api/received/games');
+    if(r?.success && r.data?.length){
+      _gamesList = r.data;
+      if(!_GID){
+        const savedGID = sessionStorage.getItem('last_received_gid');
+        const found = _gamesList.find(g => String(g.GID) === String(savedGID));
+        if(found){
+          _GID = String(found.GID);
+          _Game = found.GameName;
+        } else {
+          _GID = String(_gamesList[0].GID);
+          _Game = _gamesList[0].GameName;
+        }
+      } else {
+        const found = _gamesList.find(g => String(g.GID) === String(_GID));
+        if(found) _Game = found.GameName;
+      }
+      renderGameSelector();
+    }
+  }catch(e){}
+}
+
+function renderGameSelector(){
+  const sel = document.getElementById('ddlGameSelector');
+  if(!sel) return;
+  sel.innerHTML = _gamesList.map(g =>
+    `<option value="${g.GID}" ${String(g.GID) === String(_GID) ? 'selected' : ''}>${xss(g.GameName)}</option>`
+  ).join('');
+  if(_Game) document.getElementById('lblMYGameName').textContent = _Game;
+}
+
+async function onGameChange(newGid){
+  const found = _gamesList.find(g => String(g.GID) === String(newGid));
+  if(!found) return;
+  _GID = String(found.GID);
+  _Game = found.GameName;
+  sessionStorage.setItem('last_received_gid', _GID);
+  sessionStorage.setItem('last_received_game', _Game);
+  document.getElementById('lblGameID').innerText = _GID;
+  document.getElementById('lblMYGameName').textContent = _Game;
+
+  // Update URL without full reload
+  const u = new URL(window.location);
+  u.searchParams.set('GID', _GID);
+  u.searchParams.set('Game', _Game);
+  window.history.replaceState({}, '', u);
+
+  _gameDate = await fetchGameDate();
+  document.getElementById('txtDate').value = _gameDate || _todayDate;
+
+  await loadAutoAcceptStatus();
+  await loadContacts(false);
+  loadAllContactsPool();
+}
+
 /* ── INIT ── */
 async function init(){
   const u = await initPage('received');
   if(!u) return;
   _uid = u.UID;
+
+  // Load games list first so _GID and _Game are resolved
+  await loadUserGames();
+
   document.getElementById('lblSenderUserID').innerText = _uid;
   document.getElementById('lblGameID').innerText       = _GID;
 
@@ -358,105 +716,22 @@ async function init(){
 
   // type="date" needs YYYY-MM-DD format
   document.getElementById('txtDate').value = _gameDate || _todayDate;
-  document.getElementById('lblMYGameName').textContent = _Game;
+  if(_Game) document.getElementById('lblMYGameName').textContent = _Game;
 
-  // Load receiver list first (for select2)
+  // Load receiver list
   await loadReceiverList();
 
-  // Init Select2 — vendor bundle is v3.5.2, uses formatX callbacks not `language`
-  $('#ddlSrchCustomers').select2({
-    placeholder: 'Select Customer Name',
-    allowClear:  true,
-    width:       '100%',
-    minimumInputLength: 1,   // list tab aaye jab 1+ char type karo
-    formatInputTooShort: function(){ return ''; },  // empty msg — koi "type karo" message nahi
-    formatNoMatches:     function(){ return 'No customer found'; }
-  });
-
-  // Dropdown open hone par — search field mein focus (v3 event name: select2-open)
-  // + drop ka width force karo taaki wahi wide bar jaisa dikhe jaisa closed
-  // "Select Customer Name" bar dikhta hai. Select2 v3.5.2 apna khud ka width
-  // calculation kabhi sahi nahi kar raha (already 2 tareeko se try kiya, dono
-  // fail) — ab bas seedha ".ddl-wrap" (jo hamesha sahi, poori width ka hota
-  // hai) ka exact pixel width copy karke drop par force lagao, Select2 khud
-  // apna kaam kar chuke uske BAAD (setTimeout se), taaki ye jeete.
-  function fixDropWidth(){
-    const wrap = document.querySelector('.ddl-wrap');
-    if(!wrap) return;
-    const w = Math.round(wrap.getBoundingClientRect().width);
-    if(!w) return;
-    const target = w + 'px';
-    document.querySelectorAll('.select2-drop-active').forEach(drop => {
-      // Skip the no-op write when it's already correct — the observer also
-      // watches the style attribute now, so writing the same value again
-      // would still fire another mutation and loop forever.
-      if (drop.offsetParent !== null && drop.style.width !== target) drop.style.width = target;
-    });
-  }
-  // Fixed timeouts (0/30/100ms) helped for normal results, lekin jab search
-  // "No matches found" state mein jaata hai (koi result nahi milta), Select2
-  // apna re-render kisi later/debounced tick par karta hai jo un fixed
-  // timeouts ke baad aata hai — isliye wahi purana chota width reh jaata
-  // tha. Ab MutationObserver se drop ke andar KOI BHI DOM change turant
-  // pakad ke width dubara force karte hain — chahe result mile ya "no
-  // results" dikhe, kabhi bhi render ho, hamesha sahi width lagegi.
-  let dropObserver = null;
-  function watchDropWidth(){
-    const drop = document.querySelector('.select2-drop-active');
-    if (!drop) return;
-    if (dropObserver) dropObserver.disconnect();
-    dropObserver = new MutationObserver(() => fixDropWidth());
-    // attributes:true + attributeFilter:['style'] — Select2's own
-    // positionDropdown() repositions itself via a direct style-attribute
-    // write ($dropdown.css(...)), which childList/characterData alone
-    // doesn't catch. Missing this was the actual gap that let it win the
-    // race intermittently on slower machines even though a clean/fast test
-    // environment rarely triggered it.
-    dropObserver.observe(drop, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style'] });
-  }
-  $('#ddlSrchCustomers').on('select2-open', function(){
-    const sf = document.querySelector('.select2-drop-active .select2-input');
-    if(sf) sf.focus();
-    fixDropWidth();
-    watchDropWidth();
-  });
-  $('#ddlSrchCustomers').on('select2-close', function(){
-    if (dropObserver) { dropObserver.disconnect(); dropObserver = null; }
-  });
-  document.addEventListener('keyup', function(e){
-    if(e.target.classList.contains('select2-input')) fixDropWidth();
-  });
-
-  // Select2 v3.5.2 fires plain "change" on both select and clear — no
-  // select2:select/select2:clear (those are v4-only events).
-  $('#ddlSrchCustomers').on('change', function(){
-    if(_selResetGuard) return;
-    if($(this).val()) onCustSelect(); else closeRates();
-  });
-
-  // Fix 1: Page load par reset — back aane par purana value na dikhe
-  resetSelect2Silently();
-
   if(_GID){
+    sessionStorage.setItem('last_received_gid', _GID);
+    sessionStorage.setItem('last_received_game', _Game);
     await loadAutoAcceptStatus();
     await loadContacts(false);
     loadAllContactsPool();
+  } else {
+    document.getElementById('SeachingResultDiv').innerHTML = '<div class="emsg">No Games Found</div>';
   }
 
   await loadResult();
-
-  // Page par pohanchte hi search ready — bina click ke seedha type karo
-  openSearchReady();
-}
-
-function openSearchReady(){
-  // select2 open karo — minimumInputLength:1 ke karan sirf search field dikhega,
-  // customer list tab tak nahi aayegi jab tak type na karo
-  setTimeout(()=>{
-    try{
-      $('#ddlSrchCustomers').select2('open');
-    }catch(e){}
-  }, 350);
 }
 
 /* ── Auto Accept status load ── */
@@ -482,21 +757,216 @@ async function loadAllContactsPool(){
   }catch(e){ _allContactsPool=_allContacts; }
 }
 
-/* ── FetchReceiverList → ddlSrchCustomers ── */
+/* ── Modern Customer Combobox Component Functions ── */
 async function loadReceiverList(){
   try{
-    const r=await API.get('/api/received/receiver-list');
-    if(!r?.success||!r.data?.length) return;
-    const sel=document.getElementById('ddlSrchCustomers');
-    (r.data||[]).forEach(c=>{
-      const o=document.createElement('option');
-      o.value=c.CID;
-      o.textContent=c.CustomerName;
-      o.dataset.mobile=c.Mobile||'';
-      sel.appendChild(o);
-    });
-  }catch(e){}
+    const r = await API.get('/api/received/receiver-list');
+    if(!r?.success || !r.data?.length) return;
+    _receiverList = r.data || [];
+    document.getElementById('custCountBadge').textContent = `${_receiverList.length} Customers`;
+    renderCustomerDropdownItems(_receiverList);
+    
+    // Also keep hidden select populated for backwards compatibility
+    const sel = document.getElementById('ddlSrchCustomers');
+    if(sel){
+      sel.innerHTML = '<option value="">Select Customer Name</option>';
+      _receiverList.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.CID;
+        o.textContent = c.CustomerName;
+        o.dataset.mobile = c.Mobile || '';
+        sel.appendChild(o);
+      });
+    }
+  }catch(e){
+    console.error('Error loading receiver list:', e);
+  }
 }
+
+function getInitials(name){
+  const clean = String(name || '').trim();
+  if(!clean) return 'C';
+  const parts = clean.split(/\s+/);
+  if(parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function renderCustomerDropdownItems(list, filterTerm){
+  const container = document.getElementById('custDropdownItems');
+  if(!container) return;
+  if(!list || !list.length){
+    container.innerHTML = `<div class="cust-empty-msg">No customer found ${filterTerm ? `matching "<b>${xss(filterTerm)}</b>"` : ''}</div>`;
+    _activeDropdownIdx = -1;
+    return;
+  }
+  container.innerHTML = list.map((c, i) => {
+    const initials = getInitials(c.CustomerName);
+    const rateText = c.Rate ? `<span class="cust-item-rate">Rate: ${xss(c.Rate)}</span>` : '';
+    return `<div class="cust-item" id="custItem_${i}" onclick="selectCustomerItem('${c.CID}')" data-cid="${c.CID}">
+      <div class="cust-item-avatar">${initials}</div>
+      <div class="cust-item-info">
+        <div class="cust-item-name">${xss(c.CustomerName)}</div>
+        <div class="cust-item-mobile">${xss(c.Mobile || '')}</div>
+      </div>
+      ${rateText}
+    </div>`;
+  }).join('');
+  _activeDropdownIdx = -1;
+}
+
+function openCustDropdown(){
+  const menu = document.getElementById('custDropdownMenu');
+  const wrap = document.getElementById('custComboInputWrap');
+  const toggle = document.getElementById('btnCustToggle');
+  if(!menu) return;
+  menu.style.display = 'block';
+  if(wrap) wrap.classList.add('active');
+  if(toggle) toggle.classList.add('open');
+}
+
+function closeCustDropdown(){
+  const menu = document.getElementById('custDropdownMenu');
+  const wrap = document.getElementById('custComboInputWrap');
+  const toggle = document.getElementById('btnCustToggle');
+  if(menu) menu.style.display = 'none';
+  if(wrap) wrap.classList.remove('active');
+  if(toggle) toggle.classList.remove('open');
+  _activeDropdownIdx = -1;
+}
+
+function toggleCustDropdown(e){
+  if(e && e.target && (e.target.id === 'btnCustClear' || e.target.closest('#btnCustClear'))) return;
+  const menu = document.getElementById('custDropdownMenu');
+  if(!menu) return;
+  if(menu.style.display === 'block'){
+    closeCustDropdown();
+  } else {
+    openCustDropdown();
+    document.getElementById('txtCustSearchInput')?.focus();
+  }
+}
+
+function onCustSearchInput(val){
+  const clearBtn = document.getElementById('btnCustClear');
+  const q = String(val || '').trim().toLowerCase();
+  if(clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+  openCustDropdown();
+  
+  if(!q){
+    document.getElementById('custCountBadge').textContent = `${_receiverList.length} Customers`;
+    renderCustomerDropdownItems(_receiverList);
+    return;
+  }
+  
+  const filtered = _receiverList.filter(c => 
+    (c.CustomerName || '').toLowerCase().includes(q) ||
+    (c.Mobile || '').toLowerCase().includes(q)
+  );
+  document.getElementById('custCountBadge').textContent = `${filtered.length} found`;
+  renderCustomerDropdownItems(filtered, q);
+}
+
+function clearCustSelection(e){
+  if(e) e.stopPropagation();
+  _selectedCustomer = null;
+  const inp = document.getElementById('txtCustSearchInput');
+  if(inp) inp.value = '';
+  const clearBtn = document.getElementById('btnCustClear');
+  if(clearBtn) clearBtn.style.display = 'none';
+  const badge = document.getElementById('custCountBadge');
+  if(badge) badge.textContent = `${_receiverList.length} Customers`;
+  renderCustomerDropdownItems(_receiverList);
+  closeCustDropdown();
+  closeRates();
+}
+
+async function selectCustomerItem(cid){
+  const found = _receiverList.find(c => String(c.CID) === String(cid));
+  if(!found) return;
+  _selectedCustomer = found;
+  const inp = document.getElementById('txtCustSearchInput');
+  if(inp) inp.value = `${found.CustomerName} (${found.Mobile})`;
+  const clearBtn = document.getElementById('btnCustClear');
+  if(clearBtn) clearBtn.style.display = 'block';
+  closeCustDropdown();
+  
+  // Also sync hidden select
+  const sel = document.getElementById('ddlSrchCustomers');
+  if(sel) sel.value = found.CID;
+
+  await handleCustomerSelect(found);
+}
+
+async function handleCustomerSelect(customer){
+  if(!customer || !customer.CID) return;
+  try{
+    const r = await API.get(`/api/received/customer-rates?cid=${customer.CID}`);
+    if(!r?.success || !r.data?.length) return;
+    const dt = r.data;
+    if(dt.length === 1){
+      const d = dt[0];
+      const pati = d.Patti || d.Pati_PComm || d.patti || '0';
+      const custUID = d.fUserUID || customer.UID || d.fUID;
+      redirectToChat(d.MobileNo || customer.Mobile, _GID, _Game, custUID, getIST(), d.Rate,
+        d.D_PComm, d.D_Amt, d.A_PComm, d.A_Amt, pati,
+        d.ThirdPartyHissaID, d.ThirdPartyHissaPer,
+        d.ThirdPartyCommID, d.ThirdPartyDaraComm, d.ThirdPartyAkharComm);
+    } else {
+      document.getElementById('lblCustomerNameMobile').innerText = `${customer.CustomerName} (${customer.Mobile})`;
+      const titleEl = document.getElementById('ratesTitle');
+      if(titleEl) titleEl.innerText = `Select Rate for ${customer.CustomerName}`;
+      BlockSeaching();
+      _lblRatesTrue = 'Yes';
+      document.getElementById('lblRatesTrue').innerText = 'Yes';
+      _pendingRates = dt;
+      showRatesGrid(dt);
+    }
+  }catch(e){
+    console.error('Error fetching customer rates:', e);
+  }
+}
+
+function onCustKeydown(e){
+  const items = document.querySelectorAll('.cust-item');
+  if(!items.length) return;
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    openCustDropdown();
+    _activeDropdownIdx = Math.min(_activeDropdownIdx + 1, items.length - 1);
+    updateDropdownActiveItem(items);
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    openCustDropdown();
+    _activeDropdownIdx = Math.max(_activeDropdownIdx - 1, 0);
+    updateDropdownActiveItem(items);
+  } else if(e.key === 'Enter'){
+    e.preventDefault();
+    if(_activeDropdownIdx >= 0 && _activeDropdownIdx < items.length){
+      items[_activeDropdownIdx].click();
+    }
+  } else if(e.key === 'Escape'){
+    closeCustDropdown();
+  }
+}
+
+function updateDropdownActiveItem(items){
+  items.forEach((it, idx) => {
+    if(idx === _activeDropdownIdx){
+      it.classList.add('active');
+      it.scrollIntoView({ block: 'nearest' });
+    } else {
+      it.classList.remove('active');
+    }
+  });
+}
+
+// Click outside to close dropdown
+document.addEventListener('click', function(e){
+  const box = document.getElementById('custComboBox');
+  if(box && !box.contains(e.target)){
+    closeCustDropdown();
+  }
+});
 
 /* ── BindGrid → GetMyReceivedMessageWhatsAppLike ── */
 async function loadContacts(viewAll){
@@ -521,11 +991,12 @@ async function loadContacts(viewAll){
     if(!r?.success||!r.data?.length){
       _allContacts=[];
       el.innerHTML='<div class="emsg">No Data Found!</div>';
-      document.getElementById('lblMYGameName').textContent=_Game||'No Data Found!';
+      renderGameSelector();
       setGameBarVisible(false);
       return;
     }
-    document.getElementById('lblMYGameName').textContent=r.data[0].GameName||_Game;
+    if(r.data[0]?.GameName) _Game = r.data[0].GameName;
+    renderGameSelector();
     _allContacts=r.data;
     renderContacts(r.data);
     setGameBarVisible(true);
@@ -535,11 +1006,11 @@ async function loadContacts(viewAll){
 }
 
 function setGameBarVisible(v){
-  // Yantri button — GID hone par hamesha visible, data load ho ya na ho
+  // Controls visible when GID is present
   document.getElementById('BtnYantri').style.display = _GID ? 'block' : 'none';
-  document.getElementById('BtnResult').style.display = v ? 'block' : 'none';
-  document.getElementById('SearchHead').style.display = v ? 'block' : 'none';
-  document.getElementById('autoWrap').style.display   = v ? 'flex'  : 'none';
+  document.getElementById('BtnResult').style.display = _GID ? 'block' : 'none';
+  document.getElementById('SearchHead').style.display = (v || _allContacts.length > 0) ? 'block' : 'none';
+  document.getElementById('autoWrap').style.display   = _GID ? 'flex'  : 'none';
 }
 
 /* ── Render contact cards — ASPX repeater exact ── */
@@ -590,32 +1061,12 @@ function onContactClick(i){
   );
 }
 
-/* ── ddlSrchCustomers select (Select2) ── */
+/* ── ddlSrchCustomers select (Compatibility) ── */
 async function onCustSelect(){
   const sel=document.getElementById('ddlSrchCustomers');
-  const cid=sel.value;
+  const cid=sel?.value;
   if(!cid) return;
-  try{
-    const r=await API.get(`/api/received/customer-rates?cid=${cid}`);
-    if(!r?.success||!r.data?.length) return;
-    const dt=r.data;
-    if(dt.length===1){
-      const d=dt[0];
-      const pati=d.Patti||d.Pati_PComm||d.patti||'0';
-      redirectToChat(d.MobileNo,_GID,_Game,d.fUID,getIST(),d.Rate,
-        d.D_PComm,d.D_Amt,d.A_PComm,d.A_Amt,pati,
-        d.ThirdPartyHissaID,d.ThirdPartyHissaPer,
-        d.ThirdPartyCommID,d.ThirdPartyDaraComm,d.ThirdPartyAkharComm);
-    } else {
-      document.getElementById('lblCustomerNameMobile').innerText=
-        sel.options[sel.selectedIndex]?.text||'';
-      BlockSeaching();
-      _lblRatesTrue='Yes';
-      document.getElementById('lblRatesTrue').innerText='Yes';
-      _pendingRates=dt;
-      showRatesGrid(dt);
-    }
-  }catch(e){ console.error(e); }
+  selectCustomerItem(cid);
 }
 
 /* ── BlockSeaching — hide search UI ── */
@@ -645,7 +1096,8 @@ async function onRateClick(i){
   const lastDate=_pendingLastDate||getIST();
   _pendingLastDate='';
   closeRates();
-  redirectToChat(d.MobileNo,_GID,_Game,d.fUID,lastDate,d.Rate,
+  const custUID = d.fUserUID || _selectedCustomer?.UID || d.fUID;
+  redirectToChat(d.MobileNo || _selectedCustomer?.Mobile,_GID,_Game,custUID,lastDate,d.Rate,
     d.D_PComm,d.D_Amt,d.A_PComm,d.A_Amt,pati,
     d.ThirdPartyHissaID,d.ThirdPartyHissaPer,
     d.ThirdPartyCommID,d.ThirdPartyDaraComm,d.ThirdPartyAkharComm);
@@ -663,8 +1115,6 @@ function closeRates(){
   document.getElementById('BtnToday').style.display='block';
   document.getElementById('SearchingDiv').style.display='flex';
   document.getElementById('SeachingResultDiv').style.display='block';
-  // Reset select2 (silently — don't recurse back into closeRates)
-  resetSelect2Silently();
 }
 
 /* ── Redirect to chat page ── */
@@ -794,9 +1244,8 @@ init();
 // yahan turant "Today" ko force-refresh karte hain taaki abhi-abhi
 // chadhai entry turant dikhe, dobara back jaane ki zaroorat na pade.
 window.addEventListener('pageshow', function(e){
-  if(e.persisted && typeof $ !== 'undefined'){
-    resetSelect2Silently();
-    openSearchReady();
+  if(e.persisted){
+    clearCustSelection();
     BtnSearch1_Click();
   }
 });

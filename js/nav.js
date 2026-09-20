@@ -165,7 +165,7 @@ function renderShell(active) {
           ${item('game', '/pages/game.html', 'fas fa-keyboard', 'Add Game')}
           ${item('results', '/pages/results.html', 'fas fa-draw-polygon', 'Result')}
           ${item('sale-history', '/pages/sale-history.html', 'fa fa-history', 'Find Chat')}
-          ${item('received', '/pages/received.html', 'fas fa-inbox', 'Received')}
+          ${item('received', (sessionStorage.getItem('last_received_gid') ? `/pages/received.html?GID=${sessionStorage.getItem('last_received_gid')}&Game=${encodeURIComponent(sessionStorage.getItem('last_received_game')||'')}` : '/pages/received.html'), 'fas fa-inbox', 'Received')}
           ${item('hisab', '/pages/hisab.html', 'fas fa-balance-scale', 'Hisab')}
           ${item('hisab-summary', '/pages/hisab-summary.html', 'fas fa-balance-scale', 'Hisab Summary')}
           ${item('date-wise', '/pages/date-wise-hisab.html', 'fas fa-calendar-alt', 'Date Wise Hisab')}

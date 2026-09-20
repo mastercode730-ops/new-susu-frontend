@@ -144,10 +144,10 @@ async function loadGames() {
       </thead>
       <tbody>
         ${res.data.map(g => {
-          const nextDay   = g.IsNextDayResult   === true || g.IsNextDayResult   === 'True';
-          const active    = g.IsActive          === true || g.IsActive          === 'True';
-          const accepted  = g.IsAcceptedStatus  === true || g.IsAcceptedStatus  === 'True';
-          const rejected  = g.IsRejectedMsg     === true || g.IsRejectedMsg     === 'True';
+          const nextDay   = g.IsNextDayResult   === true || g.IsNextDayResult   === 'True' || g.IsNextDayResult === 1;
+          const active    = g.IsActive          === true || g.IsActive          === 'True' || g.IsActive === 1;
+          const accepted  = g.IsAcceptedStatus  === true || g.IsAcceptedStatus  === 'True' || g.IsAcceptedStatus === 1;
+          const rejected  = g.IsRejectedMsg     === true || g.IsRejectedMsg     === 'True' || g.IsRejectedMsg === 1;
           return `<tr>
             <td>
               <img src="/vendor/images/edit-icon-orange-pencil-0.png" width="20" height="20" style="cursor:pointer;"
@@ -209,6 +209,7 @@ async function submitGame() {
   const body = {
     gameName, drawTime,
     isNextDay:        document.getElementById('chkNextDay').checked,
+    isNextDayResult:  document.getElementById('chkNextDay').checked,
     isActive:         document.getElementById('chkIsActive').checked,
     isAcceptedStatus: document.getElementById('chkAcceptedStatus').checked,
     isRejectedMsg:    document.getElementById('chkRejectedMsg').checked

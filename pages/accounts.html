@@ -9,19 +9,58 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <style>
-/* Select2 v3.5.2 override — matches the exact polished styling established
-   in received.html (bigger, bolder, more readable names) */
+/* Select2 v3.5.2 override — matches polished styling */
 .select2-container{width:100%!important;}
-.select2-container .select2-choice{height:42px;line-height:40px;border:1px solid #ced4da;border-radius:4px;padding:0 8px;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;background:#fff;}
-.select2-container .select2-choice .select2-chosen{color:#000;font-size:.95rem;font-family:Arial,sans-serif;text-transform:capitalize;}
-.select2-container .select2-choice .select2-arrow{height:40px;}
-.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;}
+.select2-container, .select2-container.form-control{border:none!important;padding:0!important;height:auto!important;background:transparent!important;box-shadow:none!important;}
+.select2-container .select2-choice{
+  height:40px!important;line-height:38px!important;border:1px solid #ced4da!important;border-radius:4px!important;
+  padding:0 12px!important;font-size:.95rem!important;font-family:Arial,sans-serif;text-transform:capitalize;
+  background:#fff!important;box-shadow:none!important;background-image:none!important;
+}
+.select2-container .select2-choice .select2-chosen{color:#000!important;font-size:.95rem!important;font-family:Arial,sans-serif;text-transform:capitalize;font-weight:800!important;}
+.select2-container .select2-choice .select2-arrow{
+  height:38px!important;width:28px!important;background:none!important;border-left:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+.select2-container-active .select2-choice,
+.select2-drop-active{
+  border-color:#25d366!important;
+  box-shadow:0 0 0 3px rgba(37,211,102,0.18)!important;
+}
+.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;box-shadow:0 8px 16px rgba(0,0,0,0.1);}
 .select2-drop .select2-search{padding:8px;}
 .select2-drop .select2-search input{width:100%!important;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:1rem;}
 .select2-results{width:100%;max-height:360px;}
 .select2-results .select2-highlighted{background-color:#128c7e!important;}
-.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:4px 10px;line-height:1.5;color:#1572e8;}
+.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:6px 10px;line-height:1.5;color:#1572e8;}
 .select2-results li.select2-highlighted{color:#fff;}
+
+/* ── Modern Paid Type Select ── */
+.type-select{
+  height:40px!important;
+  line-height:1.5!important;
+  border:1px solid #ced4da!important;
+  border-radius:4px!important;
+  padding:6px 36px 6px 12px!important;
+  font-size:.95rem!important;
+  font-weight:800!important;
+  color:#000!important;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 12px center!important;
+  background-size:13px!important;
+  cursor:pointer!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  -moz-appearance:none!important;
+  transition:border-color .15s ease,box-shadow .15s ease!important;
+}
+.type-select:hover{
+  border-color:#999!important;
+}
+.type-select:focus{
+  border-color:#25d366!important;
+  outline:none!important;
+  box-shadow:0 0 0 3px rgba(37,211,102,0.18)!important;
+}
 
 .net-bal{margin-top:6px;font-weight:700;font-size:.85rem;color:#000;}
 .net-bal.neg{color:#c62828;}
@@ -39,7 +78,8 @@
 /* Bolder, higher-contrast text — visual only, no behavior change */
 .content .form-group label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;}
 .content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
-.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;}
+.content .form-control:not(.select2-container){font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;}
+.content .select2-container, .content .select2-container.form-control{border:none!important;background:transparent!important;padding:0!important;height:auto!important;box-shadow:none!important;display:block!important;}
 .select2-container .select2-choice .select2-chosen{font-weight:800!important;}
 /* Compact, well-aligned cards — smaller fields, tighter spacing */
 .content .card-header{padding:8px 16px!important;}
@@ -109,7 +149,7 @@
             <div class="col">
               <div class="form-group">
                 <label for="ddlType">Type</label>
-                <select class="form-control" id="ddlType" tabindex="3">
+                <select class="form-control type-select" id="ddlType" tabindex="3">
                   <option value="Paid">Paid</option>
                   <option value="Received">Received</option>
                   <option value="Paid Adjustment">Paid Adjustment</option>
@@ -143,7 +183,7 @@
             <div class="col" id="staffRow" style="display:none;">
               <div class="form-group">
                 <label for="ddlStaff">Sub User</label>
-                <select class="form-control" id="ddlStaff" tabindex="6"
+                <select id="ddlStaff" tabindex="6"
                   onkeydown="if(event.key==='Enter'){event.preventDefault();saveTransaction();}">
                   <option value="0">Self</option>
                 </select>
@@ -277,27 +317,31 @@ async function init() {
       // container right after closing; that happens a tick after 'change'
       // fires, so a synchronous .focus() here gets silently overridden a
       // moment later. Queue this after it instead of racing it.
-      if (val) setTimeout(() => $('#ddlType').select2('open'), 50);
+      if (val) setTimeout(() => {
+        const el = document.getElementById('ddlType');
+        if (el) {
+          el.focus();
+          if (typeof el.showPicker === 'function') {
+            try { el.showPicker(); } catch(e){}
+          }
+        }
+      }, 50);
     });
     bindSelect2Open('#ddlAccounts');
     $('#ddlAccounts').select2('focus');
 
-    // Type — also Select2 now (not a plain native <select>) purely so Enter
-    // can reliably *open* it (native selects have no cross-browser JS way to
-    // do that) — matches the desktop reference's "dropdown opens, but if you
-    // leave it on the Paid default and just press Enter again, it moves on"
-    // behavior. minimumResultsForSearch:-1 hides the search box since there
-    // are only 5 short options — it's a plain dropdown, not something you'd
-    // type into.
-    $('#ddlType').select2({ minimumResultsForSearch: -1 });
-    bindSelect2Open('#ddlType');
+    // Type — clean modern dropdown with smooth Enter-chain and change advancement
     const advanceToAmount = () => { const el = document.getElementById('txtAmount'); el.focus(); el.select(); };
-    // 'change' — fires when a different Type is actually picked.
-    $('#ddlType').on('change', () => setTimeout(advanceToAmount, 50));
-    // 'select2-close' — fires on EVERY close, including "opened it, left the
-    // default Paid selected, pressed Enter again" — 'change' alone wouldn't
-    // fire for that since the value never actually changed.
-    $('#ddlType').on('select2-close', () => setTimeout(advanceToAmount, 50));
+    const ddlTypeEl = document.getElementById('ddlType');
+    if (ddlTypeEl) {
+      ddlTypeEl.addEventListener('change', () => setTimeout(advanceToAmount, 50));
+      ddlTypeEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          advanceToAmount();
+        }
+      });
+    }
 
     // Sub User picker — only makes sense for the main admin (choosing which
     // staff member an entry belongs to). A subuser's own session only ever
@@ -707,12 +751,8 @@ function resetForm() {
   $('#ddlAccounts').val('').trigger('change');
   document.getElementById('txtAmount').value = '';
   document.getElementById('txtNarration').value = '';
-  // select2('val', ...) — NOT a raw .value= assignment (Select2 wraps the
-  // real <select> and won't notice a plain DOM value change, leaving the
-  // widget showing the old pick e.g. "Received") — and deliberately without
-  // triggering 'change' (unlike ddlStaff below), since ddlType's 'change'
-  // handler auto-advances to Amount, which a plain Cancel/reset shouldn't do.
-  $('#ddlType').select2('val', 'Paid');
+  const ddlTypeEl = document.getElementById('ddlType');
+  if (ddlTypeEl) ddlTypeEl.value = 'Paid';
   // ddlStaff's 'change' handler already guards on a truthy value, so
   // resetting to '0' safely skips its auto-advance-to-Submit side effect.
   if ($('#ddlStaff').data('select2')) $('#ddlStaff').val('0').trigger('change');

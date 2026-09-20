@@ -1627,6 +1627,11 @@
 
           const rightActions = `<div class="msg-actions-right">${shareBtn}${chkBtn}${copyBtn}${editBtn}</div>`;
 
+          const acBtn = (m.IsAccepted === 'Pending' && isYantri)
+            ? `<button class="btn-acc" onclick="btnAccepted_Click('${m.ChatID}')">✔</button>` : '';
+          const rejBtn = (m.IsAccepted !== 'Rejected' && isYantri && isSettledFalse)
+            ? `<button class="btn-rej" onclick="btnRejected_Click('${m.ChatID}')">✕</button>` : '';
+
           if (isSent) {
             // Customer ne bheja (received by admin) — ASPX: yellow bg
             let statusEl = '';
@@ -1642,7 +1647,7 @@
         ${delBtn}
         <div class="msg-right">
           ${msgBody}${metaLine}
-          <div class="msg-status-row">${statusEl}${byAdmin}</div>
+          <div class="msg-status-row">${statusEl}${byAdmin}${acBtn}${rejBtn}</div>
         </div>
         ${subLbl}<div class="row-sep"></div>
       </div>`;
@@ -1652,11 +1657,6 @@
             let statusEl = '';
             if (m.IsAccepted === 'Rejected') statusEl = `<span class="s-cancel">Cancelled</span>`;
             else if (m.IsAccepted === 'Accepted') statusEl = `<span class="s-ok">Ok</span>`;
-
-            const acBtn = (m.IsAccepted === 'Pending' && isYantri)
-              ? `<button class="btn-acc" onclick="btnAccepted_Click('${m.ChatID}')">✔</button>` : '';
-            const rejBtn = (m.IsAccepted !== 'Rejected' && isYantri && isSettledFalse)
-              ? `<button class="btn-rej" onclick="btnRejected_Click('${m.ChatID}')">✕</button>` : '';
 
             return `<div class="chat-row ${rowCls}">
         ${rightActions}

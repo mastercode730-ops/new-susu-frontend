@@ -158,14 +158,13 @@ async function init() {
   myUID = u.UID;
 
   await Promise.all([loadGames(), loadCustomers()]);
-  await setLatestDate();
+  setToday();
 
   const p = new URLSearchParams(location.search);
   if (p.get('UID') && p.get('Date')) {
     const d = new Date(p.get('Date'));
     const fmtd = fmtDate(d);
-    document.getElementById('txtStartDate').value = fmtd;
-    document.getElementById('txtEndDate').value   = fmtd;
+    setDates(fmtd);
     // URL se customer pre-select karo
     const uid = p.get('UID');
     document.getElementById('customerSelection').value = uid;
@@ -178,20 +177,20 @@ async function init() {
   }
 }
 
-async function setLatestDate() {
-  try {
-    const r = await API.get('/api/hisab/latest-date');
-    if (r?.success && r.data) {
-      document.getElementById('txtStartDate').value = r.data;
-      document.getElementById('txtEndDate').value   = r.data;
-    } else { setToday(); }
-  } catch(e) { setToday(); }
+function setDates(d) {
+  ['txtStartDate', 'txtEndDate'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = d;
+    if (el._flatpickr) {
+      el._flatpickr.setDate(d, false, 'd/M/Y');
+    }
+  });
 }
 
 function setToday() {
-  const d = fmtDate(new Date(Date.now()+5.5*3600000));
-  document.getElementById('txtStartDate').value = d;
-  document.getElementById('txtEndDate').value   = d;
+  const d = fmtDate(new Date());
+  setDates(d);
 }
 
 async function loadGames() {
@@ -392,11 +391,13 @@ init();
 <script>
 // Flatpickr calendar for date inputs
 document.addEventListener('DOMContentLoaded', function() {
+  const todayStr = fmtDate(new Date());
   ["txtStartDate", "txtEndDate"].forEach(function(id) {
     const el = document.getElementById(id);
     if (!el) return;
     flatpickr(el, {
       dateFormat: 'd/M/Y',
+      defaultDate: el.value || todayStr,
       allowInput: false,
       disableMobile: true,
       onChange: function(selectedDates, dateStr, instance) {

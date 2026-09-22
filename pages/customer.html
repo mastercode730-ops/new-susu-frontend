@@ -194,9 +194,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
           <input type="hidden" id="hidRateID">
         </div>
         <div class="card-action">
-          <button class="btn btn-success" onclick="saveRate()" id="btnAddRate">ADD Rate</button>
-          <button class="btn btn-danger" onclick="resetRateForm()">Reset</button>
-          <button class="btn btn-danger" onclick="deleteRate()" id="btnDeleteRate" style="display:none;">Delete Rate</button>
+          <button type="button" class="btn btn-success" onclick="saveRate()" id="btnAddRate">ADD Rate</button>
+          <button type="button" class="btn btn-danger" onclick="resetRateForm()">Reset</button>
+          <button type="button" class="btn btn-danger" onclick="deleteRate()" id="btnDeleteRate" style="display:none;">Delete Rate</button>
         </div>
         <div class="table-responsive legacy-grid" id="ratesTableWrap">
           <div class="emsg"><span class="spin"></span> Loading...</div>
@@ -547,13 +547,16 @@ async function loadRates(cid) {
     <table cellpadding="4" style="text-align:center;">
       <thead><tr><th>#</th><th>D%</th><th>D Amt</th><th>A%</th><th>A Amt</th><th>Patti%</th><th>Rate</th><th>Edit</th></tr></thead>
       <tbody>${r.data.map((d,i) => `
-        <tr>
+        <tr id="rate_row_${d.RateID}">
           <td>${i+1}</td>
           <td>${d.D_PComm}</td><td>${d.D_Amt}</td>
           <td>${d.A_PComm}</td><td>${d.A_Amt}</td>
           <td>${d.Patti}</td>
           <td style="color:var(--green2);font-weight:700;">${d.D_PComm}/${d.D_Amt}-${d.A_PComm}/${d.A_Amt}-${d.Patti}</td>
-          <td><img src="/vendor/images/edit-icon-orange-pencil-0.png" width="22" height="22" style="cursor:pointer;" onclick="editRate('${d.RateID}','${d.D_PComm}','${d.D_Amt}','${d.A_PComm}','${d.A_Amt}','${d.Patti}')"></td>
+          <td style="white-space:nowrap;">
+            <img src="/vendor/images/edit-icon-orange-pencil-0.png" width="22" height="22" style="cursor:pointer;vertical-align:middle;margin-right:8px;" title="Edit Rate" onclick="editRate('${d.RateID}','${d.D_PComm}','${d.D_Amt}','${d.A_PComm}','${d.A_Amt}','${d.Patti}')">
+            <img src="/vendor/images/deleteicon.png" width="18" height="18" style="cursor:pointer;vertical-align:middle;" title="Delete Rate" onclick="deleteRate('${d.RateID}')">
+          </td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -569,6 +572,9 @@ function editRate(rateID, dpc, da, apc, aa, patti) {
   document.getElementById('btnAddRate').textContent = 'Edit Rate';
   document.getElementById('btnDeleteRate').style.display = 'inline-block';
   editingRate = true;
+  document.querySelectorAll('#ratesTableWrap tr').forEach(r => r.classList.remove('table-active'));
+  const row = document.getElementById('rate_row_' + rateID);
+  if (row) row.classList.add('table-active');
 }
 
 async function saveRate() {
@@ -580,41 +586,53 @@ async function saveRate() {
   const apc = parseFloat(document.getElementById('rA_PComm').value);
   const aa = parseFloat(document.getElementById('rA_Amt').value);
   const patti = parseFloat(document.getElementById('rPatti').value);
-  if (dpc < 0 || dpc > 100 || apc < 0 || apc > 100 || patti < 0 || patti > 100 || da <= 0 || da > 100 || aa <= 0 || aa > 10) {
+  if (isNaN(dpc) || isNaN(da) || isNaN(apc) || isNaN(aa) || isNaN(patti) ||
+      dpc < 0 || dpc > 100 || apc < 0 || apc > 100 || patti < 0 || patti > 100 || da <= 0 || da > 100 || aa <= 0 || aa > 10) {
     toast('Invalid values! D Amt: 1-100, A Amt: 1-10, % fields: 0-100', 'err');
     return;
   }
   const r = await API.post('/api/customer/rates', {
-    cid: selectedCID, rateID: rateID || 0,
-    d_PComm: dpc, d_Amt: da, a_PComm: apc, a_Amt: aa, patti,
-    type
+    cid: selectedCID,
+    rateID: rateID || 0,
+    d_PComm: dpc,
+    d_Amt: da,
+    a_PComm: apc,
+    a_Amt: aa,
+    patti: patti,
+    type: type
   });
   if (r && r.success) {
     toast(editingRate ? 'Rate updated!' : 'Rate added!', 'ok');
     resetRateForm();
     await loadRates(selectedCID);
+    const mainCID = document.getElementById('hidCID').value;
+    if (mainCID == selectedCID) {
+      await checkRatesReadonly(selectedCID);
+    }
   } else {
     toast(r?.message || 'Error saving rate', 'err');
   }
 }
 
-async function deleteRate() {
-  const rateID = document.getElementById('hidRateID').value;
+async function deleteRate(rateIDParam) {
+  const rateID = rateIDParam || document.getElementById('hidRateID').value;
   if (!rateID || !selectedCID) return;
+  if (!confirm('Are you sure you want to delete this rate?')) return;
   const r = await API.post('/api/customer/rates', {
-    cid: selectedCID, rateID, type: 2,
-    d_PComm: document.getElementById('rD_PComm').value,
-    d_Amt: document.getElementById('rD_Amt').value,
-    a_PComm: document.getElementById('rA_PComm').value,
-    a_Amt: document.getElementById('rA_Amt').value,
-    patti: document.getElementById('rPatti').value
+    cid: selectedCID,
+    rateID: rateID,
+    type: 2
   });
   if (r && r.success) {
     toast('Rate deleted', 'ok');
     resetRateForm();
     await loadRates(selectedCID);
+    const mainCID = document.getElementById('hidCID').value;
+    if (mainCID == selectedCID) {
+      await checkRatesReadonly(selectedCID);
+    }
   } else {
-    toast(r?.message || 'Error', 'err');
+    toast(r?.message || 'Error deleting rate', 'err');
   }
 }
 
@@ -628,6 +646,7 @@ function resetRateForm() {
   document.getElementById('btnAddRate').textContent = 'ADD Rate';
   document.getElementById('btnDeleteRate').style.display = 'none';
   editingRate = false;
+  document.querySelectorAll('#ratesTableWrap tr').forEach(r => r.classList.remove('table-active'));
 }
 
 function closeRates() {

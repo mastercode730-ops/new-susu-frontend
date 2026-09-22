@@ -447,6 +447,7 @@ input:checked+.Myslider:before{transform:translateX(15px);}
       <input type="text" id="txtCustSearchInput" class="cust-combo-input"
         placeholder="Select or Search Customer Name / Mobile..."
         autocomplete="off"
+        autofocus
         oninput="onCustSearchInput(this.value)"
         onfocus="openCustDropdown()"
         onkeydown="onCustKeydown(event)" />
@@ -587,6 +588,18 @@ let _activeDropdownIdx = -1;
 
 function resetSelect2Silently(){
   clearCustSelection();
+}
+
+function focusCustomerInput(){
+  const inp = document.getElementById('txtCustSearchInput');
+  if(!inp) return;
+  inp.value = '';
+  const clearBtn = document.getElementById('btnCustClear');
+  if(clearBtn) clearBtn.style.display = 'none';
+  try {
+    inp.focus();
+    inp.select();
+  } catch(e){}
 }
 
 /* ── IST helpers ── */
@@ -732,6 +745,7 @@ async function init(){
   }
 
   await loadResult();
+  setTimeout(focusCustomerInput, 150);
 }
 
 /* ── Auto Accept status load ── */
@@ -778,6 +792,7 @@ async function loadReceiverList(){
         sel.appendChild(o);
       });
     }
+    setTimeout(focusCustomerInput, 50);
   }catch(e){
     console.error('Error loading receiver list:', e);
   }
@@ -926,26 +941,38 @@ async function handleCustomerSelect(customer){
   }
 }
 
+let _custDropdownClosedByEsc = false;
+
 function onCustKeydown(e){
   const items = document.querySelectorAll('.cust-item');
-  if(!items.length) return;
   if(e.key === 'ArrowDown'){
     e.preventDefault();
     openCustDropdown();
-    _activeDropdownIdx = Math.min(_activeDropdownIdx + 1, items.length - 1);
-    updateDropdownActiveItem(items);
+    if(items.length){
+      _activeDropdownIdx = Math.min(_activeDropdownIdx + 1, items.length - 1);
+      updateDropdownActiveItem(items);
+    }
   } else if(e.key === 'ArrowUp'){
     e.preventDefault();
     openCustDropdown();
-    _activeDropdownIdx = Math.max(_activeDropdownIdx - 1, 0);
-    updateDropdownActiveItem(items);
+    if(items.length){
+      _activeDropdownIdx = Math.max(_activeDropdownIdx - 1, 0);
+      updateDropdownActiveItem(items);
+    }
   } else if(e.key === 'Enter'){
     e.preventDefault();
     if(_activeDropdownIdx >= 0 && _activeDropdownIdx < items.length){
       items[_activeDropdownIdx].click();
     }
   } else if(e.key === 'Escape'){
-    closeCustDropdown();
+    const menu = document.getElementById('custDropdownMenu');
+    const inp = document.getElementById('txtCustSearchInput');
+    if((menu && menu.style.display === 'block') || (inp && inp.value.trim())){
+      e.preventDefault();
+      _custDropdownClosedByEsc = true;
+      clearCustSelection();
+      closeCustDropdown();
+    }
   }
 }
 
@@ -1115,6 +1142,8 @@ function closeRates(){
   document.getElementById('BtnToday').style.display='block';
   document.getElementById('SearchingDiv').style.display='flex';
   document.getElementById('SeachingResultDiv').style.display='block';
+  clearCustSelection();
+  setTimeout(focusCustomerInput, 50);
 }
 
 /* ── Redirect to chat page ── */
@@ -1212,6 +1241,10 @@ function openYantri(){ window.location.href=`/pages/yantri.html?GameID=${_GID}`;
 document.addEventListener('keyup',function(e){
   const k=e.keyCode?e.keyCode:e.which;
   if(k===27){
+    if(_custDropdownClosedByEsc){
+      _custDropdownClosedByEsc = false;
+      return;
+    }
     const lrt=document.getElementById('lblRatesTrue').innerText;
     if(lrt==='')     window.location.href='/pages/home.html';
     else if(lrt==='1') closeResult();
@@ -1244,10 +1277,16 @@ init();
 // yahan turant "Today" ko force-refresh karte hain taaki abhi-abhi
 // chadhai entry turant dikhe, dobara back jaane ki zaroorat na pade.
 window.addEventListener('pageshow', function(e){
+  clearCustSelection();
   if(e.persisted){
-    clearCustSelection();
     BtnSearch1_Click();
   }
+  setTimeout(focusCustomerInput, 50);
+  setTimeout(focusCustomerInput, 200);
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(focusCustomerInput, 50);
 });
 
 // ESC se agar search field band ho jaye to dobara open karo (user convenience)

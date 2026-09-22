@@ -1133,17 +1133,24 @@ async function onRateClick(i){
 /* ── Close rates, restore UI ── */
 function closeRates(){
   _lblRatesTrue='';
-  document.getElementById('lblRatesTrue').innerText='';
-  document.getElementById('ratesWrap').style.display='none';
-  document.getElementById('ratesBtnWrap').innerHTML='';
-  document.getElementById('txtSearchatHead').style.display='block';
-  document.getElementById('SearchHead').style.display='block';
-  document.getElementById('BtnSearch').style.display='block';
-  document.getElementById('BtnToday').style.display='block';
-  document.getElementById('SearchingDiv').style.display='flex';
-  document.getElementById('SeachingResultDiv').style.display='block';
-  clearCustSelection();
-  setTimeout(focusCustomerInput, 50);
+  const lrt = document.getElementById('lblRatesTrue');
+  if(lrt) lrt.innerText='';
+  const rw = document.getElementById('ratesWrap');
+  if(rw) rw.style.display='none';
+  const rbw = document.getElementById('ratesBtnWrap');
+  if(rbw) rbw.innerHTML='';
+  const tsh = document.getElementById('txtSearchatHead');
+  if(tsh) tsh.style.display='block';
+  const sh = document.getElementById('SearchHead');
+  if(sh) sh.style.display='block';
+  const bs = document.getElementById('BtnSearch');
+  if(bs) bs.style.display='block';
+  const bt = document.getElementById('BtnToday');
+  if(bt) bt.style.display='block';
+  const sd = document.getElementById('SearchingDiv');
+  if(sd) sd.style.display='flex';
+  const srd = document.getElementById('SeachingResultDiv');
+  if(srd) srd.style.display='block';
 }
 
 /* ── Redirect to chat page ── */
@@ -1282,7 +1289,6 @@ window.addEventListener('pageshow', function(e){
     BtnSearch1_Click();
   }
   setTimeout(focusCustomerInput, 50);
-  setTimeout(focusCustomerInput, 200);
 });
 
 document.addEventListener('DOMContentLoaded', function(){

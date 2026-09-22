@@ -58,10 +58,12 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
    app doesn't render — shrink that dead space down to just clearing the
    fixed blue top bar. Page-scoped so it doesn't touch other pages' layout. */
 .main-panel > .content{margin-top:50px!important;padding-top:8px!important;}
-#formCard,#searchCard,#ratesCard{max-height:calc(100vh - 70px);display:flex;flex-direction:column;}
-#formCard .card-body{flex:1 1 auto;min-height:0;overflow-y:auto;}
-#customerList{flex:1 1 auto;min-height:0;max-height:none;}
-#ratesTableWrap{flex:1 1 auto;min-height:0;overflow-y:auto;}
+@media (min-width: 768px) {
+  #formCard,#searchCard,#ratesCard{max-height:calc(100vh - 70px);display:flex;flex-direction:column;}
+  #formCard .card-body{flex:1 1 auto;min-height:0;overflow-y:auto;}
+  #customerList{flex:1 1 auto;min-height:0;max-height:none;}
+  #ratesTableWrap{flex:1 1 auto;min-height:0;overflow-y:auto;}
+}
 #ratesTableWrap table{width:100%;}
 .legacy-grid#ratesTableWrap th,.legacy-grid#ratesTableWrap td{padding:5px 10px;font-size:.8rem;}
 /* Search header: View All / Search / Find Party / filter — all one slim row */
@@ -73,6 +75,107 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 #searchHeader .legacy-radio{display:flex;align-items:center;gap:10px;}
 #searchHeader .legacy-radio label{margin:0;font-size:.78rem;}
 #searchHeader #custCount{font-weight:700;font-size:.8rem;color:var(--text);white-space:nowrap;}
+
+/* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
+@media (max-width: 767px) {
+  .main-panel > .content {
+    margin-top: 50px !important;
+    padding: 4px 6px !important;
+  }
+  .content > .row {
+    margin-left: -3px !important;
+    margin-right: -3px !important;
+  }
+  .content > .row > [class*="col-"] {
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+  #formCard, #searchCard, #ratesCard {
+    max-height: none !important;
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+  }
+  #formCard .card-header, #ratesCard .card-header {
+    padding: 6px 10px !important;
+  }
+  #formCard .card-body, #ratesCard .card-body {
+    padding: 6px 8px !important;
+    overflow-y: visible !important;
+  }
+  #formCard .card-action, #ratesCard .card-action {
+    padding: 6px 10px !important;
+  }
+  #formCard .row, #ratesCard .row {
+    margin-left: -3px !important;
+    margin-right: -3px !important;
+  }
+  #formCard .row > [class*="col-"], #ratesCard .row > .col {
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+  #formCard .form-group, #ratesCard .form-group {
+    margin-bottom: 2px !important;
+  }
+  #formCard .form-group label, #ratesCard .form-group label {
+    font-size: 0.73rem !important;
+    font-weight: 900 !important;
+    color: #8b1d1d !important;
+    margin-bottom: 1px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  #formCard .form-control, #ratesCard .form-control {
+    height: 31px !important;
+    min-height: 31px !important;
+    padding: 2px 6px !important;
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #111 !important;
+    background: #fffbe0 !important;
+    border: 1.5px solid #bda838 !important;
+    border-radius: 4px !important;
+  }
+  #formCard select.form-control {
+    height: 31px !important;
+    font-size: 0.78rem !important;
+    padding: 2px 4px !important;
+  }
+  #formCard .chk-row {
+    column-gap: 12px !important;
+    row-gap: 3px !important;
+    padding: 2px 0 !important;
+    margin-top: 3px !important;
+    margin-bottom: 2px !important;
+  }
+  #formCard .chk-row label {
+    font-size: 0.73rem !important;
+    font-weight: 800 !important;
+    color: #8b1d1d !important;
+    margin-left: 2px !important;
+  }
+  #formCard .chk-row input[type=checkbox] {
+    width: 15px !important;
+    height: 15px !important;
+  }
+  .card-action .btn {
+    padding: 5px 14px !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    border-radius: 4px !important;
+  }
+  #searchHeader {
+    padding: 6px 10px !important;
+    gap: 4px 8px !important;
+  }
+  #searchHeader .search-find {
+    flex: 1 1 100% !important;
+  }
+  #customerList {
+    max-height: 350px !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -101,13 +204,13 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
             </div>
           </div>
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-6 col-md-6">
               <div class="form-group">
                 <label for="txtCity">City</label>
                 <input type="text" class="form-control" id="txtCity" placeholder="Enter City">
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-6 col-md-6">
               <div class="form-group">
                 <label for="txtMobileNo">Phone</label>
                 <input type="text" class="form-control" id="txtMobileNo" placeholder="Enter Mobile No" maxlength="10" inputmode="numeric">
@@ -115,51 +218,51 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
             </div>
           </div>
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-3 col-md-3">
               <div class="form-group"><label for="txtD_PComm">D_PComm</label><input type="text" class="form-control" id="txtD_PComm" value="0"></div>
             </div>
-            <div class="col-md-3">
+            <div class="col-3 col-md-3">
               <div class="form-group"><label for="txtD_Amt">D_Amt</label><input type="text" class="form-control" id="txtD_Amt" value="100"></div>
             </div>
-            <div class="col-md-3">
+            <div class="col-3 col-md-3">
               <div class="form-group"><label for="txtA_PComm">A_PComm</label><input type="text" class="form-control" id="txtA_PComm" value="0"></div>
             </div>
-            <div class="col-md-3">
+            <div class="col-3 col-md-3">
               <div class="form-group"><label for="txtA_Amt">A_Amt</label><input type="text" class="form-control" id="txtA_Amt" value="10"></div>
             </div>
           </div>
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group"><label for="txtPatti">Patti</label><input type="text" class="form-control" id="txtPatti" value="0"></div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group"><label for="txtLC">LC</label><input type="text" class="form-control" id="txtLC" value="0"></div>
             </div>
           </div>
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-7 col-md-6">
               <div class="form-group"><label for="ddlSrchCustomers">3rd Hissa Party</label><select class="form-control" id="ddlSrchCustomers"><option value="0">Select Customer Name</option></select></div>
             </div>
-            <div class="col-md-6">
+            <div class="col-5 col-md-6">
               <div class="form-group"><label for="txt3rdPartyHissaPer">Hissa (%)</label><input type="text" class="form-control" id="txt3rdPartyHissaPer" value="0"></div>
             </div>
           </div>
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-6 col-md-4">
               <div class="form-group"><label for="ddlCommParty">3rd Comm Party</label><select class="form-control" id="ddlCommParty"><option value="0">Select Customer Name</option></select></div>
             </div>
-            <div class="col-md-4">
+            <div class="col-3 col-md-4">
               <div class="form-group"><label for="txtDaraCommPer">Dara (%)</label><input type="text" class="form-control" id="txtDaraCommPer" value="0"></div>
             </div>
-            <div class="col-md-4">
+            <div class="col-3 col-md-4">
               <div class="form-group"><label for="txtAkharCommPer">Akhar (%)</label><input type="text" class="form-control" id="txtAkharCommPer" value="0"></div>
             </div>
           </div>
           <div class="row">
-            <div class="col-md-6">
+            <div class="col-7 col-md-6">
               <div class="form-group"><label for="ddlLCParty">3rd LC Party</label><select class="form-control" id="ddlLCParty"><option value="0">Select Customer Name</option></select></div>
             </div>
-            <div class="col-md-6">
+            <div class="col-5 col-md-6">
               <div class="form-group"><label for="txtLCCommPer">LC (%)</label><input type="text" class="form-control" id="txtLCCommPer" value="0"></div>
             </div>
           </div>

@@ -35,6 +35,99 @@
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+
+/* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
+@media (max-width: 767px) {
+  .main-panel > .content {
+    margin-top: 50px !important;
+    padding: 4px 6px !important;
+  }
+  .content .card {
+    margin-bottom: 8px !important;
+    border-radius: 8px !important;
+  }
+  .content .card-header {
+    padding: 6px 10px !important;
+  }
+  .content .card-title {
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+  }
+  .content .card-body {
+    padding: 6px 10px !important;
+  }
+  .content .card-action {
+    padding: 6px 10px 10px 10px !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  .content .card-action .btn {
+    flex: 1 !important;
+    padding: 6px 10px !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    border-radius: 5px !important;
+  }
+  .content .form-group {
+    margin-bottom: 4px !important;
+  }
+  .content .form-group label {
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 2px !important;
+  }
+  .content .form-control {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    height: 32px !important;
+    padding: 3px 6px !important;
+    border-radius: 4px !important;
+  }
+  .chk-game-col br {
+    display: none !important;
+  }
+  .chk-game-col .form-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    margin-bottom: 4px !important;
+    padding: 3px 0 !important;
+  }
+  .chk-game-col input[type=checkbox] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    order: 1 !important;
+    cursor: pointer !important;
+  }
+  .chk-game-col label {
+    margin: 0 !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+    color: var(--text) !important;
+    white-space: nowrap !important;
+    order: 2 !important;
+    cursor: pointer !important;
+  }
+  #gamesTable {
+    max-height: calc(100vh - 280px) !important;
+  }
+  #gamesTable th {
+    padding: 6px 8px !important;
+    font-size: 0.78rem !important;
+  }
+  #gamesTable td {
+    padding: 5px 8px !important;
+    font-size: 0.78rem !important;
+  }
+  .tog-yes, .tog-no {
+    height: 26px !important;
+    min-width: 32px !important;
+    font-size: 0.75rem !important;
+    padding: 0 5px !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -48,7 +141,7 @@
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-7 col-md-3">
               <div class="form-group">
                 <label for="txtGameName">Game Name</label>
                 <input type="hidden" id="editGameID">
@@ -56,33 +149,33 @@
                   onfocus="this.select()" autocomplete="off">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-5 col-md-3">
               <div class="form-group">
                 <label for="txtDrawTime">Draw Time</label>
                 <input type="text" id="txtDrawTime" class="form-control" placeholder="e.g. 06:00 PM" autocomplete="off">
               </div>
             </div>
-            <div class="col-md-1">
+            <div class="col-6 col-md-1 chk-game-col">
               <div class="form-group">
-                <label>Next Day</label><br>
+                <label for="chkNextDay">Next Day</label><br>
                 <input type="checkbox" id="chkNextDay">
               </div>
             </div>
-            <div class="col-md-1">
+            <div class="col-6 col-md-1 chk-game-col">
               <div class="form-group">
-                <label>Active</label><br>
+                <label for="chkIsActive">Active</label><br>
                 <input type="checkbox" id="chkIsActive" checked>
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2 chk-game-col">
               <div class="form-group">
-                <label>Auto Accept</label><br>
+                <label for="chkAcceptedStatus">Auto Accept</label><br>
                 <input type="checkbox" id="chkAcceptedStatus">
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2 chk-game-col">
               <div class="form-group">
-                <label>Over Time Reject</label><br>
+                <label for="chkRejectedMsg">Over Time Reject</label><br>
                 <input type="checkbox" id="chkRejectedMsg">
               </div>
             </div>

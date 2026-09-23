@@ -167,6 +167,126 @@
       flex-shrink: 0;
     }
 
+    /* ─── Bet Number Search in Header ─── */
+    .bet-search-container {
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      background: #fff;
+      border: 1.5px solid #6861ce;
+      border-radius: 4px;
+      height: 26px;
+      padding: 0 4px 0 6px;
+      margin-left: 6px;
+      flex-shrink: 0;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .bet-search-container:focus-within {
+      border-color: #f59e0b;
+      box-shadow: 0 0 5px rgba(245, 158, 11, 0.5);
+    }
+    .bet-search-icon {
+      font-size: 0.76rem;
+      color: #6861ce;
+      margin-right: 3px;
+      pointer-events: none;
+      line-height: 1;
+    }
+    #txtSearchBetNo {
+      width: 70px;
+      height: 22px;
+      border: none;
+      outline: none;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #000;
+      background: transparent;
+      padding: 0;
+    }
+    #txtSearchBetNo::placeholder {
+      color: #888;
+      font-weight: normal;
+    }
+    #btnClearBetSearch {
+      background: transparent;
+      border: none;
+      color: #888;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      display: none;
+    }
+    #btnClearBetSearch:hover {
+      color: #d32f2f;
+    }
+    #betSearchMatchCount {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 8px;
+      background: #f59e0b;
+      color: #fff;
+      margin-left: 3px;
+      white-space: nowrap;
+      line-height: 1.2;
+    }
+    #betSearchMatchCount.no-match {
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    /* Highlight tags for searched bet numbers */
+    mark.bet-match-primary {
+      background: #ffeb3b !important;
+      color: #b71c1c !important;
+      font-weight: 900 !important;
+      font-size: 1.05em !important;
+      padding: 1px 4px !important;
+      border-radius: 3px !important;
+      border: 1.5px solid #d97706 !important;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.7) !important;
+      display: inline-block !important;
+      line-height: 1.2 !important;
+    }
+    mark.bet-match-amt {
+      background: #e0f2fe !important;
+      color: #0369a1 !important;
+      font-weight: 800 !important;
+      padding: 0 2px !important;
+      border-radius: 2px !important;
+      border: 1px solid #7dd3fc !important;
+    }
+
+    /* Chat row highlight when matching bet is found */
+    .chat-row.bet-row-matched {
+      border: 2px solid #f59e0b !important;
+      background-color: #fffde7 !important;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.35) !important;
+      transition: all 0.2s ease !important;
+    }
+
+    /* Dim non-matching bets when search is active */
+    .chat-search-active .chat-row:not(.bet-row-matched) {
+      opacity: 0.5 !important;
+      transition: opacity 0.2s ease !important;
+    }
+
+    /* Match badge on bet card */
+    .bet-matched-badge {
+      display: inline-block;
+      background: #f59e0b;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 900;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      vertical-align: middle;
+      letter-spacing: 0.5px;
+    }
+
     /* (merged into .chat-main block above) */
 
     /* ─── Message card — ASPX exact ─── */
@@ -1014,6 +1134,14 @@
         font-size: .85rem;
       }
 
+      #txtSearchBetNo {
+        width: 50px;
+      }
+      .bet-search-container {
+        margin-left: 2px;
+        padding: 0 3px 0 4px;
+      }
+
       /* Input row: thoda compact */
       .input-row {
         gap: 0;
@@ -1224,6 +1352,16 @@
 
         <button id="BtnYantri" onclick="OpenYantriagent()" title="Yantri">📅</button>
         <button id="btnMoveMsg" onclick="openBulkMovePopup()">💬 Bulk</button>
+
+        <div class="bet-search-container" id="betSearchContainer" title="Search bet number">
+          <span class="bet-search-icon">🔍</span>
+          <input type="text" id="txtSearchBetNo" placeholder="Find No." autocomplete="off"
+            oninput="onBetSearchInput(this.value)"
+            onkeydown="if(event.key==='Escape')clearBetSearch()">
+          <button type="button" id="btnClearBetSearch" onclick="clearBetSearch()" title="Clear search">&times;</button>
+          <span id="betSearchMatchCount" style="display:none;"></span>
+        </div>
+
         <span id="lblUserBalance"></span>
       </div>
 
@@ -1685,16 +1823,125 @@
       }
 
       // ═══════════════════════════════════════════════════════
+      // BET NUMBER SEARCH & HIGHLIGHT
+      // ═══════════════════════════════════════════════════════
+      let _currentBetSearchQuery = '';
+
+      function getEquivalentNumbers(q) {
+        const s = String(q).trim();
+        if (!s) return [];
+        const set = new Set([s]);
+        if (/^\d+$/.test(s)) {
+          const num = parseInt(s, 10);
+          if (num >= 0 && num <= 9) {
+            set.add(String(num));
+            set.add('0' + num);
+          }
+          if (num === 0 || s === '00' || s === '100') {
+            set.add('0');
+            set.add('00');
+            set.add('100');
+          }
+        }
+        return Array.from(set);
+      }
+
+      function highlightBetText(text, searchVal) {
+        if (!text || !searchVal) return { html: escHtml(text || ''), hasMatch: false };
+        const rawQ = String(searchVal).trim();
+        if (!rawQ) return { html: escHtml(text), hasMatch: false };
+
+        const targetNums = getEquivalentNumbers(rawQ);
+        const parts = text.split(/([,\n\r\t]+)/);
+        let hasMatchInMsg = false;
+
+        const result = parts.map(part => {
+          if (/^[,\n\r\t]+$/.test(part)) return escHtml(part);
+          const trimmed = part.trim();
+          if (!trimmed) return escHtml(part);
+
+          const eqIdx = trimmed.indexOf('=');
+          if (eqIdx !== -1) {
+            const numPart = trimmed.substring(0, eqIdx).trim();
+            const amtPart = trimmed.substring(eqIdx + 1).trim();
+
+            const isNumMatch = targetNums.includes(numPart);
+            const isAmtMatch = targetNums.includes(amtPart);
+
+            if (isNumMatch) {
+              hasMatchInMsg = true;
+              return `<mark class="bet-match-primary" title="Bet on number ${escHtml(numPart)}">${escHtml(part)}</mark>`;
+            } else if (isAmtMatch) {
+              hasMatchInMsg = true;
+              return `${escHtml(trimmed.substring(0, eqIdx + 1))}<mark class="bet-match-amt" title="Amount ${escHtml(amtPart)}">${escHtml(amtPart)}</mark>`;
+            }
+            return escHtml(part);
+          }
+
+          if (targetNums.includes(trimmed)) {
+            hasMatchInMsg = true;
+            return `<mark class="bet-match-primary" title="Number ${escHtml(trimmed)}">${escHtml(part)}</mark>`;
+          }
+
+          return escHtml(part);
+        }).join('');
+
+        return { html: result, hasMatch: hasMatchInMsg };
+      }
+
+      function onBetSearchInput(val) {
+        _currentBetSearchQuery = (val || '').trim();
+        const clearBtn = document.getElementById('btnClearBetSearch');
+        if (clearBtn) clearBtn.style.display = _currentBetSearchQuery ? 'inline-block' : 'none';
+        if (window._lastRenderedMsgs) {
+          renderMessages(window._lastRenderedMsgs, true);
+        }
+      }
+
+      function clearBetSearch() {
+        const inp = document.getElementById('txtSearchBetNo');
+        if (inp) inp.value = '';
+        _currentBetSearchQuery = '';
+        const clearBtn = document.getElementById('btnClearBetSearch');
+        if (clearBtn) clearBtn.style.display = 'none';
+        if (window._lastRenderedMsgs) {
+          renderMessages(window._lastRenderedMsgs, false);
+        }
+        if (inp) inp.focus();
+      }
+
+      function updateSearchMatchCount(count) {
+        const badge = document.getElementById('betSearchMatchCount');
+        if (!badge) return;
+        if (!_currentBetSearchQuery) {
+          badge.style.display = 'none';
+          return;
+        }
+        badge.style.display = 'inline-block';
+        if (count > 0) {
+          badge.className = '';
+          badge.textContent = `${count} bet${count > 1 ? 's' : ''}`;
+        } else {
+          badge.className = 'no-match';
+          badge.textContent = '0';
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════
       // RENDER MESSAGES — ISSUE 1 & 5: Show like image 2
       // All entries visible, latest at bottom (scroll to bottom)
       // ═══════════════════════════════════════════════════════
-      function renderMessages(msgs) {
+      function renderMessages(msgs, shouldScrollToMatch = false) {
+        window._lastRenderedMsgs = msgs;
         const el = document.getElementById('ScrollChatDiv');
+        const query = _currentBetSearchQuery;
         if (!msgs.length) {
           el.innerHTML = '<div style="text-align:center;padding:28px;color:#aaa;font-size:.85rem;">No messages for this date</div>';
+          updateSearchMatchCount(0);
           return;
         }
         const isTrue = v => v === true || v === 'True' || v === 'true' || v === '1';
+        let matchCount = 0;
 
         el.innerHTML = msgs.map(m => {
           const isSent = String(m.Sender) === '0';
@@ -1704,11 +1951,24 @@
           const isSettledFalse = !isTrue(m.IsSettled);
 
           let msgBody = '';
+          let isRowMatch = false;
           if (String(m.IsTextChat) === 'False' || m.IsTextChat === false) {
             msgBody = `<img src="${m.Message || ''}" style="max-width:180px;border-radius:4px;" alt="img">`;
           } else {
-            msgBody = `<span class="msg-text">${escHtml(m.Message || '')}</span>`;
+            if (query) {
+              const highlightResult = highlightBetText(m.Message || '', query);
+              msgBody = `<span class="msg-text">${highlightResult.html}</span>`;
+              if (highlightResult.hasMatch) {
+                isRowMatch = true;
+                matchCount++;
+              }
+            } else {
+              msgBody = `<span class="msg-text">${escHtml(m.Message || '')}</span>`;
+            }
           }
+
+          const rowMatchCls = isRowMatch ? ' bet-row-matched' : '';
+          const matchBadge = isRowMatch ? `<span class="bet-matched-badge">🎯 No. ${escHtml(query)}</span>` : '';
 
           // Parse datetime once
           const _msgDt = parseMsgDateTime(m.MessageDateTime);
@@ -1721,7 +1981,8 @@
                  ${m.TotalAmount ? `<span class="lbl-total">💰 Total: ${m.TotalAmount}</span>` : ''}
                  ${m.Rate ? `<span class="meta-item"><span class="meta-label">Rate:</span> ${escHtml(m.Rate)}</span>` : ''}
                  ${fullDate ? `<span class="last-updated">🕐 ${fullDate}</span>` : ''}
-               </div>` : '';
+                 ${matchBadge}
+               </div>` : (matchBadge ? `<div class="msg-meta-combined">${matchBadge}</div>` : '');
 
           const byAdmin = isByAdmin ? `<span class="by-admin">BY ADMIN</span>` : '';
           const subLbl = m.subuserID ? `<span class="subuser-lbl">${escHtml(String(m.subuserID))}</span>` : '';
@@ -1752,7 +2013,7 @@
             const delBtn = m.IsAccepted === 'Pending'
               ? `<button class="btn-del" onclick="GetSelectedRow('${m.ChatID}')">🗑</button>` : '';
 
-            return `<div class="chat-row ${rowCls}">
+            return `<div class="chat-row ${rowCls}${rowMatchCls}">
         ${rightActions}
         ${delBtn}
         <div class="msg-right">
@@ -1768,7 +2029,7 @@
             if (m.IsAccepted === 'Rejected') statusEl = `<span class="s-cancel">Cancelled</span>`;
             else if (m.IsAccepted === 'Accepted') statusEl = `<span class="s-ok">Ok</span>`;
 
-            return `<div class="chat-row ${rowCls}">
+            return `<div class="chat-row ${rowCls}${rowMatchCls}">
         ${rightActions}
         <div class="msg-left">
           ${msgBody}${metaLine}
@@ -1778,8 +2039,21 @@
       </div>`;
           }
         }).join('');
-        // ISSUE 5: Scroll to bottom so latest entry is always visible
-        scrollBottom();
+
+        updateSearchMatchCount(matchCount);
+
+        if (query) {
+          el.classList.add('chat-search-active');
+          if (shouldScrollToMatch) {
+            const firstMatch = el.querySelector('.bet-row-matched');
+            if (firstMatch) {
+              firstMatch.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+          }
+        } else {
+          el.classList.remove('chat-search-active');
+          scrollBottom();
+        }
       }
 
       function parseMsgDateTime(s) {

@@ -34,6 +34,9 @@
 .select2-results .select2-highlighted{background-color:#128c7e!important;}
 .select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:6px 10px;line-height:1.5;color:#1572e8;}
 .select2-results li.select2-highlighted{color:#fff;}
+#s2id_ddlType .select2-chosen{text-transform:none!important;font-weight:800!important;}
+.select2-drop-for-type .select2-results li{text-transform:none!important;font-size:.9rem!important;font-weight:700!important;color:#111!important;}
+.select2-drop-for-type .select2-results li.select2-highlighted{background-color:#128c7e!important;color:#fff!important;}
 
 /* ── Modern Paid Type Select ── */
 .type-select{
@@ -149,12 +152,12 @@
             <div class="col">
               <div class="form-group">
                 <label for="ddlType">Type</label>
-                <select class="form-control type-select" id="ddlType" tabindex="3">
-                  <option value="Paid">Paid</option>
-                  <option value="Received">Received</option>
-                  <option value="Paid Adjustment">Paid Adjustment</option>
-                  <option value="Receive Adjustment">Receive Adjustment</option>
+                <select class="form-control" id="ddlType" tabindex="3">
+                  <option value="Received">Receipt/Liye</option>
+                  <option value="Paid" selected>Payment/Diye</option>
                   <option value="Commission">Commission</option>
+                  <option value="Receive Adjustment">AdjustReceipt(-)</option>
+                  <option value="Paid Adjustment">AdjustPayment(+)</option>
                 </select>
               </div>
             </div>
@@ -318,30 +321,58 @@ async function init() {
       // fires, so a synchronous .focus() here gets silently overridden a
       // moment later. Queue this after it instead of racing it.
       if (val) setTimeout(() => {
-        const el = document.getElementById('ddlType');
-        if (el) {
-          el.focus();
-          if (typeof el.showPicker === 'function') {
-            try { el.showPicker(); } catch(e){}
-          }
-        }
+        $('#ddlType').select2('open');
       }, 50);
     });
     bindSelect2Open('#ddlAccounts');
     $('#ddlAccounts').select2('focus');
 
-    // Type — clean modern dropdown with smooth Enter-chain and change advancement
+    // Type — Select2 searchable dropdown matching desktop reference
+    function typeMatcher(term, text, opt) {
+      if (!term || !term.trim()) return true;
+      const t = term.trim().toLowerCase();
+      const txt = (text || '').toLowerCase();
+      const val = (opt && opt.val ? opt.val() : (opt && opt.value ? opt.value : '')).toLowerCase();
+      if (txt.indexOf(t) > -1 || val.indexOf(t) > -1) return true;
+      if ((t === 'r' || t === 'rcv' || t === 'rec' || t === 'received' || t === 'liye') && (val === 'received' || txt.includes('receipt') || txt.includes('liye'))) return true;
+      if ((t === 'p' || t === 'pay' || t === 'paid' || t === 'diye') && (val === 'paid' || txt.includes('payment') || txt.includes('diye'))) return true;
+      if ((t === 'c' || t === 'com' || t === 'comm') && val === 'commission') return true;
+      if ((t === 'adj' || t === 'adjust') && (txt.includes('adjust') || val.includes('adjustment'))) return true;
+      return false;
+    }
+
     const advanceToAmount = () => { const el = document.getElementById('txtAmount'); el.focus(); el.select(); };
-    const ddlTypeEl = document.getElementById('ddlType');
-    if (ddlTypeEl) {
-      ddlTypeEl.addEventListener('change', () => setTimeout(advanceToAmount, 50));
-      ddlTypeEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
+
+    $('#ddlType').select2({
+      minimumResultsForSearch: 0,
+      dropdownCssClass: 'select2-drop-for-type',
+      matcher: typeMatcher
+    });
+    bindSelect2Open('#ddlType');
+
+    let _typeJustSelected = false;
+    $('#ddlType').on('select2-selecting', function() {
+      _typeJustSelected = true;
+    });
+    $('#ddlType').on('select2-close', function() {
+      if (_typeJustSelected) {
+        _typeJustSelected = false;
+        setTimeout(advanceToAmount, 50);
+      }
+    });
+    $('#ddlType').on('change', function() {
+      setTimeout(advanceToAmount, 50);
+    });
+    $(document).on('keydown', '#s2id_ddlType', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if ($(this).hasClass('select2-dropdown-open')) {
+          // Select2 handles Enter
+        } else {
           advanceToAmount();
         }
-      });
-    }
+      }
+    });
 
     // Sub User picker — only makes sense for the main admin (choosing which
     // staff member an entry belongs to). A subuser's own session only ever
@@ -751,8 +782,12 @@ function resetForm() {
   $('#ddlAccounts').val('').trigger('change');
   document.getElementById('txtAmount').value = '';
   document.getElementById('txtNarration').value = '';
-  const ddlTypeEl = document.getElementById('ddlType');
-  if (ddlTypeEl) ddlTypeEl.value = 'Paid';
+  if ($('#ddlType').data('select2')) {
+    $('#ddlType').select2('val', 'Paid');
+  } else {
+    const ddlTypeEl = document.getElementById('ddlType');
+    if (ddlTypeEl) ddlTypeEl.value = 'Paid';
+  }
   // ddlStaff's 'change' handler already guards on a truthy value, so
   // resetting to '0' safely skips its auto-advance-to-Submit side effect.
   if ($('#ddlStaff').data('select2')) $('#ddlStaff').val('0').trigger('change');

@@ -79,24 +79,70 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
 /* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
 @media (max-width: 767px) {
-  .main-panel > .content,
-  .main-panel .content,
-  .content {
-    margin-top: 50px !important;
-    padding: 2px 3px !important;
+  /* Slim blue header */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    line-height: 38px !important;
+    padding: 0 8px !important;
   }
-  .content > .row {
+  .logo-header .logo {
+    font-size: 1rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+  }
+  .logo-header .navbar-toggler {
+    height: 38px !important;
+    line-height: 38px !important;
+    padding: 0 4px !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.1rem !important;
+  }
+  .logo-header .more {
+    height: 38px !important;
+    line-height: 38px !important;
+    padding: 0 6px !important;
+  }
+  .logo-header .more i {
+    font-size: 1.05rem !important;
+    line-height: 38px !important;
+  }
+
+  /* Eliminate all gaps between header and card */
+  .main-panel {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  .main-panel > .content {
+    margin-top: 38px !important;
+    padding: 2px 3px 0 3px !important;
+  }
+  .main-panel > .content > .content,
+  .content .content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+  .content > .row,
+  .content .row {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-  .content > .row > [class*="col-"] {
+  .content > .row > [class*="col-"],
+  .content .row > [class*="col-"] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
   }
   #formCard, #searchCard, #ratesCard, .card {
     padding: 0 !important;
     max-height: none !important;
-    margin-bottom: 6px !important;
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
     border-radius: 6px !important;
     width: 100% !important;
   }

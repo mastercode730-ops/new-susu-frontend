@@ -27,7 +27,17 @@ tbody tr{cursor:pointer;}
 .content .form-group{margin-bottom:4px!important;}
 .content .form-group label{font-size:.76rem!important;margin-bottom:2px!important;display:block;}
 .content .form-control{padding:.25rem .5rem!important;height:auto!important;font-size:.82rem!important;}
-#txtStartDate{max-width:220px;}
+.content .row{margin-left:-6px;margin-right:-6px;}
+.content .row>[class*="col-"]{padding-left:6px;padding-right:6px;}
+.btn-align-label{
+  display:block;
+  font-size:14px;
+  line-height:1.5;
+  margin-bottom:5px;
+  visibility:hidden;
+  height:21px;
+}
+
 /* Data grids: bold bordered header instead of the faint Bootstrap table look */
 .content table,#histModal table{border-collapse:collapse!important;}
 .content table th,#histModal table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 14px!important;font-size:.85rem!important;}
@@ -43,6 +53,213 @@ tbody tr{cursor:pointer;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+
+/* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
+@media (max-width: 767.98px) {
+  /* Slim blue header with perfectly aligned hamburger */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 8px !important;
+  }
+  .logo-header {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  .logo-header .navbar-toggler {
+    order: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 38px !important;
+    padding: 0 !important;
+    margin: 0 auto 0 0 !important;
+    border: none !important;
+    background: transparent !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    display: block !important;
+  }
+  .logo-header .logo {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+  }
+  .logo-header .more {
+    order: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    line-height: 1 !important;
+  }
+  .logo-header .more i {
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  /* Eliminate all gaps between header and card */
+  .main-panel {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  .main-panel > .content {
+    margin-top: 38px !important;
+    padding: 2px 3px 0 3px !important;
+  }
+  .main-panel > .content > .content,
+  .content .content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+  .content > .row,
+  .content .row {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .content > .row > [class*="col-"],
+  .content .row > [class*="col-"] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+  .content .card, .card {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+  }
+  .content .card-header {
+    padding: 4px 8px !important;
+  }
+  .content .card-title {
+    font-size: 0.92rem !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    margin: 0 !important;
+  }
+  .content .card-body {
+    padding: 4px 6px !important;
+  }
+  .content .form-group {
+    margin-bottom: 3px !important;
+  }
+  .content .form-group label {
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    margin-bottom: 1px !important;
+    white-space: nowrap !important;
+  }
+  .content .form-control {
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+    height: 31px !important;
+    padding: 2px 6px !important;
+    border: 1.5px solid #888 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+  }
+  #txtStartDate {
+    max-width: 100% !important;
+    text-align: center !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+  }
+  #txtsearch {
+    height: 28px !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    border: 1.5px solid #888 !important;
+    border-radius: 4px !important;
+  }
+  .btn-align-label {
+    display: block !important;
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 1px !important;
+    visibility: hidden !important;
+    height: 14px !important;
+  }
+  .btn-col .btn {
+    width: 100% !important;
+    height: 31px !important;
+    padding: 2px 4px !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    border-radius: 4px !important;
+    line-height: 1 !important;
+    margin-top: 0 !important;
+    white-space: nowrap !important;
+  }
+  .hisab-tbl-wrap {
+    margin-top: 3px !important;
+    padding: 0 2px 4px 2px !important;
+    max-height: 220px !important;
+    overflow: auto !important;
+  }
+  .hisab-tbl-wrap table {
+    width: 100% !important;
+  }
+  .hisab-tbl-wrap th {
+    padding: 4px 6px !important;
+    font-size: 0.76rem !important;
+    background: #343a40 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+  .hisab-tbl-wrap td {
+    padding: 3px 5px !important;
+    font-size: 0.8rem !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+    border: 1px solid #999 !important;
+    white-space: nowrap !important;
+  }
+  .hisab-tbl-wrap tfoot td {
+    background: #e2e8f0 !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    font-size: 0.82rem !important;
+    border: 1px solid #777 !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -52,17 +269,25 @@ tbody tr{cursor:pointer;}
     <div class="col-md-12">
       <div class="card">
         <div class="card-body">
-          <div class="row">
-            <div class="col-md-3">
+          <div class="row align-items-end">
+            <div class="col-5 col-md-3">
               <div class="form-group">
                 <label for="txtStartDate">Date</label>
                 <input type="text" class="form-control" id="txtStartDate" readonly placeholder="dd/MMM/yyyy"
                   onfocus="this.select()" onchange="bindGrid()">
               </div>
             </div>
-            <div class="col-md-9" style="display:flex;align-items:flex-end;gap:8px;margin-bottom:1rem;">
-              <button class="btn btn-success" onclick="bindGrid()">Search</button>
-              <button class="btn btn-success" style="margin-left:auto;" onclick="exportHisab()">Export Excel</button>
+            <div class="col-3 col-md-2 btn-col">
+              <div class="form-group">
+                <label class="btn-align-label">&nbsp;</label>
+                <button type="button" class="btn btn-success" id="btnSearch" onclick="onSearchClick(event)">Search</button>
+              </div>
+            </div>
+            <div class="col-4 col-md-3 btn-col">
+              <div class="form-group">
+                <label class="btn-align-label">&nbsp;</label>
+                <button type="button" class="btn btn-success" id="btnExport" onclick="exportHisab()">Export Excel</button>
+              </div>
             </div>
           </div>
         </div>
@@ -73,13 +298,13 @@ tbody tr{cursor:pointer;}
         <div class="card-header">
           <div class="card-title">My Game Hisab</div>
         </div>
-        <div class="card-body">
+        <div class="card-body" style="padding-bottom:2px!important;">
           <input type="text" class="form-control" id="txtsearch"
             placeholder="Filter Name / Mobile"
             oninput="filterGameHisab(this.value)"
             onfocus="this.select()">
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive hisab-tbl-wrap">
           <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
             <thead>
               <tr style="background-color:LightGray;">
@@ -109,7 +334,7 @@ tbody tr{cursor:pointer;}
         <div class="card-header">
           <div class="card-title">My Hisab</div>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive hisab-tbl-wrap">
           <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
             <thead>
               <tr style="background-color:LightGray;">
@@ -247,7 +472,19 @@ async function bindGrid() {
   _vsMyHisab = (r2?.success) ? (r2.data || []) : [];
   renderMyHisab(_vsMyHisab);
 
-  document.getElementById('txtStartDate').focus();
+  if (window.fpStartDate) window.fpStartDate.close();
+}
+
+function onSearchClick(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (window.fpStartDate) {
+    window.fpStartDate.close();
+    if (window.fpStartDate.element) window.fpStartDate.element.blur();
+  }
+  if (document.activeElement && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+  bindGrid();
 }
 
 // ── Render grvGameHisab ──
@@ -441,19 +678,21 @@ function exportHisab() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  ["txtStartDate"].forEach(function(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    flatpickr(el, {
+  const el = document.getElementById('txtStartDate');
+  if (el) {
+    window.fpStartDate = flatpickr(el, {
       dateFormat: 'd/M/Y',
       allowInput: false,
       disableMobile: true,
+      onClose: function(selectedDates, dateStr, instance) {
+        if (instance && instance.element) instance.element.blur();
+      },
       onChange: function(selectedDates, dateStr, instance) {
-        // Trigger change event for any onchange handlers
+        if (instance && instance.element) instance.element.blur();
         el.dispatchEvent(new Event('change'));
       }
     });
-  });
+  }
 });
 </script>
 </body>

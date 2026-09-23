@@ -35,6 +35,203 @@
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+
+/* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
+@media (max-width: 767px) {
+  /* Slim blue header with perfectly aligned hamburger */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 8px !important;
+  }
+  .logo-header {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  .logo-header .navbar-toggler {
+    order: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 38px !important;
+    padding: 0 !important;
+    margin: 0 auto 0 0 !important;
+    border: none !important;
+    background: transparent !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    display: block !important;
+  }
+  .logo-header .logo {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+  }
+  .logo-header .more {
+    order: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    line-height: 1 !important;
+  }
+  .logo-header .more i {
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  /* Eliminate all gaps between header and card */
+  .main-panel {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  .main-panel > .content {
+    margin-top: 38px !important;
+    padding: 2px 3px 0 3px !important;
+  }
+  .main-panel > .content > .content,
+  .content .content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+  .content > .row,
+  .content .row {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .content > .row > [class*="col-"],
+  .content .row > [class*="col-"] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+  .content .card, .card {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+  }
+  .content .card-header {
+    padding: 4px 8px !important;
+  }
+  .content .card-title {
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    margin: 0 !important;
+  }
+  .content .card-body {
+    padding: 4px 6px !important;
+  }
+  .content .form-group {
+    margin-bottom: 3px !important;
+  }
+  .content .form-group label {
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    margin-bottom: 1px !important;
+    white-space: nowrap !important;
+  }
+  .content .form-control {
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+    height: 31px !important;
+    padding: 2px 6px !important;
+    border: 1.5px solid #888 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+  }
+  .content select.form-control {
+    font-size: 0.78rem !important;
+    padding: 2px 4px !important;
+  }
+  #txtResult {
+    font-size: 1.05rem !important;
+    font-weight: 900 !important;
+    color: #8b1d1d !important;
+    text-align: center !important;
+  }
+  .hide-mobile {
+    display: none !important;
+  }
+  .btn-submit-col .form-group {
+    display: flex !important;
+    align-items: flex-end !important;
+    height: 100% !important;
+    padding-bottom: 1px !important;
+  }
+  .btn-submit-col .btn {
+    width: 100% !important;
+    height: 31px !important;
+    padding: 4px 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    border-radius: 4px !important;
+  }
+  .btn-search-col .btn {
+    width: 100% !important;
+    height: 31px !important;
+    padding: 4px 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    border-radius: 4px !important;
+    margin-top: 2px !important;
+  }
+  #resultsTable {
+    padding: 4px 4px 8px 4px !important;
+    max-height: calc(100vh - 280px) !important;
+  }
+  #resultsTable table {
+    min-width: 600px !important;
+  }
+  #resultsTable th {
+    padding: 5px 6px !important;
+    font-size: 0.76rem !important;
+    background: #343a40 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+  }
+  #resultsTable td {
+    padding: 4px 6px !important;
+    font-size: 0.78rem !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+    border: 1px solid #999 !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -48,7 +245,7 @@
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="txtDate">Date</label>
                 <!-- ASPX: txtDate TabIndex=1, CalendarExtender, AutoPostBack→GetResult -->
@@ -57,7 +254,7 @@
                   onkeydown="onDateKey(event)">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="gameSelection">Game</label>
                 <!-- ASPX: GameSelection TabIndex=2, AutoPostBack→GetResult -->
@@ -67,7 +264,7 @@
                 </select>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="txtResult">Result</label>
                 <!-- ASPX: txtResult TabIndex=3, MaxLength=2, process(oninput) -->
@@ -78,9 +275,9 @@
                   onkeydown="onResultKey(event)">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3 btn-submit-col">
               <div class="form-group">
-                <label>&nbsp;</label><br>
+                <label class="hide-mobile">&nbsp;</label><br class="hide-mobile">
                 <!-- ASPX: BtnSubmit TabIndex=4 -->
                 <button class="btn btn-success" id="btnSubmit" tabindex="4" onclick="btnSubmitClick()">Submit</button>
               </div>
@@ -88,7 +285,7 @@
           </div>
 
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-6 col-md-4">
               <div class="form-group">
                 <label for="txtStartDate">Start Date</label>
                 <!-- ASPX: txtStartDate TabIndex=5, CalendarExtender -->
@@ -97,7 +294,7 @@
                   onkeydown="onStartDateKey(event)">
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-6 col-md-4">
               <div class="form-group">
                 <label for="txtEndDate">End Date</label>
                 <!-- ASPX: txtEndDate TabIndex=6, CalendarExtender -->
@@ -106,9 +303,9 @@
                   onkeydown="onEndDateKey(event)">
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-md-4 btn-search-col">
               <div class="form-group">
-                <label>&nbsp;</label><br>
+                <label class="hide-mobile">&nbsp;</label><br class="hide-mobile">
                 <!-- ASPX: btnSearch TabIndex=7 → BindGrid → txtStartDate.Focus -->
                 <button class="btn btn-success" id="btnSearch" tabindex="7" onclick="btnSearchClick()">Search</button>
               </div>

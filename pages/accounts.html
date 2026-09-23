@@ -381,7 +381,6 @@ async function init() {
     if (!u.SubUID) {
       await loadSubUsers();
       appendCustomersToStaffList();
-      appendSubUsersToCustomerList();
       document.getElementById('staffRow').style.display = 'block';
       $('#ddlStaff').select2();
       bindSelect2Open('#ddlStaff');
@@ -718,27 +717,7 @@ function appendCustomersToStaffList() {
 }
 
 // Customer Name also lists every Sub User alongside the customers (mirrors
-// appendCustomersToStaffList in the other direction). Sub User entries use a
-// "staff_" prefixed value so they stay distinguishable from real customer
-// UIDs — a Sub User has no ledger of their own, so saveTransaction() blocks
-// the save outright if one ends up picked here, rather than silently sending
-// a bogus customerUID to the backend.
-function appendSubUsersToCustomerList() {
-  const sel = document.getElementById('ddlAccounts');
-  // Insert right after "Self" (same spot Sub User dropdown puts them, before
-  // its own customer entries) — NOT appended at the very end. With dozens of
-  // alphabetically-sorted customers already in this list, anything appended
-  // last sits below a full page of scrolling and is effectively invisible
-  // without knowing to scroll all the way down for it.
-  const afterSelf = sel.options[1]?.nextSibling || null;
-  Array.from(document.getElementById('ddlStaff').options).forEach(o => {
-    if (o.value === '0' || o.value.startsWith('cust_')) return; // Self / customer entries already in this list
-    const opt = document.createElement('option');
-    opt.value = 'staff_' + o.value; opt.textContent = o.textContent;
-    sel.insertBefore(opt, afterSelf);
-  });
-  refreshCustomerSelect2();
-}
+function appendSubUsersToCustomerList() {}
 
 // ── SAVE ──────────────────────────────────────────────
 async function saveTransaction() {

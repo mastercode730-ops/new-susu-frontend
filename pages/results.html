@@ -184,31 +184,37 @@
     color: #8b1d1d !important;
     text-align: center !important;
   }
-  .hide-mobile {
-    display: none !important;
+  #txtDate,
+  #txtStartDate,
+  #txtEndDate {
+    text-align: center !important;
   }
-  .btn-submit-col .form-group {
-    display: flex !important;
-    align-items: flex-end !important;
-    height: 100% !important;
-    padding-bottom: 1px !important;
+  .btn-align-label {
+    display: block !important;
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 1px !important;
+    visibility: hidden !important;
+    height: 14px !important;
   }
-  .btn-submit-col .btn {
+  .results-sep {
+    border: 0 !important;
+    border-top: 1px solid #dcdfe6 !important;
+    margin: 4px 0 5px 0 !important;
+    padding: 0 !important;
     width: 100% !important;
-    height: 31px !important;
-    padding: 4px 8px !important;
-    font-size: 0.85rem !important;
-    font-weight: 800 !important;
-    border-radius: 4px !important;
   }
+  .btn-submit-col .btn,
   .btn-search-col .btn {
     width: 100% !important;
     height: 31px !important;
-    padding: 4px 8px !important;
-    font-size: 0.85rem !important;
+    padding: 2px 4px !important;
+    font-size: 0.82rem !important;
     font-weight: 800 !important;
     border-radius: 4px !important;
-    margin-top: 2px !important;
+    line-height: 1 !important;
+    margin-top: 0 !important;
   }
   #resultsTable {
     padding: 4px 4px 8px 4px !important;
@@ -231,6 +237,19 @@
     font-weight: 800 !important;
     border: 1px solid #999 !important;
   }
+}
+.btn-align-label {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 5px;
+  visibility: hidden;
+  height: 21px;
+}
+.results-sep {
+  border: 0;
+  border-top: 1px solid #dcdfe6;
+  margin: 6px 0;
 }
 </style>
 </head>
@@ -277,37 +296,39 @@
             </div>
             <div class="col-6 col-md-3 btn-submit-col">
               <div class="form-group">
-                <label class="hide-mobile">&nbsp;</label><br class="hide-mobile">
+                <label class="btn-align-label">&nbsp;</label>
                 <!-- ASPX: BtnSubmit TabIndex=4 -->
-                <button class="btn btn-success" id="btnSubmit" tabindex="4" onclick="btnSubmitClick()">Submit</button>
+                <button type="button" class="btn btn-success" id="btnSubmit" tabindex="4" onclick="btnSubmitClick(event)">Submit</button>
               </div>
             </div>
           </div>
 
+          <hr class="results-sep">
+
           <div class="row">
-            <div class="col-6 col-md-4">
+            <div class="col-4 col-md-4">
               <div class="form-group">
                 <label for="txtStartDate">Start Date</label>
                 <!-- ASPX: txtStartDate TabIndex=5, CalendarExtender -->
-                <input type="text" class="form-control" id="txtStartDate" placeholder="Enter Start Date"
+                <input type="text" class="form-control" id="txtStartDate" placeholder="Start Date"
                   tabindex="5" readonly style="cursor:pointer;"
                   onkeydown="onStartDateKey(event)">
               </div>
             </div>
-            <div class="col-6 col-md-4">
+            <div class="col-4 col-md-4">
               <div class="form-group">
                 <label for="txtEndDate">End Date</label>
                 <!-- ASPX: txtEndDate TabIndex=6, CalendarExtender -->
-                <input type="text" class="form-control" id="txtEndDate" placeholder="Enter End Date"
+                <input type="text" class="form-control" id="txtEndDate" placeholder="End Date"
                   tabindex="6" readonly style="cursor:pointer;"
                   onkeydown="onEndDateKey(event)">
               </div>
             </div>
-            <div class="col-12 col-md-4 btn-search-col">
+            <div class="col-4 col-md-4 btn-search-col">
               <div class="form-group">
-                <label class="hide-mobile">&nbsp;</label><br class="hide-mobile">
-                <!-- ASPX: btnSearch TabIndex=7 → BindGrid → txtStartDate.Focus -->
-                <button class="btn btn-success" id="btnSearch" tabindex="7" onclick="btnSearchClick()">Search</button>
+                <label class="btn-align-label">&nbsp;</label>
+                <!-- ASPX: btnSearch TabIndex=7 → BindGrid -->
+                <button type="button" class="btn btn-success" id="btnSearch" tabindex="7" onclick="btnSearchClick(event)">Search</button>
               </div>
             </div>
           </div>
@@ -370,17 +391,17 @@ async function init() {
     dateFormat: 'd/M/Y',      // dd/MMM/yyyy → flatpickr "d/M/Y" = 04/Apr/2026
     allowInput: false,         // readonly - click to open
     disableMobile: true,
+    onClose: function(selectedDates, dateStr, instance) {
+      if (instance && instance.element) {
+        instance.element.blur();
+      }
+    }
   };
 
   try {
     fpDate  = flatpickr('#txtDate',      { ...fpCfg, onChange: (selectedDates, dateStr) => { onDateChange(dateStr); } });
     fpStart = flatpickr('#txtStartDate', { ...fpCfg });
     fpEnd   = flatpickr('#txtEndDate',   { ...fpCfg });
-    // Make inputs editable when flatpickr loads
-    ['txtDate','txtStartDate','txtEndDate'].forEach(id => {
-      const inp = document.getElementById(id);
-      if(inp) inp.readOnly = false; // flatpickr handles it
-    });
   } catch(fpErr) {
     console.warn('Flatpickr failed, using text input:', fpErr);
     // Fallback: allow manual typing
@@ -429,6 +450,8 @@ function setDateVal(id, dateStr) {
   const fp = id==='txtDate'?fpDate : id==='txtStartDate'?fpStart : fpEnd;
   if (fp) {
     fp.setDate(d, false);  // false = no onChange trigger
+    fp.close();
+    if (fp.element) fp.element.blur();
     // Ensure the input shows dd/MMM/yyyy format
     document.getElementById(id).value = dateStr;
   }
@@ -598,7 +621,21 @@ async function bindGrid() {
 
 // ── SAVE RESULT (ASPX: BtnSubmit_Click) ───────────────────
 // ASPX: SaveResult(txtResult, GameSelection.SelectedValue, txtDate, User.Identity.Name)
-async function btnSubmitClick() {
+async function btnSubmitClick(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  [fpDate, fpStart, fpEnd].forEach(fp => {
+    if (fp) {
+      fp.close();
+      if (fp.element) fp.element.blur();
+    }
+  });
+  if (document.activeElement && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+
   const gid    = document.getElementById('gameSelection').value;
   const date   = document.getElementById('txtDate').value;
   let   result = document.getElementById('txtResult').value.trim();
@@ -619,6 +656,12 @@ async function btnSubmitClick() {
       setDateVal('txtStartDate', date);
       setDateVal('txtEndDate',   date);
       await bindGrid();
+      [fpDate, fpStart, fpEnd].forEach(fp => {
+        if (fp) {
+          fp.close();
+          if (fp.element) fp.element.blur();
+        }
+      });
       document.getElementById('gameSelection').focus();
     } else {
       ErrorMessage();
@@ -627,10 +670,23 @@ async function btnSubmitClick() {
   } catch(e) { ErrorMessage(); }
 }
 
-// ── SEARCH (ASPX: btnSearch_Click → BindGrid → txtStartDate.Focus) ──
-async function btnSearchClick() {
+// ── SEARCH (ASPX: btnSearch_Click → BindGrid) ──
+async function btnSearchClick(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  [fpDate, fpStart, fpEnd].forEach(fp => {
+    if (fp) {
+      fp.close();
+      if (fp.element) fp.element.blur();
+    }
+  });
+  if (document.activeElement && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+
   await bindGrid();
-  document.getElementById('txtStartDate').focus();
 }
 
 // ── DATE CHANGE (ASPX: txtDate_TextChanged → GetResult) ───
@@ -641,7 +697,12 @@ function onDateChange(dateStr) {
 // ── KEYBOARD NAV (ASPX: pageLoad keydown handlers) ────────
 // txtDate Enter → gameSelection.focus
 function onDateKey(e) {
-  if(e.key==='Enter'){e.preventDefault();getResult();document.getElementById('gameSelection').focus();}
+  if(e.key==='Enter'){
+    e.preventDefault();
+    fpDate?.close();
+    getResult();
+    document.getElementById('gameSelection').focus();
+  }
 }
 // gameSelection Enter → txtResult.focus+select
 async function onGameKey(e) {
@@ -659,11 +720,20 @@ function onResultKey(e) {
 }
 // txtStartDate Enter → txtEndDate.focus+select
 function onStartDateKey(e) {
-  if(e.key==='Enter'){e.preventDefault();const i=document.getElementById('txtEndDate');i.focus();}
+  if(e.key==='Enter'){
+    e.preventDefault();
+    fpStart?.close();
+    const i=document.getElementById('txtEndDate');
+    i.focus();
+  }
 }
 // txtEndDate Enter → btnSearch.focus
 function onEndDateKey(e) {
-  if(e.key==='Enter'){e.preventDefault();document.getElementById('btnSearch').focus();}
+  if(e.key==='Enter'){
+    e.preventDefault();
+    fpEnd?.close();
+    document.getElementById('btnSearch').focus();
+  }
 }
 
 // ASPX: process(input) — only digits

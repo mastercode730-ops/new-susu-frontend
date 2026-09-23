@@ -7,8 +7,11 @@
 <script src="/js/theme-preload.js"></script>
 <style>
 .hideGridColumn{display:none;}
-#myTable{width:100%;border-collapse:collapse;border:1px solid #000;margin-top:8px;}
-#myTable td{padding:1px 5px;font-size:13px;font-weight:bold;color:#000;text-align:center;height:22px;border:1px solid #ccc;}
+#myTable{width:100%;border-collapse:collapse;border:1px solid #999;margin:4px 0;}
+#myTable:not(:has(tr)){display:none;}
+#myTable td{padding:2px 5px;font-size:13px;font-weight:bold;color:#000;text-align:center;height:22px;border:1px solid #ccc;}
+#lblMessage{display:none;font-size:.76rem;font-weight:800;color:#2e7d32;word-break:break-all;margin:2px 0;}
+#composerTotalWrap{display:none;margin:2px 0 4px;font-size:.8rem;font-weight:900;color:#000;}
 
 /* Embedded chat panel (opens when a Customer link in the results grid is clicked) */
 .right-panel-chat{display:none;flex-direction:column;overflow:hidden;background:#fff;font-family:Arial,sans-serif;font-size:13px;height:calc(100vh - 150px);min-height:480px;border:1px solid #dee2e6;border-radius:8px;}
@@ -60,6 +63,234 @@
 .sh-spin{display:inline-block;width:12px;height:12px;border:2px solid #dee2e6;border-top-color:#6861ce;border-radius:50%;animation:shsp .6s linear infinite;vertical-align:middle;}
 @keyframes shsp{to{transform:rotate(360deg)}}
 .sh-toast{position:fixed;bottom:55px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 14px;border-radius:6px;font-size:.78rem;z-index:9999;display:none;}
+
+/* Desktop general rules */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+.content .form-group label{font-size:.76rem!important;margin-bottom:2px!important;display:block;}
+.content .form-control{padding:.25rem .5rem!important;height:auto!important;font-size:.82rem!important;}
+.content .row{margin-left:-6px;margin-right:-6px;}
+.content .row>[class*="col-"]{padding-left:6px;padding-right:6px;}
+.btn-align-label{
+  display:block;
+  font-size:14px;
+  line-height:1.5;
+  margin-bottom:5px;
+  visibility:hidden;
+  height:21px;
+}
+.results-sep{
+  border:0;
+  border-top:1px solid #dcdfe6;
+  margin:6px 0;
+}
+
+/* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
+@media (max-width: 767.98px) {
+  /* Slim blue header with perfectly aligned hamburger */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 8px !important;
+  }
+  .logo-header {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  .logo-header .navbar-toggler {
+    order: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 38px !important;
+    padding: 0 !important;
+    margin: 0 auto 0 0 !important;
+    border: none !important;
+    background: transparent !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    display: block !important;
+  }
+  .logo-header .logo {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+  }
+  .logo-header .more {
+    order: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    line-height: 1 !important;
+  }
+  .logo-header .more i {
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  /* Eliminate all gaps between header and card */
+  .main-panel {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+  .main-panel > .content {
+    margin-top: 38px !important;
+    padding: 2px 3px 0 3px !important;
+  }
+  .main-panel > .content > .content,
+  .content .content {
+    margin-top: 0 !important;
+    padding: 0 !important;
+  }
+  .content > .row,
+  .content .row {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .content > .row > [class*="col-"],
+  .content .row > [class*="col-"] {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+  .content .card, .card {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+  }
+  .content .card-header {
+    padding: 4px 8px !important;
+  }
+  .content .card-title {
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    margin: 0 !important;
+  }
+  .content .card-body {
+    padding: 4px 6px !important;
+  }
+  .content .form-group {
+    margin-bottom: 3px !important;
+  }
+  .content .form-group label {
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    margin-bottom: 1px !important;
+    white-space: nowrap !important;
+  }
+  .content .form-control {
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+    height: 31px !important;
+    padding: 2px 6px !important;
+    border: 1.5px solid #888 !important;
+    border-radius: 4px !important;
+    background: #fff !important;
+  }
+  #txtNumber,
+  #txtAmount,
+  #txtDate {
+    text-align: center !important;
+  }
+  #txtDate {
+    padding: 2px 3px !important;
+    font-size: 0.8rem !important;
+  }
+  .btn-align-label {
+    display: block !important;
+    font-size: 0.74rem !important;
+    font-weight: 900 !important;
+    line-height: 1.15 !important;
+    margin-bottom: 1px !important;
+    visibility: hidden !important;
+    height: 14px !important;
+  }
+  .results-sep {
+    border: 0 !important;
+    border-top: 1px solid #dcdfe6 !important;
+    margin: 4px 0 5px 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  .btn-copy-col .btn,
+  .btn-search-col .btn {
+    width: 100% !important;
+    height: 31px !important;
+    padding: 2px 4px !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    border-radius: 4px !important;
+    line-height: 1 !important;
+    margin-top: 0 !important;
+  }
+  #saleTableWrap {
+    margin-top: 4px !important;
+    padding: 2px 2px 6px 2px !important;
+    max-height: calc(100vh - 215px) !important;
+    overflow: auto !important;
+  }
+  #saleTableWrap table {
+    min-width: 580px !important;
+    width: 100% !important;
+  }
+  #saleTableWrap th {
+    padding: 5px 6px !important;
+    font-size: 0.76rem !important;
+    background: #343a40 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+  }
+  #saleTableWrap td {
+    padding: 3px 5px !important;
+    font-size: 0.78rem !important;
+    color: #000 !important;
+    font-weight: 800 !important;
+    border: 1px solid #999 !important;
+    white-space: nowrap !important;
+  }
+  #saleTableWrap tfoot td {
+    background: #e2e8f0 !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    font-size: 0.82rem !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -73,56 +304,60 @@
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-5 col-md-4">
               <div class="form-group">
-                <label>Number</label>
+                <label for="txtNumber">Number</label>
                 <input type="text" class="form-control" id="txtNumber" placeholder="Number"
                   onfocus="this.select()" onkeypress="return shIsNumber(event)" onkeydown="numberKD(event)">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-4 col-md-4">
               <div class="form-group">
-                <label>Amount</label>
+                <label for="txtAmount">Amount</label>
                 <input type="text" class="form-control" id="txtAmount" placeholder="Amount"
                   onfocus="this.select()" onkeypress="return shIsNumber(event)" oninput="shProcess(this)" onkeydown="amountKD(event)">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-3 col-md-4 btn-copy-col">
               <div class="form-group">
-                <label>&nbsp;</label><br>
-                <button type="button" class="btn btn-success" onclick="copyMessage()">Copy</button>
+                <label class="btn-align-label">&nbsp;</label>
+                <button type="button" class="btn btn-success" id="btnCopy" onclick="copyMessage()">Copy</button>
               </div>
             </div>
           </div>
 
-          <div id="lblMessage" style="display:block;"></div>
+          <div id="lblMessage"></div>
           <div class="table-responsive" style="height:auto;width:100%">
             <table id="myTable"><tbody id="myTableBody"></tbody></table>
           </div>
-          <span id="lblTotalAmountShow"></span> <span id="lblTotalAmount"></span>
+          <div id="composerTotalWrap">
+            <span id="lblTotalAmountShow"></span> <span id="lblTotalAmount"></span>
+          </div>
 
-          <div class="row" style="margin-top:10px;">
-            <div class="col-md-3">
+          <hr class="results-sep">
+
+          <div class="row">
+            <div class="col-5 col-md-3">
               <div class="form-group">
-                <label>Date</label>
+                <label for="txtDate">Date</label>
                 <input type="date" class="form-control" id="txtDate">
               </div>
             </div>
-            <div class="col-md-5">
+            <div class="col-4 col-md-6">
               <div class="form-group">
-                <label>Message</label>
-                <input type="text" class="form-control" id="txtMessage" placeholder="Enter Message">
+                <label for="txtMessage">Message</label>
+                <input type="text" class="form-control" id="txtMessage" placeholder="Message">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-3 col-md-3 btn-search-col">
               <div class="form-group">
-                <label>&nbsp;</label><br>
-                <button type="button" class="btn btn-success" onclick="loadHistory()">Search</button>
+                <label class="btn-align-label">&nbsp;</label>
+                <button type="button" class="btn btn-success" id="btnSearch" onclick="loadHistory()">Search</button>
               </div>
             </div>
           </div>
 
-          <div class="table-responsive">
+          <div class="table-responsive" id="saleTableWrap">
             <table class="table-bordered-bd-primary table-hover" cellpadding="4"
               style="text-transform:capitalize;text-align:center;width:100%;">
               <thead>
@@ -299,19 +534,30 @@ function addRow(s1,s2){
 function shSubTotal(){
   const tb=SG('myTableBody');let sum=0;
   Array.from(tb.rows).forEach(r=>sum+=parseFloat(r.cells[1].textContent)||0);
-  if(sum){SG('lblTotalAmountShow').textContent='Total Amount:';SG('lblTotalAmount').textContent=sum.toFixed(0);}
-  else{SG('lblTotalAmountShow').textContent='';SG('lblTotalAmount').textContent='';}
+  const wrap=SG('composerTotalWrap');
+  if(sum){
+    SG('lblTotalAmountShow').textContent='Total Amount: ';
+    SG('lblTotalAmount').textContent=sum.toFixed(0);
+    if(wrap)wrap.style.display='block';
+  } else {
+    SG('lblTotalAmountShow').textContent='';
+    SG('lblTotalAmount').textContent='';
+    if(wrap)wrap.style.display='none';
+  }
 }
 function copyMessage(){
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   const tb=SG('myTableBody');let final='';
   Array.from(tb.rows).forEach(r=>{ final+=r.cells[0].textContent+'='+r.cells[1].textContent+','; });
   final=final.slice(0,-1);
   SG('lblMessage').innerHTML=final;
+  if(final){SG('lblMessage').style.display='block';}else{SG('lblMessage').style.display='none';}
   SG('txtMessage').value=final;
 }
 
 // ── ASPX: BtnSearch_Click → BindGrid() → SP ShowSaleHistory(@fUID,@Date,@Filter) ──
 async function loadHistory(){
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   const date=SG('txtDate').value,filter=SG('txtMessage').value.trim();
   if(!filter){SG('saleTbody').innerHTML='<tr><td colspan="7">Enter a message to search</td></tr>';return;}
   SG('saleTbody').innerHTML='<tr><td colspan="7"><span class="sh-spin"></span> Loading...</td></tr>';

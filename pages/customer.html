@@ -43,6 +43,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 .content #formCard .row > [class*="col-"],.content #ratesCard .row>.col{padding-left:6px;padding-right:6px;}
 .content #formCard .checkbox-inline,.content #formCard input[type=checkbox]{vertical-align:middle;}
 .content #formCard .chk-row{display:flex;flex-wrap:wrap;align-items:center;column-gap:14px;row-gap:4px;}
+.content #formCard .chk-item{display:inline-flex;align-items:center;gap:4px;}
 .content #formCard .chk-row label{display:inline!important;font-size:.72rem!important;margin:0 0 0 3px!important;color:#8b1d1d;font-weight:800;vertical-align:middle;}
 .content #formCard .chk-row input[type=checkbox]{margin:0;vertical-align:middle;}
 /* Grid: horizontal scroll instead of squeezing columns */
@@ -78,46 +79,94 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 
 /* Mobile Optimization: minimal scrolling, bold, heavy, clear fields */
 @media (max-width: 767px) {
-  .main-panel > .content {
+  .main-panel > .content,
+  .main-panel .content,
+  .content {
     margin-top: 50px !important;
-    padding: 4px 6px !important;
+    padding: 2px 3px !important;
   }
   .content > .row {
-    margin-left: -3px !important;
-    margin-right: -3px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
   .content > .row > [class*="col-"] {
-    padding-left: 3px !important;
-    padding-right: 3px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
-  #formCard, #searchCard, #ratesCard {
+  #formCard, #searchCard, #ratesCard, .card {
+    padding: 0 !important;
     max-height: none !important;
-    margin-bottom: 8px !important;
-    border-radius: 8px !important;
+    margin-bottom: 6px !important;
+    border-radius: 6px !important;
+    width: 100% !important;
   }
   #formCard .card-header, #ratesCard .card-header {
-    padding: 6px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 4px 8px !important;
+  }
+  #formCard .legacy-toplink, #ratesCard .legacy-toplink {
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    color: #1d5fa8 !important;
+    text-decoration: underline !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  #formCard .card-header .card-title, #ratesCard .card-header .card-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    color: #8b1d1d !important;
+    text-align: left !important;
+  }
+  #formCard .card-header .card-title #formTitle {
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    color: #8b1d1d !important;
+    line-height: 1 !important;
+  }
+  #formCard .card-header .card-title #btnNewTop {
+    margin-left: auto !important;
+    padding: 2px 8px !important;
+    font-size: 0.72rem !important;
   }
   #formCard .card-body, #ratesCard .card-body {
-    padding: 6px 8px !important;
+    padding: 4px 6px !important;
     overflow-y: visible !important;
   }
   #formCard .card-action, #ratesCard .card-action {
-    padding: 6px 10px !important;
+    padding: 4px 6px 6px 6px !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  #formCard .card-action .btn, #ratesCard .card-action .btn {
+    flex: 1 !important;
+    padding: 6px 12px !important;
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    border-radius: 5px !important;
   }
   #formCard .row, #ratesCard .row {
-    margin-left: -3px !important;
-    margin-right: -3px !important;
+    margin-left: -2px !important;
+    margin-right: -2px !important;
   }
   #formCard .row > [class*="col-"], #ratesCard .row > .col {
-    padding-left: 3px !important;
-    padding-right: 3px !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
   }
   #formCard .form-group, #ratesCard .form-group {
     margin-bottom: 2px !important;
   }
   #formCard .form-group label, #ratesCard .form-group label {
-    font-size: 0.73rem !important;
+    font-size: 0.72rem !important;
     font-weight: 900 !important;
     color: #8b1d1d !important;
     margin-bottom: 1px !important;
@@ -127,9 +176,9 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     text-overflow: ellipsis !important;
   }
   #formCard .form-control, #ratesCard .form-control {
-    height: 31px !important;
-    min-height: 31px !important;
-    padding: 2px 6px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 2px 5px !important;
     font-size: 0.84rem !important;
     font-weight: 800 !important;
     color: #111 !important;
@@ -138,35 +187,40 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     border-radius: 4px !important;
   }
   #formCard select.form-control {
-    height: 31px !important;
-    font-size: 0.78rem !important;
-    padding: 2px 4px !important;
+    height: 30px !important;
+    font-size: 0.76rem !important;
+    padding: 2px 3px !important;
   }
   #formCard .chk-row {
-    column-gap: 12px !important;
-    row-gap: 3px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2px 6px !important;
     padding: 2px 0 !important;
-    margin-top: 3px !important;
+    margin-top: 2px !important;
     margin-bottom: 2px !important;
+  }
+  .chk-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
   }
   #formCard .chk-row label {
     font-size: 0.73rem !important;
     font-weight: 800 !important;
     color: #8b1d1d !important;
-    margin-left: 2px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
   }
   #formCard .chk-row input[type=checkbox] {
     width: 15px !important;
     height: 15px !important;
-  }
-  .card-action .btn {
-    padding: 5px 14px !important;
-    font-size: 0.82rem !important;
-    font-weight: 800 !important;
-    border-radius: 4px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
   }
   #searchHeader {
-    padding: 6px 10px !important;
+    padding: 5px 8px !important;
     gap: 4px 8px !important;
   }
   #searchHeader .search-find {
@@ -267,10 +321,10 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
             </div>
           </div>
           <div class="form-group chk-row">
-            <input type="checkbox" id="chkSelfComm"> <label for="chkSelfComm">Self Commission</label>
-            <input type="checkbox" id="chkYantriTo"> <label for="chkYantriTo">Yantri To</label>
-            <input type="checkbox" id="chkIsLimit"> <label for="chkIsLimit">Limit</label>
-            <input type="checkbox" id="chkIsUttar"> <label for="chkIsUttar">Uttar</label>
+            <span class="chk-item"><input type="checkbox" id="chkSelfComm"> <label for="chkSelfComm">Self Commission</label></span>
+            <span class="chk-item"><input type="checkbox" id="chkYantriTo"> <label for="chkYantriTo">Yantri To</label></span>
+            <span class="chk-item"><input type="checkbox" id="chkIsLimit"> <label for="chkIsLimit">Limit</label></span>
+            <span class="chk-item"><input type="checkbox" id="chkIsUttar"> <label for="chkIsUttar">Uttar</label></span>
           </div>
           <input type="hidden" id="hidCID">
         </div>

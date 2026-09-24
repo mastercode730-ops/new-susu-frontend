@@ -80,17 +80,24 @@ tbody tr{cursor:pointer;}
           <input type="text" class="form-control" id="txtsearch" placeholder="Filter Name / Mobile"
             oninput="filterGameBal(this.value)" onfocus="this.select()">
         </div>
-        <div class="table-responsive">
-          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
-            <thead><tr style="background-color:LightGray;">
-              <th>SRNo</th><th>Customer</th><th>Opening</th><th>Today</th><th>Balance</th>
-              <th id="thAdd" style="display:none;">ADD</th>
+        <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;margin-bottom:0;">
+            <thead style="position: sticky; top: 0; z-index: 2;"><tr style="background-color:LightGray;">
+              <th style="position: sticky; top: 0; background: #d9d9d9; z-index: 2;">SRNo</th>
+              <th style="position: sticky; top: 0; background: #d9d9d9; z-index: 2;">Customer</th>
+              <th style="position: sticky; top: 0; background: #d9d9d9; z-index: 2;">Opening</th>
+              <th style="position: sticky; top: 0; background: #d9d9d9; z-index: 2;">Today</th>
+              <th style="position: sticky; top: 0; background: #d9d9d9; z-index: 2;">Balance</th>
+              <th id="thAdd" style="display:none; position: sticky; top: 0; background: #d9d9d9; z-index: 2;">ADD</th>
             </tr></thead>
             <tbody id="bodyGameBal"><tr><td colspan="6" class="emsg"><span class="spin"></span> Loading...</td></tr></tbody>
-            <tfoot style="background-color:LightGray;font-weight:bold;"><tr>
-              <td>SRNo</td><td>Total</td>
-              <td id="ft_gb_open">&ndash;</td><td id="ft_gb_today">&ndash;</td><td id="ft_gb_bal">&ndash;</td>
-              <td id="ft_gb_add" style="display:none;">ADD</td>
+            <tfoot style="background-color:LightGray;font-weight:bold;position: sticky; bottom: 0; z-index: 2;"><tr>
+              <td style="position: sticky; bottom: 0; background: #eee; z-index: 2;">SRNo</td>
+              <td style="position: sticky; bottom: 0; background: #eee; z-index: 2;">Total</td>
+              <td id="ft_gb_open" style="position: sticky; bottom: 0; background: #eee; z-index: 2;">&ndash;</td>
+              <td id="ft_gb_today" style="position: sticky; bottom: 0; background: #eee; z-index: 2;">&ndash;</td>
+              <td id="ft_gb_bal" style="position: sticky; bottom: 0; background: #eee; z-index: 2;">&ndash;</td>
+              <td id="ft_gb_add" style="display:none; position: sticky; bottom: 0; background: #eee; z-index: 2;">ADD</td>
             </tr></tfoot>
           </table>
         </div>
@@ -306,6 +313,7 @@ async function init() {
   // Flatpickr
   flatpickr('#txtStartDate', {
     dateFormat: 'd/M/Y',
+    maxDate: 'today',
     allowInput: false,
     disableMobile: true,
     defaultDate: parseDate(_currentDate),

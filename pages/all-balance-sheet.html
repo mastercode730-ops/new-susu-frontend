@@ -6,13 +6,27 @@
 <script src="/js/theme-preload.js"></script>
 <link rel="stylesheet" href="/css/main.css">
 <style>
-.pos{color:var(--green2);font-weight:600;}
-.neg{color:var(--red);font-weight:600;}
-.emsg{padding:24px;text-align:center;color:var(--muted);font-size:.85rem;}
+/* Bolder, high-contrast typography and compact layout */
+.content label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:10px 16px!important;}
+.content table{border-collapse:collapse!important;width:100%!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
+.content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
+.content table tfoot td{background:#eee!important;font-weight:900!important;}
+.content table tbody tr:hover td{background:#eef3ff!important;}
+.pos{color:#28a745!important;font-weight:900!important;}
+.neg{color:#dc3545!important;font-weight:900!important;}
+.table-responsive{overflow-x:auto;max-height:500px;overflow-y:auto;}
+.table-responsive thead th{position:sticky;top:0;z-index:2;background:#d9d9d9!important;}
+.table-responsive tfoot td{position:sticky;bottom:0;z-index:2;background:#eee!important;}
+.emsg{padding:24px;text-align:center;color:var(--muted);font-size:.88rem;font-weight:700;}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
-tbody tr[data-row]{cursor:pointer;}
-tbody tr[data-row]:hover td{background:rgba(18,140,126,.06);}
+/* Vendor theme reserves 62px above .content */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
 </style>
 </head>
 <body>
@@ -24,53 +38,44 @@ tbody tr[data-row]:hover td{background:rgba(18,140,126,.06);}
         <div class="card-header">
           <div class="card-title">
             Balance Sheet
-            <button class="btn btn-danger btn-sm" style="float:right;" onclick="history.back()">&larr; Back</button>
+            <button class="btn btn-danger btn-sm" style="float:right; font-weight:800; padding:4px 14px;" onclick="history.back()">&larr; Back</button>
           </div>
         </div>
         <div class="card-body">
-          <!-- ASPX: SelectUID=1 → Game customers (GetMyGameBalanceHistory) -->
-          <!-- ASPX: SelectUID=2 → Receivers    (GetMYBalanceHistory)       -->
-          <div class="btn-group" style="margin-bottom:14px;">
-            <button class="btn btn-success" id="tabGame" onclick="switchTab(1)">Game Customers</button>
-            <button class="btn btn-secondary" id="tabRcv"  onclick="switchTab(2)">Receivers</button>
-          </div>
-
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group">
+          <div class="row align-items-end" style="margin-bottom: 12px;">
+            <div class="col-md-4 col-sm-12">
+              <div class="form-group" style="margin-bottom: 0;">
                 <label for="custSel">Customer</label>
                 <select class="form-control" id="custSel" onchange="loadData()">
                   <option value="">Select Customer</option>
                 </select>
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="fromDate">From</label>
+            <div class="col-md-3 col-sm-6">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="fromDate">From Date</label>
                 <input type="date" class="form-control" id="fromDate">
               </div>
             </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="toDate">To</label>
+            <div class="col-md-3 col-sm-6">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="toDate">To Date</label>
                 <input type="date" class="form-control" id="toDate">
               </div>
             </div>
-            <div class="col-md-2">
-              <div class="form-group">
-                <label>&nbsp;</label>
-                <button class="btn btn-success btn-block" onclick="loadData()">Load</button>
-              </div>
+            <div class="col-md-2 col-sm-12">
+              <button class="btn btn-success btn-block" id="btnLoad" onclick="loadData()" style="font-weight: 800; padding: 7px 16px;">Load</button>
             </div>
           </div>
 
-          <!-- ASPX: RadioButtonAll, RadioButtonSale, RadioButtonAccounts -->
-          <div class="btn-group" style="margin-bottom:14px;">
-            <button class="btn btn-success" id="typeAll"      onclick="setType('all')">All</button>
-            <button class="btn btn-secondary" id="typeSale"     onclick="setType('sale')">Sale</button>
-            <button class="btn btn-secondary" id="typeAccounts" onclick="setType('accounts')">Account</button>
+          <!-- Type Filters: All, Sale, Account -->
+          <div style="margin-bottom: 12px;">
+            <div class="btn-group" id="typeGroup">
+              <button class="btn btn-success" id="typeAll" onclick="setType('all')" style="font-weight: 800; min-width: 65px; padding: 6px 16px;">All</button>
+              <button class="btn btn-secondary" id="typeSale" onclick="setType('sale')" style="font-weight: 800; min-width: 65px; padding: 6px 16px;">Sale</button>
+              <button class="btn btn-secondary" id="typeAccounts" onclick="setType('accounts')" style="font-weight: 800; min-width: 75px; padding: 6px 16px;">Account</button>
+            </div>
           </div>
-          <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;">Tap a row to see that date's game-wise breakdown</div>
         </div>
 
         <div class="table-responsive" id="tableWrap">
@@ -81,12 +86,12 @@ tbody tr[data-row]:hover td{background:rgba(18,140,126,.06);}
   </div>
 </div>
 
-<!-- Game-wise history modal (row click) — same pattern as Hisab.aspx's history popup -->
+<!-- Game-wise history modal (row click) -->
 <div class="modal fade" id="histModal" tabindex="-1" role="dialog">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="histTitle">Game History</h5>
+        <h5 class="modal-title" id="histTitle" style="font-weight: 800;">Game History</h5>
         <button type="button" class="close" onclick="closeHist()"><span>&times;</span></button>
       </div>
       <div class="modal-body">
@@ -119,34 +124,30 @@ tbody tr[data-row]:hover td{background:rgba(18,140,126,.06);}
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
 <script>
-// ASPX: SelectUID=1 → Game tab, SelectUID=2 → Receiver tab
-let currentTab  = 1;   // 1=game, 2=receiver
 let currentType = 'all';
 let currentCustUID = '';
 let currentCustName = '';
-let rowsData = [];
+let allRowsData = [];
+let displayRows = [];
 
 const p = new URLSearchParams(location.search);
 
 async function init() {
   await initPage('all-balance-sheet');
 
-  // Default dates: first of month to today
   const ist   = new Date(new Date().getTime() + 5.5*3600000);
   const today = ist.toISOString().split('T')[0];
   const first = today.substring(0,8) + '01';
-  document.getElementById('fromDate').value = first;
-  document.getElementById('toDate').value   = today;
+  const elFrom = document.getElementById('fromDate');
+  const elTo = document.getElementById('toDate');
+  elFrom.max = today;
+  elTo.max = today;
+  elFrom.value = first;
+  elTo.value   = today;
 
-  // URL params: ?UID=X&SelectUID=1or2 (same as AllBalanceSheet.aspx?UID=X&SelectUID=1)
-  const uid       = p.get('UID')       || '';
-  const selectUID = p.get('SelectUID') || '1';
-  currentTab = parseInt(selectUID) === 2 ? 2 : 1;
-  updateTabUI();
-
+  const uid = p.get('UID') || '';
   await loadCustomers();
 
-  // Auto-select if UID given in URL
   if (uid) {
     document.getElementById('custSel').value = uid;
     loadData();
@@ -169,25 +170,13 @@ async function loadCustomers() {
   } catch(e) {}
 }
 
-function switchTab(tab) {
-  currentTab = tab;
-  updateTabUI();
-  loadCustomers();
-  document.getElementById('tableWrap').innerHTML = '<div class="emsg">Select a customer and click Load</div>';
-}
-
-function updateTabUI() {
-  document.getElementById('tabGame').className = 'btn ' + (currentTab === 1 ? 'btn-success' : 'btn-secondary');
-  document.getElementById('tabRcv').className  = 'btn ' + (currentTab === 2 ? 'btn-success' : 'btn-secondary');
-}
-
 function setType(t) {
   currentType = t;
   ['all','sale','accounts'].forEach(x => {
     const el = document.getElementById('type' + x.charAt(0).toUpperCase() + x.slice(1));
     if (el) el.className = 'btn ' + (x === t ? 'btn-success' : 'btn-secondary');
   });
-  loadData();
+  applyFilterAndRender();
 }
 
 async function loadData() {
@@ -198,46 +187,93 @@ async function loadData() {
   const from = document.getElementById('fromDate').value;
   const to   = document.getElementById('toDate').value;
 
-  document.getElementById('tableWrap').innerHTML = '<div class="emsg"><span class="spin"></span></div>';
+  const btn = document.getElementById('btnLoad');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Loading...';
+  }
+  document.getElementById('tableWrap').innerHTML = '<div class="emsg"><span class="spin"></span> Loading...</div>';
 
   try {
-    // ASPX: SelectUID=1 → GetMyGameBalanceHistory/Sale/Accounts
-    //       SelectUID=2 → GetMYBalanceHistory/Sale/Accounts
-    const endpoint = currentTab === 1
-      ? `/api/balance/game-balance-history?customerUID=${custUID}&fromDate=${from}&toDate=${to}&type=${currentType === 'all' ? '' : currentType}`
-      : `/api/balance/my-balance-history?customerUID=${custUID}&fromDate=${from}&toDate=${to}&type=${currentType === 'all' ? '' : currentType}`;
-
+    const endpoint = `/api/balance/game-balance-history?customerUID=${encodeURIComponent(custUID)}&fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}`;
     const r = await API.get(endpoint);
-    renderTable(r?.data || []);
+    allRowsData = r?.data || [];
+    applyFilterAndRender();
   } catch(e) {
-    document.getElementById('tableWrap').innerHTML = '<div class="emsg">Error loading data</div>';
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg" style="color:#dc3545;">Error loading data</div>';
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = 'Load';
+    }
   }
 }
 
-// ASPX GridView columns for this SP: MessageDateTime, Lene (Debit), Dene (Credit),
-// RunningTotal (Balance), Type — there is NO CustomerName/Narration column (this
-// is a single customer's own statement, so repeating their name every row would
-// be redundant — matches the real ASPX design, which has no Customer column here).
-function renderTable(data) {
-  rowsData = data || [];
-  if (!rowsData.length) {
+function applyFilterAndRender() {
+  if (!allRowsData.length) {
     document.getElementById('tableWrap').innerHTML = '<div class="emsg">No records found</div>';
     return;
   }
+
+  // Classification rule:
+  // - Adjustments ('Receive Adjustment', 'Paid Adjustment', 'AdjustReceipt(-)', 'AdjustPayment(+)', etc.)
+  //   MUST come under the 'Sale' tab, NOT under 'Account'.
+  // - 'Sale' includes: Game sales ('Sale', 'Self Hissa', 'Self Comm') AND all Adjustments.
+  // - 'Account' includes: Pure accounts ('Paid', 'Received', 'Commission', etc.) excluding Adjustments and Game sales.
+  // - 'All' includes: Everything.
+  let filtered = allRowsData;
+  if (currentType === 'sale') {
+    filtered = allRowsData.filter(d => {
+      const t = (d.Type || '').toLowerCase();
+      return ['sale', 'self hissa', 'self comm'].includes(t) || t.includes('adjust');
+    });
+  } else if (currentType === 'accounts') {
+    filtered = allRowsData.filter(d => {
+      const t = (d.Type || '').toLowerCase();
+      return !['sale', 'self hissa', 'self comm', 'opening'].includes(t) && !t.includes('adjust');
+    });
+  }
+
+  let running = 0;
+  displayRows = filtered.map(d => {
+    const win = (d.WinAmount !== undefined && d.WinAmount !== null)
+      ? parseFloat(d.WinAmount)
+      : ((parseFloat(d.Lene) || 0) - (parseFloat(d.Dene) || 0));
+    running += win;
+    return {
+      ...d,
+      ComputedWin: win,
+      ComputedRunning: running,
+      ComputedLene: (d.Lene !== undefined && d.Lene !== null && d.Lene !== '') ? parseFloat(d.Lene) : (win > 0 ? win : 0),
+      ComputedDene: (d.Dene !== undefined && d.Dene !== null && d.Dene !== '') ? parseFloat(d.Dene) : (win < 0 ? Math.abs(win) : 0)
+    };
+  });
+
+  renderTable(displayRows);
+}
+
+function renderTable(data) {
+  if (!data.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg">No records found for ' + currentType.toUpperCase() + '</div>';
+    return;
+  }
   let totalLene = 0, totalDene = 0;
-  const rows = rowsData.map((d, i) => {
-    totalLene += parseFloat(d.Lene || 0);
-    totalDene += parseFloat(d.Dene || 0);
+  const rows = data.map((d, i) => {
+    const lene = d.ComputedLene || 0;
+    const dene = d.ComputedDene || 0;
+    totalLene += lene;
+    totalDene += dene;
     const date = d.MessageDateTime ? new Date(d.MessageDateTime).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
-    const bal = parseFloat(d.RunningTotal || 0);
-    return `<tr data-row onclick="rowClick(${i})">
+    const bal = (d.ComputedRunning !== undefined) ? d.ComputedRunning : (parseFloat(d.RunningTotal) || 0);
+    return `<tr>
       <td>${date}</td>
-      <td class="pos">${d.Lene > 0 ? parseFloat(d.Lene).toLocaleString('en-IN') : ''}</td>
-      <td class="neg">${d.Dene > 0 ? parseFloat(d.Dene).toLocaleString('en-IN') : ''}</td>
+      <td class="pos">${lene > 0 ? lene.toLocaleString('en-IN') : ''}</td>
+      <td class="neg">${dene > 0 ? dene.toLocaleString('en-IN') : ''}</td>
       <td class="${bal < 0 ? 'neg' : 'pos'}">${bal.toLocaleString('en-IN')}</td>
       <td>${d.Type || ''}</td>
     </tr>`;
   }).join('');
+  const net = totalLene - totalDene;
   document.getElementById('tableWrap').innerHTML = `
     <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
       <thead><tr style="background-color:LightGray;">
@@ -245,19 +281,20 @@ function renderTable(data) {
       </tr></thead>
       <tbody>${rows}</tbody>
       <tfoot style="background-color:LightGray;font-weight:bold;"><tr>
-        <td>Total (${rowsData.length})</td>
+        <td>Total (${data.length})</td>
         <td class="pos">${totalLene.toLocaleString('en-IN')}</td>
         <td class="neg">${totalDene.toLocaleString('en-IN')}</td>
-        <td colspan="2" class="${(totalLene - totalDene) < 0 ? 'neg' : 'pos'}">Net: ${(totalLene - totalDene).toLocaleString('en-IN')}</td>
+        <td colspan="2" class="${net < 0 ? 'neg' : 'pos'}">Net: ${net.toLocaleString('en-IN')}</td>
       </tr></tfoot>
     </table>`;
 }
 
-// ASPX: row click on grvGameHisab/grvgames → GetDateWiseMyHisabHistory (game
-// customers) or GetDateWiseWinAmountHistory (receivers) for that exact date.
 function rowClick(i) {
-  const d = rowsData[i];
+  const d = displayRows[i];
   if (!d || !d.MessageDateTime) return;
+  // If it's pure account entry without game breakdown, do not open empty modal
+  const t = (d.Type || '').toLowerCase();
+  if (t === 'received' || t === 'paid') return;
   showHistory(d.MessageDateTime);
 }
 
@@ -270,14 +307,12 @@ function toDdMmmYyyy(dateVal) {
 async function showHistory(dateVal) {
   const dateStr = toDdMmmYyyy(dateVal);
   $('#histModal').modal('show');
-  document.getElementById('histTitle').textContent = `${currentCustName} — Game History`;
+  document.getElementById('histTitle').textContent = `${currentCustName} — Game History (${dateStr})`;
   document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg"><span class="spin"></span> Loading...</td></tr>';
   document.getElementById('footHist').style.display = 'none';
 
   try {
-    const endpoint = currentTab === 1
-      ? `/api/hisab/game-hisab-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`
-      : `/api/hisab/win-amount-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`;
+    const endpoint = `/api/hisab/game-hisab-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`;
     const r = await API.get(endpoint);
     if (!r?.success || !r.data?.length) {
       document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg">No Data Found!</td></tr>';

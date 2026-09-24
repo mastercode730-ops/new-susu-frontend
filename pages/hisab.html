@@ -432,23 +432,23 @@ async function init() {
   document.getElementById('txtsearch').focus();
 }
 
-// ── BindLastedDate ──
+function getPreviousDate() {
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const d = new Date(Date.now() + istOffset);
+  d.setUTCDate(d.getUTCDate() - 1);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${months[d.getUTCMonth()]}/${d.getUTCFullYear()}`;
+}
+
+// ── Bind Previous Day Date ──
 async function setLatestDate() {
-  try {
-    const r = await API.get('/api/hisab/latest-date');
-    if (r?.success && r.data) {
-      document.getElementById('txtStartDate').value = r.data;
-      _currentDate = r.data;
-    } else {
-      const d = fmtDate(new Date(Date.now() + 5.5*3600000));
-      document.getElementById('txtStartDate').value = d;
-      _currentDate = d;
-    }
-  } catch(e) {
-    const d = fmtDate(new Date(Date.now() + 5.5*3600000));
-    document.getElementById('txtStartDate').value = d;
-    _currentDate = d;
+  const prev = getPreviousDate();
+  const el = document.getElementById('txtStartDate');
+  if (el) el.value = prev;
+  if (window.fpStartDate) {
+    window.fpStartDate.setDate(prev, false);
   }
+  _currentDate = prev;
 }
 
 // ── BindGrid() — calls both SPs ──
@@ -680,8 +680,12 @@ function exportHisab() {
 document.addEventListener('DOMContentLoaded', function() {
   const el = document.getElementById('txtStartDate');
   if (el) {
+    const prevDate = typeof getPreviousDate === 'function' ? getPreviousDate() : '';
+    if (!el.value && prevDate) el.value = prevDate;
     window.fpStartDate = flatpickr(el, {
       dateFormat: 'd/M/Y',
+      defaultDate: el.value || prevDate || undefined,
+      maxDate: 'today',
       allowInput: false,
       disableMobile: true,
       onClose: function(selectedDates, dateStr, instance) {

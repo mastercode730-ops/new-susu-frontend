@@ -31,6 +31,20 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
 </style>
 </head>
 <body>
@@ -68,7 +82,7 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
           </div>
         </div>
         <div class="card-action">
-          <button class="btn btn-success" onclick="saveAccessRights()">Save Access Rights</button>
+          <button class="btn btn-success" id="btnSaveAccess" onclick="saveAccessRights()">Save Access Rights</button>
           <button class="btn btn-danger" onclick="resetAccess()">Reset</button>
         </div>
       </div>
@@ -101,7 +115,7 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
           </div>
         </div>
         <div class="card-action">
-          <button class="btn btn-success" onclick="saveSubUser()">Save Staff</button>
+          <button class="btn btn-success" id="btnSaveStaff" onclick="saveSubUser()">Save Staff</button>
         </div>
       </div>
 
@@ -184,13 +198,15 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
 <script src="/js/nav.js"></script>
 <script>
 let _allClients = []; // for client-side filter (ASPX: filterGrid) — Assign Customers panel
+let _subUserMap = {};
 
 async function init() {
   const user = await initPage('access');
   if (!user) return;
   if (user.SubUID) { window.location.href = '/pages/home.html'; return; }
 
-  await Promise.all([loadSubUsers(), loadAccessRightsList(), loadAssignUserDropdown()]);
+  await loadSubUsers();
+  await Promise.all([loadAccessRightsList(), loadAssignUserDropdown()]);
 }
 
 async function loadSubUsers() {
@@ -199,6 +215,7 @@ async function loadSubUsers() {
   const ddl = document.getElementById('ddlSubUsers');
 
   ddl.innerHTML = '<option value="">Select Sub User</option>';
+  _subUserMap = {};
 
   if (!res || !res.success || !res.data.length) {
     el.innerHTML = '<div class="empty-state">No sub users</div>';
@@ -206,6 +223,7 @@ async function loadSubUsers() {
   }
 
   res.data.forEach(u => {
+    _subUserMap[u.SubUserID] = u.subusername || '';
     const opt = document.createElement('option');
     opt.value = u.SubUserID;
     const name = u.subusername ? `${u.subusername} (${u.Mobile})` : (u.Mobile || u.SubUserID);
@@ -278,18 +296,30 @@ async function loadAccessRightsList() {
   el.innerHTML = `
     <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
       <thead>
-        <tr style="background-color:LightGray;"><th>User</th><th>Contacts</th><th>Games</th><th>Hisab</th><th>Accounts</th></tr>
+        <tr style="background-color:LightGray;">
+          <th>Sub User ID</th>
+          <th>Name</th>
+          <th>Contacts</th>
+          <th>Games</th>
+          <th>Hisab</th>
+          <th>Accounts</th>
+        </tr>
       </thead>
       <tbody>
-        ${res.data.map(r => `
-          <tr>
-            <td style="text-transform:capitalize">${r.StaffName || r.ARfSatffID}</td>
-            <td>${yn(r.ADDContacts)}</td>
-            <td>${yn(r.ADDGames)}</td>
-            <td>${yn(r.Hisab)}</td>
-            <td>${yn(r.Accounts)}</td>
-          </tr>
-        `).join('')}
+        ${res.data.map(r => {
+          const subUserID = r.ARfSatffID || '';
+          const name = r.subusername || r.StaffName || _subUserMap[subUserID] || '';
+          return `
+            <tr>
+              <td>${subUserID}</td>
+              <td style="text-transform:capitalize">${name}</td>
+              <td>${yn(r.ADDContacts)}</td>
+              <td>${yn(r.ADDGames)}</td>
+              <td>${yn(r.Hisab)}</td>
+              <td>${yn(r.Accounts)}</td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     </table>
   `;
@@ -302,27 +332,43 @@ async function saveAccessRights() {
     return;
   }
 
-  const body = {
-    subUserID,
-    addContacts: document.getElementById('chkADDContacts').checked,
-    addGames: document.getElementById('chkADDGames').checked,
-    result: document.getElementById('chkResult').checked,
-    hisab: document.getElementById('chkHisab').checked,
-    hisabSummary: document.getElementById('chkHisabSummary').checked,
-    dateWiseHisab: document.getElementById('chkDateWiseHisab').checked,
-    accounts: document.getElementById('chkAccounts').checked,
-    showAllAccounts: document.getElementById('chkShowAllAccounts').checked,
-    balance: document.getElementById('chkBalance').checked,
-    lc: document.getElementById('chkLC').checked,
-    yantri: document.getElementById('chkYantri').checked
-  };
+  const btn = document.getElementById('btnSaveAccess');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Saving...';
+  }
 
-  const res = await API.post('/api/admin/access-rights', body);
-  if (res && res.success) {
-    showToast('Access rights saved!');
-    await loadAccessRightsList();
-  } else {
-    showToast(res?.message || 'Error', 'error');
+  try {
+    const body = {
+      subUserID,
+      addContacts: document.getElementById('chkADDContacts').checked,
+      addGames: document.getElementById('chkADDGames').checked,
+      result: document.getElementById('chkResult').checked,
+      hisab: document.getElementById('chkHisab').checked,
+      hisabSummary: document.getElementById('chkHisabSummary').checked,
+      dateWiseHisab: document.getElementById('chkDateWiseHisab').checked,
+      accounts: document.getElementById('chkAccounts').checked,
+      showAllAccounts: document.getElementById('chkShowAllAccounts').checked,
+      balance: document.getElementById('chkBalance').checked,
+      lc: document.getElementById('chkLC').checked,
+      yantri: document.getElementById('chkYantri').checked
+    };
+
+    const res = await API.post('/api/admin/access-rights', body);
+    if (res && res.success) {
+      showToast('Access rights saved!');
+      await loadAccessRightsList();
+    } else {
+      showToast(res?.message || 'Error', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving access rights', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
   }
 }
 
@@ -337,22 +383,38 @@ async function saveSubUser() {
     return;
   }
 
-  let res;
-  if (id) {
-    res = await API.put(`/api/admin/subusers/${id}`, { subUsername: name, mobile, password, isActive: 'True' });
-  } else {
-    res = await API.post('/api/admin/subusers', { subUsername: name, mobile, password });
+  const btn = document.getElementById('btnSaveStaff');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Saving...';
   }
 
-  if (res && res.success) {
-    showToast('Staff saved!');
-    document.getElementById('subName').value = '';
-    document.getElementById('subMobile').value = '';
-    document.getElementById('subPassword').value = '';
-    document.getElementById('editSubID').value = '';
-    await loadSubUsers();
-  } else {
-    showToast(res?.message || 'Error', 'error');
+  try {
+    let res;
+    if (id) {
+      res = await API.put(`/api/admin/subusers/${id}`, { subUsername: name, mobile, password, isActive: 'True' });
+    } else {
+      res = await API.post('/api/admin/subusers', { subUsername: name, mobile, password });
+    }
+
+    if (res && res.success) {
+      showToast('Staff saved!');
+      document.getElementById('subName').value = '';
+      document.getElementById('subMobile').value = '';
+      document.getElementById('subPassword').value = '';
+      document.getElementById('editSubID').value = '';
+      await Promise.all([loadSubUsers(), loadAssignUserDropdown(), loadAccessRightsList()]);
+    } else {
+      showToast(res?.message || 'Error', 'error');
+    }
+  } catch (err) {
+    showToast('Error saving staff', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
   }
 }
 
@@ -458,6 +520,13 @@ async function saveAssignments() {
     }
   });
 
+  const btn = document.getElementById('MyButton');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Saving...';
+  }
+
   try {
     const r = await API.post('/api/admin/assign-clients', { staffID, customerIDs });
     if (r?.success) {
@@ -469,6 +538,11 @@ async function saveAssignments() {
     }
   } catch(e) {
     showToast('Something Wrong', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
   }
 }
 

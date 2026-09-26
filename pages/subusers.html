@@ -116,18 +116,25 @@ async function loadUsers() {
     tbody.innerHTML = '<tr><td colspan="6">No Sub Users Found</td></tr>';
     return;
   }
-  tbody.innerHTML = r.data.map(u => `
+  tbody.innerHTML = r.data.map(u => {
+    const isActive = u.IsActive === true || u.IsActive === 1 || String(u.IsActive).toLowerCase() === 'true' || String(u.IsActive) === '1';
+    return `
     <tr>
       <td>
         <img src="/vendor/images/edit-icon-orange-pencil-0.png" width="35" height="35" style="cursor:pointer;"
-          onclick="editUser('${u.SubUserID}','${esc(u.subusername)}','${u.Mobile}','${u.Password}','${u.IsActive}')">
+          onclick="editUser('${u.SubUserID}','${esc(u.subusername)}','${u.Mobile}','${u.Password}',${isActive})">
       </td>
       <td>${u.SubUserID}</td>
       <td>${u.Password||''}</td>
       <td style="text-transform:capitalize">${u.subusername||''}</td>
       <td>${u.Mobile||''}</td>
-      <td>${u.ActiveYesNo||''}</td>
-    </tr>`).join('');
+      <td>
+        <span style="padding:4px 10px;border-radius:2px;font-weight:bold;color:#fff;background-color:${isActive ? '#31ce36' : '#f25961'};">
+          ${isActive ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ── savesubuser_Click ──
@@ -192,7 +199,7 @@ function editUser(subid, name, mobile, password, isActive) {
   document.getElementById('txtName').value       = name;
   document.getElementById('txtMobile').value     = mobile;
   document.getElementById('txtPassword').value   = password;
-  document.getElementById('isactive').checked    = (isActive === 'True' || isActive === true);
+  document.getElementById('isactive').checked    = (isActive === true || isActive === 'True' || isActive === 'true' || isActive === 1 || isActive === '1');
   document.getElementById('btnSave').textContent = 'Update';
   document.getElementById('formTitle').textContent = 'All Sub Users';
   document.getElementById('txtMobile').focus();

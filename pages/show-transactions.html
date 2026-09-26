@@ -81,6 +81,26 @@
 <script src="/js/api.js"></script>
 <script src="/js/nav.js"></script>
 <script>
+function toIsoDate(dStr) {
+  if (!dStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
+  const mo = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const m = dStr.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+  if (m) {
+    const day = m[1].padStart(2, '0');
+    const month = mo[m[2].slice(0,3).charAt(0).toUpperCase() + m[2].slice(1,3).toLowerCase()] || '01';
+    return `${m[3]}-${month}-${day}`;
+  }
+  const d = new Date(dStr);
+  if (!isNaN(d.getTime())) {
+    const y = d.getFullYear();
+    const moNum = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${y}-${moNum}-${da}`;
+  }
+  return '';
+}
+
 async function init() {
   await initPage('show-transactions');
   const cr = await API.get('/api/accounts/customers');
@@ -89,7 +109,8 @@ async function init() {
   document.getElementById('txStaff').innerHTML = '<option value="">All Staff</option><option value="0">Self</option>' + (sr?.data||[]).map(s => `<option value="${s.SubUserID}">${s.subusername}</option>`).join('');
   const now = new Date(new Date().getTime()+5.5*3600000).toISOString().split('T')[0];
   const dr = await API.get('/api/accounts/latest-date');
-  let defaultDate = dr?.date ? new Date(dr.date).toISOString().split('T')[0] : now;
+  const lastEntry = localStorage.getItem('accounts_last_entry_date') || localStorage.getItem('accounts_last_date');
+  let defaultDate = toIsoDate(lastEntry) || toIsoDate(dr?.date) || now;
   if (defaultDate > now) defaultDate = now;
 
   const elFrom = document.getElementById('txFrom');
@@ -102,8 +123,14 @@ async function init() {
   const p = new URLSearchParams(location.search);
   if (p.get('SUID')) document.getElementById('txStaff').value = p.get('SUID');
   if (p.get('customerUID')) document.getElementById('txCust').value = p.get('customerUID');
-  if (p.get('from')) elFrom.value = p.get('from') > now ? now : p.get('from');
-  if (p.get('to')) elTo.value = p.get('to') > now ? now : p.get('to');
+  if (p.get('from')) {
+    const f = toIsoDate(p.get('from'));
+    if (f) elFrom.value = f > now ? now : f;
+  }
+  if (p.get('to')) {
+    const t = toIsoDate(p.get('to'));
+    if (t) elTo.value = t > now ? now : t;
+  }
   loadTx();
 }
 

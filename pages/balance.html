@@ -320,6 +320,7 @@ async function init() {
     onChange: function(sel, dateStr) {
       _currentDate = dateStr;
       document.getElementById('txtStartDate').value = dateStr;
+      BindGrid();
     }
   });
 
@@ -663,6 +664,8 @@ function setLoading() {
     const el=document.getElementById(id);
     if(el) el.innerHTML=`<tr><td colspan="6" class="emsg"><span class="spin"></span> Loading...</td></tr>`;
   });
+  const st = document.getElementById('bodyStaff');
+  if(st) st.innerHTML=`<tr><td colspan="3" class="emsg"><span class="spin"></span> Loading...</td></tr>`;
 }
 function getIST()  { return new Date(Date.now()+5.5*3600000).toISOString().split('T')[0]; }
 function fmtDateToday() {

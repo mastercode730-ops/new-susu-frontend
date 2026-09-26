@@ -3,12 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Assign Clients - Susu9</title>
+<title>Assign Customers - Susu9</title>
 <script src="/js/theme-preload.js"></script>
 <link rel="stylesheet" href="/css/main.css">
 <style>
 .hideGridColumn { display:none; }
 thead th.assign-hd { background-color:#1572e8; color:White; }
+.select2-container{width:100%!important;}
+.select2-container, .select2-container.form-control{border:none!important;padding:0!important;height:auto!important;background:transparent!important;box-shadow:none!important;display:block!important;}
+.select2-container .select2-choice{
+  height:40px!important;line-height:38px!important;border:1px solid #ced4da!important;border-radius:4px!important;
+  padding:0 12px!important;font-size:.95rem!important;font-family:Arial,sans-serif;text-transform:capitalize;
+  background:#fff!important;box-shadow:none!important;background-image:none!important;
+}
+.select2-container .select2-choice .select2-chosen{color:#000!important;font-size:.95rem!important;font-family:Arial,sans-serif;text-transform:capitalize;font-weight:700!important;}
+.select2-container .select2-choice .select2-arrow{
+  height:38px!important;width:28px!important;background:none!important;border-left:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+.select2-container-active .select2-choice,
+.select2-drop-active{
+  border-color:#1572e8!important;
+  box-shadow:0 0 0 3px rgba(21,114,232,0.18)!important;
+}
+.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;box-shadow:0 8px 16px rgba(0,0,0,0.1);box-sizing:border-box!important;}
+.select2-drop .select2-search{padding:8px 10px!important;}
+.select2-drop .select2-search input{width:100%!important;box-sizing:border-box!important;border:1px solid #ced4da!important;border-radius:4px!important;padding:8px 10px!important;font-size:.95rem!important;font-weight:600!important;background:#fff!important;}
+.select2-results{width:100%!important;max-height:360px;margin:0!important;padding:4px 0!important;}
+.select2-results .select2-highlighted{background-color:#1572e8!important;}
+.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.9rem;font-weight:600;padding:8px 12px;line-height:1.5;color:#222;}
+.select2-results li.select2-highlighted{color:#fff;}
 </style>
 </head>
 <body>
@@ -18,24 +42,17 @@ thead th.assign-hd { background-color:#1572e8; color:White; }
     <div class="col-md-12">
       <div class="card">
         <div class="card-header">
-          <div class="card-title">Access Right</div>
+          <div class="card-title">Assign Customers</div>
         </div>
         <div class="card-body">
           <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-5">
               <div class="form-group">
-                <label for="ddlSrchCustomers">User</label>
-                <!-- ASPX: ddlSrchCustomers AutoPostBack → BindCustomerGrid() -->
-                <select class="form-control" id="ddlSrchCustomers" style="text-transform:capitalize;" onchange="loadClients()">
-                  <option value="">Select User</option>
+                <label for="ddlSrchCustomers">Select Sub user</label>
+                <!-- Combined searchable dropdown with typing search -->
+                <select class="form-control" id="ddlSrchCustomers" style="text-transform:capitalize;">
+                  <option value="">Select Sub user</option>
                 </select>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-group">
-                <label for="txtFilter">Filter</label>
-                <input type="text" id="txtFilter" class="form-control" onkeyup="filterGrid()"
-                  placeholder="Filter by Name...">
               </div>
             </div>
           </div>
@@ -87,8 +104,12 @@ async function init() {
   // ASPX: ShowAllSubUsers() → load subusers into ddlSrchCustomers
   await loadSubUsers();
 
-  // ASPX: ddlSrchCustomers.Focus()
-  document.getElementById('ddlSrchCustomers').focus();
+  // Focus dropdown
+  if (window.$ && $.fn.select2) {
+    $('#ddlSrchCustomers').select2('focus');
+  } else {
+    document.getElementById('ddlSrchCustomers').focus();
+  }
 
   // ASPX: ESC → Subusers.aspx (always, regardless of history)
   window.__escPageHandler = function() {
@@ -101,10 +122,40 @@ async function init() {
 async function loadSubUsers() {
   const r = await API.get('/api/admin/subusers');
   const sel = document.getElementById('ddlSrchCustomers');
-  sel.innerHTML = '<option value="">Select User</option>';
-  (r?.data||[]).forEach(u => {
-    sel.innerHTML += `<option value="${u.SubUserID}">${u.subusername||u.SubUserID}</option>`;
+  sel.innerHTML = '<option value="">Select Sub user</option>';
+  (r?.data || []).forEach(u => {
+    const name = (u.subusername || u.Name || '').trim();
+    const id = String(u.SubUserID || '').trim();
+    const label = name ? `${name} - ${id}` : id;
+    sel.innerHTML += `<option value="${id}">${label}</option>`;
   });
+
+  if (window.$ && $.fn.select2) {
+    if ($('#ddlSrchCustomers').data('select2')) {
+      $('#ddlSrchCustomers').select2('destroy');
+    }
+    $('#ddlSrchCustomers').select2({
+      width: '100%',
+      placeholder: 'Select Sub user',
+      allowClear: true,
+      matcher: function(term, text, opt) {
+        if (!term || !term.trim()) return true;
+        const t = term.trim().toLowerCase();
+        const txt = (text || '').toLowerCase();
+        const val = (opt && opt.val ? opt.val() : (opt && opt.value ? opt.value : '')).toLowerCase();
+        return txt.indexOf(t) > -1 || val.indexOf(t) > -1;
+      }
+    }).on('change', function() {
+      loadClients();
+    }).on('select2-open', function() {
+      const containerWidth = $('#s2id_ddlSrchCustomers').outerWidth();
+      if (containerWidth && containerWidth > 100) {
+        $('#select2-drop').css('width', containerWidth + 'px');
+      }
+    });
+  } else {
+    sel.onchange = loadClients;
+  }
 }
 
 // ── ddlSrchCustomers_SelectedIndexChanged → BindCustomerGrid() ──
@@ -117,7 +168,7 @@ async function loadClients() {
   _allClients = [];
 
   if (!staffID) {
-    tbody.innerHTML = '<tr><td colspan="4">Select a user</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">Select a sub user to load clients</td></tr>';
     return;
   }
 
@@ -150,7 +201,9 @@ function renderClients(data) {
 
 // ── filterGrid() — ASPX: filter by CustomerName column (index 3) ──
 function filterGrid() {
-  const filter = document.getElementById('txtFilter').value.toUpperCase();
+  const filterInput = document.getElementById('txtFilter');
+  if (!filterInput) return;
+  const filter = filterInput.value.toUpperCase();
   const rows = document.querySelectorAll('#clientBody tr');
   rows.forEach(tr => {
     const td = tr.cells[3]; // CustomerName col index 3
@@ -171,7 +224,7 @@ function checkAll(headerChk) {
 // ASPX: reads checked rows → AllID = comma separated CIDs → AJAX call
 async function saveAssignments() {
   const staffID = document.getElementById('ddlSrchCustomers').value;
-  if (!staffID) { showToast('User select karo!', true); return; }
+  if (!staffID) { showToast('Select Sub user first!', true); return; }
 
   // ASPX: collect checked CIDs from hidden column (index 2)
   const checkedRows = document.querySelectorAll('#clientBody tr');

@@ -46,9 +46,9 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
           <div class="row">
             <div class="col-md-4">
               <div class="form-group">
-                <label for="ddlSubUsers">User</label>
+                <label for="ddlSubUsers">Sub User</label>
                 <select id="ddlSubUsers" class="form-control" onchange="loadAccessRights()">
-                  <option value="">Select User</option>
+                  <option value="">Select Sub User</option>
                 </select>
               </div>
             </div>
@@ -198,7 +198,7 @@ async function loadSubUsers() {
   const el = document.getElementById('subUsersList');
   const ddl = document.getElementById('ddlSubUsers');
 
-  ddl.innerHTML = '<option value="">Select User</option>';
+  ddl.innerHTML = '<option value="">Select Sub User</option>';
 
   if (!res || !res.success || !res.data.length) {
     el.innerHTML = '<div class="empty-state">No sub users</div>';
@@ -208,7 +208,8 @@ async function loadSubUsers() {
   res.data.forEach(u => {
     const opt = document.createElement('option');
     opt.value = u.SubUserID;
-    opt.textContent = `${u.subusername} (${u.Mobile})`;
+    const name = u.subusername ? `${u.subusername} (${u.Mobile})` : (u.Mobile || u.SubUserID);
+    opt.textContent = name;
     ddl.appendChild(opt);
   });
 
@@ -220,11 +221,11 @@ async function loadSubUsers() {
       <tbody>
         ${res.data.map(u => `
           <tr>
-            <td style="text-transform:capitalize">${u.subusername}</td>
+            <td style="text-transform:capitalize">${u.subusername || ''}</td>
             <td>${u.Mobile}</td>
             <td><span style="padding:4px 10px;border-radius:2px;font-weight:bold;color:#fff;background-color:${u.IsActive === 'True' || u.IsActive === true ? '#31ce36' : '#f25961'};">${u.IsActive === 'True' || u.IsActive === true ? 'Active' : 'Inactive'}</span></td>
             <td>
-              <button class="btn btn-primary btn-sm" onclick="editSubUser('${u.SubUserID}','${u.subusername}','${u.Mobile}','${u.Password}')">Edit</button>
+              <button class="btn btn-primary btn-sm" onclick="editSubUser('${u.SubUserID}','${u.subusername||''}','${u.Mobile}','${u.Password}')">Edit</button>
             </td>
           </tr>
         `).join('')}
@@ -235,26 +236,30 @@ async function loadSubUsers() {
 
 async function loadAccessRights() {
   const subUserID = document.getElementById('ddlSubUsers').value;
-  if (!subUserID) return;
+  if (!subUserID) { resetAccess(); return; }
 
-  const res = await API.get(`/api/admin/access-rights/${subUserID}`);
+  let res = await API.get(`/api/admin/access-rights/${subUserID}`);
   if (!res || !res.success || !res.data) {
+    res = await API.get(`/api/admin/access-rights?subUID=${subUserID}`);
+  }
+  const ar = res && res.data ? (Array.isArray(res.data) ? res.data[0] : res.data) : null;
+  if (!ar) {
     resetAccess();
     return;
   }
 
-  const ar = res.data;
-  document.getElementById('chkADDContacts').checked = ar.ADDContacts === true || ar.ADDContacts === 'True';
-  document.getElementById('chkADDGames').checked = ar.ADDGames === true || ar.ADDGames === 'True';
-  document.getElementById('chkResult').checked = ar.Result === true || ar.Result === 'True';
-  document.getElementById('chkHisab').checked = ar.Hisab === true || ar.Hisab === 'True';
-  document.getElementById('chkHisabSummary').checked = ar.HisabSummary === true || ar.HisabSummary === 'True';
-  document.getElementById('chkDateWiseHisab').checked = ar.DateWiseHisab === true || ar.DateWiseHisab === 'True';
-  document.getElementById('chkAccounts').checked = ar.Accounts === true || ar.Accounts === 'True';
-  document.getElementById('chkShowAllAccounts').checked = ar.ShowAllAccounts === true || ar.ShowAllAccounts === 'True';
-  document.getElementById('chkBalance').checked = ar.Balance === true || ar.Balance === 'True';
-  document.getElementById('chkLC').checked = ar.LC === true || ar.LC === 'True';
-  document.getElementById('chkYantri').checked = ar.Yantri === true || ar.Yantri === 'True';
+  const isTrue = v => v === true || v === 'True' || v === 1 || String(v) === '1' || String(v).toLowerCase() === 'true';
+  document.getElementById('chkADDContacts').checked = isTrue(ar.ADDContacts);
+  document.getElementById('chkADDGames').checked = isTrue(ar.ADDGames);
+  document.getElementById('chkResult').checked = isTrue(ar.Result);
+  document.getElementById('chkHisab').checked = isTrue(ar.Hisab);
+  document.getElementById('chkHisabSummary').checked = isTrue(ar.HisabSummary);
+  document.getElementById('chkDateWiseHisab').checked = isTrue(ar.DateWiseHisab);
+  document.getElementById('chkAccounts').checked = isTrue(ar.Accounts);
+  document.getElementById('chkShowAllAccounts').checked = isTrue(ar.ShowAllAccounts);
+  document.getElementById('chkBalance').checked = isTrue(ar.Balance);
+  document.getElementById('chkLC').checked = isTrue(ar.LC);
+  document.getElementById('chkYantri').checked = isTrue(ar.Yantri);
 }
 
 async function loadAccessRightsList() {

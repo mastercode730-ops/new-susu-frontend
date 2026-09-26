@@ -223,24 +223,54 @@ async function initPage(active) {
     if (u.SubUID) {
       // Staff/subuser
       const sub = document.getElementById('navSubUID');
-      if (sub) { sub.textContent = 'Staff: ' + u.SubUID; sub.style.display = 'inline'; }
+      if (sub) { sub.textContent = 'Staff: ' + (u.subusername || u.SubUID); sub.style.display = 'inline'; }
 
-      if (String(u.ADDGames)      === 'False') _hide('nav-game');
-      if (String(u.ADDContacts)   === 'False') _hide('nav-customer');
-      if (String(u.Hisab)         === 'False') _hide('nav-hisab');
-      if (String(u.HisabSummary)  === 'False') _hide('nav-hisab-summary');
-      if (String(u.DateWiseHisab) === 'False') _hide('nav-date-wise');
-      if (String(u.Balance)       === 'False') _hide('nav-balance');
-      if (String(u.Accounts)      === 'False') _hide('nav-accounts');
-      if (String(u.LC)            === 'False') _hide('nav-lc');
-      if (String(u.Result)        === 'False') _hide('nav-results');
-      if (String(u.Yantri)        === 'False') _hide('nav-yantri');
+      const isTrue = v => v === true || v === 1 || String(v).toLowerCase() === 'true' || String(v) === '1';
 
-      // Staff cannot manage staff, access rights, or sub user balance/assignment
+      // Only checked menus are visible, everything else is hidden
+      if (!isTrue(u.ADDContacts))  _hide('nav-customer');
+      if (!isTrue(u.ADDGames))     _hide('nav-game');
+      if (!isTrue(u.Result))       _hide('nav-results');
+      if (!isTrue(u.Hisab))        _hide('nav-hisab');
+      if (!isTrue(u.HisabSummary)) _hide('nav-hisab-summary');
+      if (!isTrue(u.Accounts))     _hide('nav-accounts');
+      if (!isTrue(u.Balance))      _hide('nav-balance');
+      if (!isTrue(u.LC))           _hide('nav-lc');
+      if (!isTrue(u.Yantri))       _hide('nav-yantri');
+
+      // Admin-only / non-granted menus are always hidden for sub users
+      _hide('nav-sale-history');
       _hide('nav-subusers');
+      _hide('nav-pl-yantri');
+      _hide('nav-absent-customers');
       _hide('nav-access');
+      _hide('nav-change-password');
+      _hide('nav-date-wise');
+      _hide('nav-admin');
       _hide('nav-staff-balance');
       _hide('nav-assign-clients');
+
+      // Protect unauthorized direct URL visits
+      const pageAccessMap = {
+        'customer': u.ADDContacts,
+        'game': u.ADDGames,
+        'results': u.Result,
+        'hisab': u.Hisab,
+        'hisab-summary': u.HisabSummary,
+        'accounts': u.Accounts,
+        'balance': u.Balance,
+        'lc': u.LC,
+        'yantri': u.Yantri
+      };
+      const adminOnlyPages = ['subusers', 'access', 'assign-clients', 'pl-yantri', 'sale-history', 'absent-customers'];
+      if (adminOnlyPages.includes(active)) {
+        window.location.href = '/pages/home.html';
+        return null;
+      }
+      if (active in pageAccessMap && !isTrue(pageAccessMap[active])) {
+        window.location.href = '/pages/home.html';
+        return null;
+      }
     } else if (u.SuperAdmin === 'SuperAdmin') {
       const adminItem = document.getElementById('nav-admin');
       if (adminItem) adminItem.style.display = 'block';

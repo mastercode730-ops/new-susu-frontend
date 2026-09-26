@@ -19,7 +19,7 @@
           <div class="card-title">
             Create Sub User
             <button class="btn btn-success" style="float:right;font-weight:900;" onclick="window.location.href='/pages/assign-clients.html'">
-              Access Right <i class="fas fa-user-shield"></i>
+              Assign Customers <i class="fas fa-users-cog"></i>
             </button>
           </div>
         </div>
@@ -140,11 +140,29 @@ async function saveSubUser() {
   const btnText  = document.getElementById('btnSave').textContent;
 
   // Validation
-  let valid = true;
-  document.getElementById('errName').style.display  = !name    ? 'inline' : 'none'; if(!name)    valid=false;
-  document.getElementById('errMobile').style.display = !mobile  ? 'inline' : 'none'; if(!mobile)  valid=false;
-  document.getElementById('errPwd').style.display    = !password? 'inline' : 'none'; if(!password) valid=false;
-  if (!valid) return;
+  if (!name) {
+    document.getElementById('errName').style.display = 'inline';
+    showToast('Name is required!', true);
+    document.getElementById('txtName').focus();
+    return;
+  }
+  document.getElementById('errName').style.display = 'none';
+
+  if (!mobile) {
+    document.getElementById('errMobile').style.display = 'inline';
+    showToast('Mobile number is required!', true);
+    document.getElementById('txtMobile').focus();
+    return;
+  }
+  document.getElementById('errMobile').style.display = 'none';
+
+  if (!password) {
+    document.getElementById('errPwd').style.display = 'inline';
+    showToast('Password is required!', true);
+    document.getElementById('txtPassword').focus();
+    return;
+  }
+  document.getElementById('errPwd').style.display = 'none';
 
   try {
     let r;

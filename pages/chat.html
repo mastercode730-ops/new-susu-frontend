@@ -3120,8 +3120,8 @@
           const custs = r?.data || [];
           // Cache store karo for search filtering
           _bulkAllCustomers = custs;
-          // Initial render (no filter)
-          bulkCustFilter('');
+          // Initial render (no filter, don't auto-trigger bulkCustomerChange since we explicitly call it below)
+          bulkCustFilter('', false);
           // Current customer pre-select
           const sel = document.getElementById('bulkCustomer');
           for (let i = 1; i < sel.options.length; i++) {
@@ -3129,7 +3129,6 @@
             if (parts[2] === String(P.selUID) || parts[1] === P.mobile) { sel.selectedIndex = i; break; }
           }
           await bulkCustomerChange();
-          bulkPreSelectRate();
         } catch (e) { console.error('bulkLoadCustomers', e); }
       }
 
@@ -3148,6 +3147,7 @@
         }
       }
 
+      let _bulkRateReqSeq = 0;
       async function bulkCustomerChange() {
         const sel = document.getElementById('bulkCustomer');
         const val = sel.value;
@@ -3156,10 +3156,19 @@
         if (!val) return;
         const cid = val.split('|')[0];
         if (!cid) return;
+        const reqId = ++_bulkRateReqSeq;
         try {
           const r = await API.get('/api/customer/' + cid + '/rates');
+          if (reqId !== _bulkRateReqSeq) return;
           const rates = r?.data || [];
+          rateSel.innerHTML = '<option value="">-- Select Rate --</option>';
+          const seen = new Set();
           rates.forEach(rt => {
+            const rateKey = rt.RateID || ((rt.D_PComm || 0) + '/' +
+              (rt.D_Amt || 100) + '-' + (rt.A_PComm || 0) + '/' + (rt.A_Amt || 10) + '-' + (rt.Patti || rt.Pati_PComm || 0));
+            if (seen.has(rateKey)) return;
+            seen.add(rateKey);
+
             const o = document.createElement('option');
             o.value = rt.RateID || rt.rateID || '';
             o.dataset.dpcomm = rt.D_PComm || 0; o.dataset.damt = rt.D_Amt || 100;
@@ -3170,9 +3179,10 @@
             o.dataset.tpcommid = rt.ThirdPartyCommID || '0'; o.dataset.tpdara = rt.ThirdPartyDaraComm || '0';
             o.dataset.tpakhar = rt.ThirdPartyAkharComm || '0';
             o.textContent = rt.Rate || ((rt.D_PComm || 0) + '/' +
-              (rt.D_Amt || 100) + '-' + (rt.A_PComm || 0) + '/' + (rt.A_Amt || 10) + '-' + (rt.Patti || 0));
+              (rt.D_Amt || 100) + '-' + (rt.A_PComm || 0) + '/' + (rt.A_Amt || 10) + '-' + (rt.Patti || rt.Pati_PComm || 0));
             rateSel.appendChild(o);
           });
+          bulkPreSelectRate();
         } catch (e) { console.error('bulkCustomerChange', e); }
       }
 
@@ -3193,7 +3203,7 @@
       // type karo → matching customers dropdown mein aayein
       let _bulkAllCustomers = []; // full customer list cache
 
-      function bulkCustFilter(q) {
+      function bulkCustFilter(q, autoTriggerChange = true) {
         const sel = document.getElementById('bulkCustomer');
         const term = q.toLowerCase().trim();
         sel.innerHTML = '<option value="">-- Select Customer --</option>';
@@ -3214,7 +3224,7 @@
           sel.appendChild(o);
         });
         // Agar sirf ek result ho to auto-select karo
-        if (filtered.length === 1) { sel.selectedIndex = 1; bulkCustomerChange(); }
+        if (autoTriggerChange && filtered.length === 1) { sel.selectedIndex = 1; bulkCustomerChange(); }
       }
 
       function bulkMsgSet(txt, ok) { const el = document.getElementById('bulkMsg'); el.textContent = txt; el.style.color = ok ? 'green' : 'red'; }

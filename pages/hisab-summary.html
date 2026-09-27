@@ -61,6 +61,155 @@ tbody tr{cursor:pointer;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+
+/* Mobile Optimization: minimal scrolling, compact side-by-side fields */
+@media (max-width: 767px) {
+  /* Slim blue header with hamburger */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 8px !important;
+  }
+  .logo-header {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  .logo-header .navbar-toggler {
+    order: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 38px !important;
+    padding: 0 !important;
+    margin: 0 auto 0 0 !important;
+    border: none !important;
+    background: transparent !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    display: block !important;
+  }
+  .logo-header .logo {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+  }
+  .logo-header .more {
+    order: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    line-height: 1 !important;
+  }
+  .logo-header .more i {
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  .main-panel > .content {
+    margin-top: 40px !important;
+    padding: 4px 6px !important;
+  }
+  .content .card {
+    margin-bottom: 6px !important;
+    border-radius: 6px !important;
+  }
+  .content .card-body {
+    padding: 6px 8px !important;
+  }
+  .content .card-action {
+    padding: 6px 8px !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+  .content .card-action .btn {
+    flex: 1 !important;
+    padding: 5px 8px !important;
+    font-size: 0.82rem !important;
+    height: 32px !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+  }
+  .content .card-header {
+    padding: 4px 8px !important;
+  }
+  .content .card-title {
+    font-size: 0.88rem !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+  }
+  .content .row {
+    margin-left: -4px !important;
+    margin-right: -4px !important;
+  }
+  .content .row > [class*="col-"] {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  .content .form-group {
+    margin-bottom: 4px !important;
+  }
+  .content .form-group label {
+    font-size: 0.72rem !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
+  .content .form-control {
+    padding: 0.2rem 0.45rem !important;
+    height: 30px !important;
+    font-size: 0.78rem !important;
+    border-radius: 4px !important;
+  }
+  .content select.form-control {
+    height: 30px !important;
+    font-size: 0.78rem !important;
+    padding: 0.2rem 0.35rem !important;
+  }
+  .cust-box .cust-inp {
+    height: 30px !important;
+  }
+  .table-responsive {
+    max-height: calc(100vh - 215px) !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .content table th {
+    padding: 6px 10px !important;
+    font-size: 0.78rem !important;
+  }
+  .content table td {
+    padding: 5px 10px !important;
+    font-size: 0.82rem !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -71,20 +220,20 @@ tbody tr{cursor:pointer;}
       <div class="card">
         <div class="card-body">
           <div class="row">
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="txtStartDate">From Date</label>
                 <input type="text" class="form-control" id="txtStartDate" readonly placeholder="dd/MMM/yyyy"
                   onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('gameSelection').focus();}">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="txtEndDate">To Date</label>
                 <input type="text" class="form-control" id="txtEndDate" readonly placeholder="dd/MMM/yyyy" onfocus="this.select()">
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="gameSelection">Game</label>
                 <select class="form-control" id="gameSelection" onchange="document.getElementById('customerSelection').focus()">
@@ -92,7 +241,7 @@ tbody tr{cursor:pointer;}
                 </select>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
               <div class="form-group">
                 <label for="custSearch">Customer</label>
                 <div class="cust-wrap" id="custWrap">

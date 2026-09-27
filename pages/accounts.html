@@ -69,14 +69,203 @@
 .net-bal.neg{color:#c62828;}
 .net-bal.pos{color:#2e7d32;}
 
-/* Bootstrap's plain .col (no breakpoint infix) stays side-by-side at every
-   width, including mobile — Date/Customer Name and the other field pairs end
-   up squeezed into half-width columns, which is what was truncating the date
-   text ("19/Ju" instead of "19/Jul/2026"). Stack them to full width below
-   768px, same as every other form on the site. */
-@media (max-width:768px){
-  .card-body > .row { flex-direction: column; }
-  .card-body > .row > .col { flex: 0 0 100%; max-width: 100%; }
+/* Mobile Optimization: minimal scrolling, compact side-by-side fields */
+@media (max-width: 767px) {
+  /* Slim blue header with hamburger */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 8px !important;
+  }
+  .logo-header {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  .logo-header .navbar-toggler {
+    order: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 38px !important;
+    padding: 0 !important;
+    margin: 0 auto 0 0 !important;
+    border: none !important;
+    background: transparent !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    display: block !important;
+  }
+  .logo-header .logo {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+  }
+  .logo-header .more {
+    order: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    line-height: 1 !important;
+  }
+  .logo-header .more i {
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  .main-panel > .content {
+    margin-top: 40px !important;
+    padding: 4px 6px !important;
+  }
+  .content .card {
+    margin-bottom: 6px !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+  }
+  .content .card-header {
+    padding: 6px 10px !important;
+  }
+  .content .card-title {
+    font-size: 0.92rem !important;
+    margin: 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  .content .card-title .btn {
+    float: none !important;
+    padding: 3px 10px !important;
+    font-size: 0.76rem !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    font-weight: 800 !important;
+  }
+  .content .card-body {
+    padding: 6px 8px !important;
+  }
+  .content .card-body > .row {
+    flex-direction: column !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  /* Left panel border and padding reset on mobile */
+  .col-lg-6.col-md-12 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-right: none !important;
+  }
+  /* Inner form rows - 2 columns side by side! */
+  .col-lg-6.col-md-12 .row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin-left: -3px !important;
+    margin-right: -3px !important;
+  }
+  .col-lg-6.col-md-12 .row > [class*="col-"] {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+  .col-lg-6.col-md-12 .row > .col-12 {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  .col-lg-6.col-md-12 .form-group {
+    margin-bottom: 4px !important;
+    min-width: 0 !important;
+  }
+  .col-lg-6.col-md-12 .form-group label {
+    font-size: 0.72rem !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+  }
+  .content .form-control:not(.select2-container) {
+    padding: 0.2rem 0.45rem !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    font-size: 0.8rem !important;
+    border-radius: 4px !important;
+  }
+  .select2-container .select2-choice {
+    height: 32px !important;
+    line-height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 0.8rem !important;
+    border-radius: 4px !important;
+  }
+  .select2-container .select2-choice .select2-chosen {
+    font-size: 0.8rem !important;
+    line-height: 30px !important;
+  }
+  .select2-container .select2-choice .select2-arrow {
+    height: 30px !important;
+    width: 20px !important;
+  }
+  .type-select {
+    height: 32px !important;
+    min-height: 32px !important;
+    line-height: 1.4 !important;
+    font-size: 0.8rem !important;
+    padding: 2px 24px 2px 8px !important;
+    background-size: 11px !important;
+  }
+  .net-bal {
+    margin-top: 1px !important;
+    font-size: 0.72rem !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  /* Submit / Cancel row */
+  .col-lg-6.col-md-12 .btn {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 4px 12px !important;
+    font-size: 0.84rem !important;
+  }
+  /* Right panel: Recent entries */
+  .col-lg-6.col-md-12:last-child {
+    margin-top: 8px !important;
+    border-top: 1px solid #e9ecef !important;
+    padding-top: 8px !important;
+    padding-left: 0 !important;
+  }
+  #miniHistPlaceholder {
+    padding: 16px 8px !important;
+    font-size: 0.78rem !important;
+  }
+  .table-responsive {
+    max-height: 220px !important;
+  }
 }
 /* Bolder, higher-contrast text — visual only, no behavior change */
 .content .form-group label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;}
@@ -116,14 +305,14 @@
             <!-- Left Side: Transaction Entry Form -->
             <div class="col-lg-6 col-md-12" style="border-right: 1px solid #e9ecef; padding-right: 24px;">
               <div class="row">
-                <div class="col">
+                <div class="col-6">
                   <div class="form-group">
                     <label for="txtDate">Date</label>
                     <input type="text" class="form-control" id="txtDate" placeholder="dd/MMM/yyyy" tabindex="1"
                       onkeydown="if(event.key==='Enter'){event.preventDefault();advanceFromDate();}">
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-6">
                   <div class="form-group">
                     <label for="ddlAccounts">Customer Name</label>
                     <select id="ddlAccounts" tabindex="2" style="text-transform:capitalize;">
@@ -135,7 +324,7 @@
               </div>
 
               <div class="row">
-                <div class="col">
+                <div class="col-6">
                   <div class="form-group">
                     <label for="ddlType">Type</label>
                     <select class="form-control" id="ddlType" tabindex="3">
@@ -147,7 +336,7 @@
                     </select>
                   </div>
                 </div>
-                <div class="col">
+                <div class="col-6">
                   <div class="form-group">
                     <label for="txtAmount">Amount</label>
                     <input type="tel" class="form-control" id="txtAmount" placeholder="Enter Amount" tabindex="4"
@@ -158,14 +347,14 @@
               </div>
 
               <div class="row">
-                <div class="col">
+                <div class="col-6" id="narrationCol">
                   <div class="form-group">
                     <label for="txtNarration">Narration</label>
                     <input type="text" class="form-control" id="txtNarration" placeholder="Add note..." tabindex="5"
                       onkeydown="if(event.key==='Enter'){event.preventDefault();advanceFromNarration();}">
                   </div>
                 </div>
-                <div class="col" id="staffRow" style="display:none;">
+                <div class="col-6" id="staffRow" style="display:none;">
                   <div class="form-group">
                     <label for="ddlStaff">Sub User</label>
                     <select id="ddlStaff" tabindex="6">
@@ -176,8 +365,8 @@
                 </div>
               </div>
 
-              <div class="row" style="margin-top: 14px;">
-                <div class="col">
+              <div class="row" style="margin-top: 10px;">
+                <div class="col-12" style="display: flex; gap: 8px;">
                   <button class="btn btn-success" id="btnSubmit" tabindex="7" onclick="saveTransaction()" style="padding: 7px 24px; font-weight: 800;">Submit</button>
                   <button class="btn btn-danger" tabindex="8" onclick="resetForm()" style="padding: 7px 20px; font-weight: 800;">Cancel</button>
                 </div>

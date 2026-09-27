@@ -476,7 +476,7 @@ function resetCustSearchReady() {
 function renderTable(data) {
   document.getElementById('summaryBody').innerHTML = data.map((row,i) => `
     <tr onclick="selectRow(this)" tabindex="0" onkeydown="arrowNav(event,this,${i})">
-      <td>${row.Mobile||''}</td><td>${row.GameName||''}</td><td>${row.Rates||''}</td>
+      <td>${(row.CustomerName || row.Mobile || '').replace(/\s+\d{4,5}$/, '')}</td><td>${row.GameName||''}</td><td>${row.Rates||''}</td>
       <td>${row.Total_Amount||0}</td><td>${row.D_Sale||0}</td><td>${row.A_Sale||0}</td>
       <td>${row.Commision||0}</td><td>${row.O_Dara||0}</td><td>${row.O_Akhar||0}</td>
       <td>${row.WinAmount||0}</td><td>${row.Pati||0}</td><td>${row.Balance||0}</td>

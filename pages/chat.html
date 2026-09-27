@@ -3219,7 +3219,7 @@
           const mobile = c.Mobile || c.mobile || '';
           const cid = c.CID || c.cid || '';
           o.value = cid + '|' + mobile + '|' + uid;
-          o.textContent = (c.CustomerName || c.customerName || mobile) + ' ' + String(mobile).slice(-5);
+          o.textContent = c.CustomerName || c.customerName || mobile;
           if (String(uid) === String(P.selUID) || mobile === P.mobile) o.selected = true;
           sel.appendChild(o);
         });
@@ -3290,24 +3290,27 @@
         // WHERE fGameID=@GameID(P.gameId) AND fSenderID=@SelectedUID(P.selUID) AND fReceiverID=@UserID(me) AND MsgDate=@MsgDate(_currentDate)
         // Then InsertChatMessageWhatsappLike: fGameID=currentGameID, fReceiverID=targetUID, @CurrentMsgDate=date
 
-        // targetUID = TO customer ka UID
-        // FIX: custVal.split('|')[2] = bulkCustomer dropdown ka actual customer UID (correct!)
-        // rate.targetUID = rate ki MobileNo se joined UID (galat ho sakta hai — sub-agent ka UID aata hai)
         const custParts = custVal.split('|');
-        let targetUID = custParts[2] || '';  // PRIMARY: customer dropdown ka UID
+        let targetUID = custParts[2] || rate.targetUID || '';
+        const mobile = custParts[1] || rate.mobile || '';
 
-        // Fallback: mobile se lookup
+        // Fallback: mobile se lookup ya current user
         if (!targetUID || targetUID === '0') {
           try {
-            const mob = custParts[1] || rate.mobile || '';
-            if (mob) {
-              const ur = await API.get('/api/home/user-by-mobile/' + mob);
-              if (ur?.data?.[0]?.UID) targetUID = String(ur.data[0].UID);
+            if (mobile) {
+              const ur = await API.get('/api/home/user-by-mobile/' + mobile);
+              const foundUid = ur?.data?.UID || ur?.data?.[0]?.UID;
+              if (foundUid) targetUID = String(foundUid);
             }
           } catch (e) { }
         }
         if (!targetUID || targetUID === '0') {
-          bulkMsgSet('Target customer UID nahi mila ❌', false);
+          if (mobile === P.mobile && P.selUID) {
+            targetUID = String(P.selUID);
+          }
+        }
+        if (!mobile && !targetUID) {
+          bulkMsgSet('Target customer select karo ❌', false);
           return;
         }
 
@@ -3320,6 +3323,7 @@
             currentGameID: gameID,
             currentMsgDate: date,
             targetUID: targetUID,
+            mobile: mobile,
             // SOURCE rate (current chat ka — sirf isi rate ki entries copy hogi)
             src_D_PComm: P.dPComm, src_D_Amt: P.dAmt,
             src_A_PComm: P.aPComm, src_A_Amt: P.aAmt,

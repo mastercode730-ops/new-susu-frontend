@@ -18,15 +18,7 @@ const ATLANTIS_JS = [
   '/vendor/assets/js/core/popper.min.js',
   '/vendor/assets/js/core/bootstrap.min.js',
   '/vendor/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js',
-  '/vendor/assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
   '/vendor/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js',
-  '/vendor/assets/js/plugin/chart.js/chart.min.js',
-  '/vendor/assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js',
-  '/vendor/assets/js/plugin/chart-circle/circles.min.js',
-  '/vendor/assets/js/plugin/datatables/datatables.min.js',
-  '/vendor/assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js',
-  '/vendor/assets/js/plugin/jqvmap/jquery.vmap.min.js',
-  '/vendor/assets/js/plugin/jqvmap/maps/jquery.vmap.world.js',
   '/vendor/assets/js/plugin/sweetalert/sweetalert.min.js',
   '/vendor/assets/js/atlantis.min.js',
   '/vendor/Select/select2.js'
@@ -46,7 +38,7 @@ function _loadScript(src) {
     const script = document.createElement('script');
     script.src = src;
     script.onload = resolve;
-    script.onerror = () => reject(new Error('Failed to load ' + src));
+    script.onerror = () => resolve(); // Graceful fallback
     document.head.appendChild(script);
   });
 }
@@ -55,10 +47,21 @@ let _vendorLoadPromise = null;
 function loadVendorAssets() {
   if (_vendorLoadPromise) return _vendorLoadPromise;
   ATLANTIS_CSS.forEach(_loadCss);
-  _vendorLoadPromise = ATLANTIS_JS.reduce(
-    (chain, src) => chain.then(() => _loadScript(src)),
-    Promise.resolve()
-  );
+
+  // Load jQuery first, then core dependencies in parallel, then Bootstrap, then Atlantis & Select2
+  _vendorLoadPromise = _loadScript('/vendor/assets/js/core/jquery.3.2.1.min.js')
+    .then(() => Promise.all([
+      _loadScript('/vendor/assets/js/core/popper.min.js'),
+      _loadScript('/vendor/assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js'),
+      _loadScript('/vendor/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js'),
+      _loadScript('/vendor/assets/js/plugin/sweetalert/sweetalert.min.js')
+    ]))
+    .then(() => _loadScript('/vendor/assets/js/core/bootstrap.min.js'))
+    .then(() => Promise.all([
+      _loadScript('/vendor/assets/js/atlantis.min.js'),
+      _loadScript('/vendor/Select/select2.js')
+    ]));
+
   return _vendorLoadPromise;
 }
 
@@ -113,53 +116,47 @@ function renderShell(active) {
   const item = (id, href, icon, label) => `
         <li class="nav-item ${active === id ? 'active' : ''}" id="nav-${id}">
           <a href="${href}">
-            <i class="${icon}" style="font-weight:bold;color:Black;"></i>
-            <p style="font-weight:bold;color:Black;">${label}</p>
+            <i class="${icon}"></i>
+            <p>${label}</p>
           </a>
         </li>`;
 
   return `
   <div class="main-header">
     <div class="logo-header" data-background-color="blue">
-      <a href="/pages/home.html" class="logo" style="color:white;text-decoration:none;font-weight:700;letter-spacing:2px;">SUSU9</a>
+      <a href="/pages/home.html" class="logo">SUSU9</a>
       <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"><i class="icon-menu"></i></span>
       </button>
-      <button class="more"><a href="https://wa.me/+17073166800" target="_blank"><i class="fa fa-whatsapp" style="font-size:26px;color:white;"></i></a></button>
+      <button class="more"><a href="https://wa.me/+17073166800" target="_blank"><i class="fa fa-whatsapp" style="font-size:22px;color:white;"></i></a></button>
       <button class="more" onclick="location.href='/pages/home.html'"><i class="fas fa-home" style="color:white;"></i></button>
       <div class="nav-toggle"><button class="btn btn-toggle toggle-sidebar"><i class="icon-menu"></i></button></div>
     </div>
   </div>
   <div class="sidebar sidebar-style-2">
-    <div class="sidebar-wrapper scrollbar scrollbar-inner">
+    <div class="sidebar-wrapper">
       <div class="sidebar-content">
-        <div class="user">
-          <div class="info">
-            <a data-toggle="collapse" href="#collapseUser" aria-expanded="true">
-              <span>
-                <span id="navUID" style="font-weight:bold;color:black;"></span>
-                <span class="user-level" id="navSubUID" style="font-weight:bold;color:black;display:none;"></span>
-                <span class="caret"></span>
-              </span>
-            </a>
-            <div class="clearfix"></div>
-            <div class="collapse in" id="collapseUser">
-              <ul class="nav">
-                <li><a href="#" onclick="doLogout();return false;"><span class="link-collapse" style="font-weight:bold;color:black;">Logout</span></a></li>
-              </ul>
-            </div>
+        <div class="sidebar-user-pill">
+          <div class="user-avatar"><i class="fa fa-user-circle"></i></div>
+          <div class="user-details">
+            <span class="user-name" id="navUID">User</span>
+            <span class="user-role" id="navSubUID">Administrator</span>
           </div>
+          <a href="#" onclick="doLogout();return false;" class="btn-logout" title="Logout">
+            <i class="fas fa-sign-out-alt fa fa-sign-out"></i> <span>Logout</span>
+          </a>
+        </div>
+        <div class="sidebar-quick-actions">
+          <a href="/pages/home.html" class="quick-btn ${active === 'home' || active === 'dashboard' ? 'active' : ''}">
+            <i class="fa fa-home"></i> <span>Dashboard</span>
+          </a>
+          <a class="quick-btn support-btn" href="https://wa.me/+17073166800" target="_blank">
+            <i class="fa fa-whatsapp"></i> <span>Support</span>
+          </a>
         </div>
         <ul class="nav nav-primary">
-          <li class="mx-4 mt-2">
-            <a href="/pages/home.html" class="btn btn-primary btn-block"><span class="btn-label mr-2"><i class="fa fa-home"></i></span>Dashboard</a>
-          </li>
-          <li class="mx-4 mt-2">
-            <a class="btn btn-primary btn-block" href="https://wa.me/+17073166800" target="_blank"><span class="btn-label mr-2"><i class="fa fa-whatsapp"></i></span>Support</a>
-          </li>
           <li class="nav-section">
-            <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
-            <h4 class="text-section" style="font-weight:bold;color:Black;">Menu</h4>
+            <h4 class="text-section">Menu</h4>
           </li>
           ${item('customer', '/pages/customer.html', 'fas fa-users', 'Add Contact')}
           ${item('game', '/pages/game.html', 'fas fa-keyboard', 'Add Game')}
@@ -178,8 +175,8 @@ function renderShell(active) {
           ${item('change-password', '/pages/change-password.html', 'fas fa-user-lock', 'Change Password')}
           <li class="nav-item" id="nav-admin" style="display:none;">
             <a href="/pages/admin/dashboard.html">
-              <i class="fas fa-cog" style="font-weight:bold;color:#ffd700;"></i>
-              <p style="font-weight:bold;color:#ffd700;">Admin</p>
+              <i class="fas fa-cog" style="color:#eab308;"></i>
+              <p style="color:#ca8a04;">Admin</p>
             </a>
           </li>
         </ul>
@@ -201,15 +198,94 @@ function loadThemeFonts() {
   });
 }
 
-// ── initPage — inject shell first (so theme JS initializes against real DOM),
-// load theme assets, then apply access control ──
+function _applyUserPermissions(u, active) {
+  if (!u) return true;
+
+  const navUID = document.getElementById('navUID');
+  if (navUID) {
+    navUID.textContent = u.subusername ? u.subusername : (u.UID ? 'User #' + u.UID : 'User');
+  }
+
+  const sub = document.getElementById('navSubUID');
+  if (sub) {
+    if (u.SubUID) {
+      sub.textContent = 'Staff: ' + (u.subusername || u.SubUID);
+      sub.style.display = 'inline';
+    } else {
+      sub.textContent = 'Administrator';
+      sub.style.display = 'inline';
+    }
+  }
+
+  if (u.SubUID) {
+    const isTrue = v => v === true || v === 1 || String(v).toLowerCase() === 'true' || String(v) === '1';
+
+    // Only checked menus are visible, everything else is hidden
+    if (!isTrue(u.ADDContacts))  _hide('nav-customer');
+    if (!isTrue(u.ADDGames))     _hide('nav-game');
+    if (!isTrue(u.Result))       _hide('nav-results');
+    if (!isTrue(u.Hisab))        _hide('nav-hisab');
+    if (!isTrue(u.HisabSummary)) _hide('nav-hisab-summary');
+    if (!isTrue(u.Accounts))     _hide('nav-accounts');
+    if (!isTrue(u.Balance))      _hide('nav-balance');
+    if (!isTrue(u.LC))           _hide('nav-lc');
+    if (!isTrue(u.Yantri))       _hide('nav-yantri');
+
+    // Admin-only / non-granted menus are always hidden for sub users
+    _hide('nav-sale-history');
+    _hide('nav-subusers');
+    _hide('nav-pl-yantri');
+    _hide('nav-absent-customers');
+    _hide('nav-access');
+    _hide('nav-change-password');
+    _hide('nav-date-wise');
+    _hide('nav-admin');
+    _hide('nav-staff-balance');
+    _hide('nav-assign-clients');
+
+    // Protect unauthorized direct URL visits
+    const pageAccessMap = {
+      'customer': u.ADDContacts,
+      'game': u.ADDGames,
+      'results': u.Result,
+      'hisab': u.Hisab,
+      'hisab-summary': u.HisabSummary,
+      'accounts': u.Accounts,
+      'balance': u.Balance,
+      'lc': u.LC,
+      'yantri': u.Yantri
+    };
+    const adminOnlyPages = ['subusers', 'access', 'assign-clients', 'pl-yantri', 'sale-history', 'absent-customers'];
+    if (adminOnlyPages.includes(active)) {
+      window.location.href = '/pages/home.html';
+      return false;
+    }
+    if (active in pageAccessMap && !isTrue(pageAccessMap[active])) {
+      window.location.href = '/pages/home.html';
+      return false;
+    }
+  } else if (u.SuperAdmin === 'SuperAdmin') {
+    const adminItem = document.getElementById('nav-admin');
+    if (adminItem) adminItem.style.display = 'block';
+  }
+  return true;
+}
+
+// ── initPage — inject shell first, instantly apply cached permissions, then verify with server ──
 async function initPage(active) {
-  // Done BEFORE loading vendor JS so atlantis.min.js's ready-handlers
-  // (sidebar toggle, scrollbar init) bind to elements that actually exist.
   _wrapPageContent(renderShell(active));
 
+  // Instantly apply cached permissions to eliminate any lag or flicker
+  const cachedUserStr = localStorage.getItem('susu9_user');
+  if (cachedUserStr) {
+    try {
+      const cached = JSON.parse(cachedUserStr);
+      if (!_applyUserPermissions(cached, active)) return null;
+    } catch(e) {}
+  }
+
   loadThemeFonts();
-  await loadVendorAssets();
+  const vendorPromise = loadVendorAssets();
   _initMobileSidebarBackdrop();
 
   try {
@@ -217,65 +293,10 @@ async function initPage(active) {
     if (!r || !r.success) { window.location.href = '/login.html'; return null; }
     const u = r.user;
 
-    const navUID = document.getElementById('navUID');
-    if (navUID) navUID.textContent = u.UID || '';
+    localStorage.setItem('susu9_user', JSON.stringify(u));
+    if (!_applyUserPermissions(u, active)) return null;
 
-    if (u.SubUID) {
-      // Staff/subuser
-      const sub = document.getElementById('navSubUID');
-      if (sub) { sub.textContent = 'Staff: ' + (u.subusername || u.SubUID); sub.style.display = 'inline'; }
-
-      const isTrue = v => v === true || v === 1 || String(v).toLowerCase() === 'true' || String(v) === '1';
-
-      // Only checked menus are visible, everything else is hidden
-      if (!isTrue(u.ADDContacts))  _hide('nav-customer');
-      if (!isTrue(u.ADDGames))     _hide('nav-game');
-      if (!isTrue(u.Result))       _hide('nav-results');
-      if (!isTrue(u.Hisab))        _hide('nav-hisab');
-      if (!isTrue(u.HisabSummary)) _hide('nav-hisab-summary');
-      if (!isTrue(u.Accounts))     _hide('nav-accounts');
-      if (!isTrue(u.Balance))      _hide('nav-balance');
-      if (!isTrue(u.LC))           _hide('nav-lc');
-      if (!isTrue(u.Yantri))       _hide('nav-yantri');
-
-      // Admin-only / non-granted menus are always hidden for sub users
-      _hide('nav-sale-history');
-      _hide('nav-subusers');
-      _hide('nav-pl-yantri');
-      _hide('nav-absent-customers');
-      _hide('nav-access');
-      _hide('nav-change-password');
-      _hide('nav-date-wise');
-      _hide('nav-admin');
-      _hide('nav-staff-balance');
-      _hide('nav-assign-clients');
-
-      // Protect unauthorized direct URL visits
-      const pageAccessMap = {
-        'customer': u.ADDContacts,
-        'game': u.ADDGames,
-        'results': u.Result,
-        'hisab': u.Hisab,
-        'hisab-summary': u.HisabSummary,
-        'accounts': u.Accounts,
-        'balance': u.Balance,
-        'lc': u.LC,
-        'yantri': u.Yantri
-      };
-      const adminOnlyPages = ['subusers', 'access', 'assign-clients', 'pl-yantri', 'sale-history', 'absent-customers'];
-      if (adminOnlyPages.includes(active)) {
-        window.location.href = '/pages/home.html';
-        return null;
-      }
-      if (active in pageAccessMap && !isTrue(pageAccessMap[active])) {
-        window.location.href = '/pages/home.html';
-        return null;
-      }
-    } else if (u.SuperAdmin === 'SuperAdmin') {
-      const adminItem = document.getElementById('nav-admin');
-      if (adminItem) adminItem.style.display = 'block';
-    }
-
+    await vendorPromise;
     return u;
   } catch (e) {
     window.location.href = '/login.html';
@@ -289,21 +310,20 @@ function _hide(id) {
   if (el) el.style.display = 'none';
 }
 
-// ── Admin shell (mirrors Susu9/ADMIN/MasterPage.master — same Atlantis theme,
-// smaller sidebar menu: Dashboard/User/Sale/Yantri) ──
+// ── Admin shell (mirrors Susu9/ADMIN/MasterPage.master) ──
 function renderAdminShell(active) {
   const item = (id, href, icon, label) => `
         <li class="nav-item ${active === id ? 'active' : ''}">
           <a href="${href}">
-            <i class="${icon}" style="font-weight:bold;color:Black;"></i>
-            <p style="font-weight:bold;color:Black;">${label}</p>
+            <i class="${icon}"></i>
+            <p>${label}</p>
           </a>
         </li>`;
 
   return `
   <div class="main-header">
     <div class="logo-header" data-background-color="blue">
-      <a href="/pages/admin/dashboard.html" class="logo" style="color:white;text-decoration:none;font-weight:700;letter-spacing:1px;">MahaMaya</a>
+      <a href="/pages/admin/dashboard.html" class="logo">MahaMaya</a>
       <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"><i class="icon-menu"></i></span>
       </button>
@@ -312,32 +332,29 @@ function renderAdminShell(active) {
     </div>
   </div>
   <div class="sidebar sidebar-style-2">
-    <div class="sidebar-wrapper scrollbar scrollbar-inner">
+    <div class="sidebar-wrapper">
       <div class="sidebar-content">
-        <div class="user">
-          <div class="info">
-            <a data-toggle="collapse" href="#collapseUser" aria-expanded="true">
-              <span>
-                <span id="navUID" style="font-weight:bold;color:black;"></span>
-                <span class="user-level" style="font-weight:bold;color:black;">Administrator</span>
-                <span class="caret"></span>
-              </span>
-            </a>
-            <div class="clearfix"></div>
-            <div class="collapse in" id="collapseUser">
-              <ul class="nav">
-                <li><a href="#" onclick="doLogout();return false;"><span class="link-collapse" style="font-weight:bold;color:black;">Logout</span></a></li>
-              </ul>
-            </div>
+        <div class="sidebar-user-pill">
+          <div class="user-avatar"><i class="fa fa-user-circle"></i></div>
+          <div class="user-details">
+            <span class="user-name" id="navUID">User</span>
+            <span class="user-role">Administrator</span>
           </div>
+          <a href="#" onclick="doLogout();return false;" class="btn-logout" title="Logout">
+            <i class="fas fa-sign-out-alt fa fa-sign-out"></i> <span>Logout</span>
+          </a>
+        </div>
+        <div class="sidebar-quick-actions">
+          <a href="/pages/admin/dashboard.html" class="quick-btn ${active === 'dashboard' ? 'active' : ''}">
+            <i class="fa fa-home"></i> <span>Dashboard</span>
+          </a>
+          <a class="quick-btn support-btn" href="/pages/home.html">
+            <i class="fa fa-arrow-left"></i> <span>Main App</span>
+          </a>
         </div>
         <ul class="nav nav-primary">
-          <li class="mx-4 mt-2">
-            <a href="/pages/admin/dashboard.html" class="btn btn-primary btn-block"><span class="btn-label mr-2"><i class="fa fa-home"></i></span>Dashboard</a>
-          </li>
           <li class="nav-section">
-            <span class="sidebar-mini-icon"><i class="fa fa-ellipsis-h"></i></span>
-            <h4 class="text-section" style="font-weight:bold;color:Black;">Menu</h4>
+            <h4 class="text-section">Menu</h4>
           </li>
           ${item('dashboard', '/pages/admin/dashboard.html', 'fa fa-search', 'Dashboard')}
           ${item('users', '/pages/admin/users.html', 'fas fa-users', 'User')}
@@ -373,8 +390,17 @@ function _wrapPageContent(shellHtml) {
 async function initAdminPage(active) {
   _wrapPageContent(renderAdminShell(active));
 
+  const cachedUserStr = localStorage.getItem('susu9_user');
+  if (cachedUserStr) {
+    try {
+      const cached = JSON.parse(cachedUserStr);
+      const navUID = document.getElementById('navUID');
+      if (navUID) navUID.textContent = cached.subusername ? cached.subusername : (cached.UID ? 'User #' + cached.UID : 'User');
+    } catch(e) {}
+  }
+
   loadThemeFonts();
-  await loadVendorAssets();
+  const vendorPromise = loadVendorAssets();
   _initMobileSidebarBackdrop();
 
   try {
@@ -384,8 +410,9 @@ async function initAdminPage(active) {
     if (u.SubUID || u.SuperAdmin !== 'SuperAdmin') { window.location.href = '/pages/home.html'; return null; }
 
     const navUID = document.getElementById('navUID');
-    if (navUID) navUID.textContent = u.UID || '';
+    if (navUID) navUID.textContent = u.subusername ? u.subusername : (u.UID ? 'User #' + u.UID : 'User');
 
+    await vendorPromise;
     return u;
   } catch (e) {
     window.location.href = '/login.html';

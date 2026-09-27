@@ -103,3 +103,261 @@ body {
     background-attachment: local, local, scroll, scroll;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   9. Compact, Elegant & Fast Sidebar Design
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar Container & Header ── */
+.sidebar, .sidebar[data-background-color="white"] {
+  background: #ffffff !important;
+  border-right: 1px solid #eef2f6 !important;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03) !important;
+}
+.sidebar .sidebar-wrapper {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  padding-bottom: 24px !important;
+}
+.sidebar .sidebar-wrapper::-webkit-scrollbar {
+  width: 5px;
+}
+.sidebar .sidebar-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.sidebar .sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Hide duplicate jQuery scrollbar elements completely */
+.sidebar .scroll-element,
+.sidebar-wrapper > .scroll-element,
+.scroll-wrapper > .scroll-element {
+  display: none !important;
+}
+
+.logo-header[data-background-color="blue"] {
+  background: linear-gradient(135deg, #1572e8 0%, #0d5fc2 100%) !important;
+  height: 52px !important;
+  padding: 0 14px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+.logo-header .logo {
+  color: #fff !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 2px !important;
+  text-decoration: none !important;
+}
+
+/* ── Compact User Pill ── */
+.sidebar-user-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 10px 6px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  gap: 8px;
+}
+.sidebar-user-pill .user-avatar {
+  font-size: 22px;
+  color: #1572e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.sidebar-user-pill .user-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-user-pill .user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.sidebar-user-pill .user-role {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
+}
+.sidebar-user-pill .btn-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #dc2626 !important;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sidebar-user-pill .btn-logout i {
+  font-size: 11px;
+}
+.sidebar-user-pill .btn-logout:hover {
+  color: #ffffff !important;
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+/* ── Quick Action Buttons (Dashboard & Support in 1 row) ── */
+.sidebar-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 2px 10px 4px;
+}
+.quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  text-decoration: none !important;
+  color: #ffffff !important;
+  background: #1572e8;
+  border: 1px solid #1572e8;
+  transition: all 0.15s ease;
+  line-height: 1;
+  white-space: nowrap;
+}
+.quick-btn:hover {
+  background: #0d5fc2;
+  border-color: #0d5fc2;
+  box-shadow: 0 2px 6px rgba(21, 114, 232, 0.25);
+}
+.quick-btn.active {
+  background: #0d5fc2;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.quick-btn.support-btn {
+  background: #25d366;
+  border-color: #25d366;
+}
+.quick-btn.support-btn:hover {
+  background: #1eb956;
+  border-color: #1eb956;
+  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.25);
+}
+.quick-btn i {
+  font-size: 12px;
+}
+
+/* ── Section Title ── */
+.sidebar .nav-section {
+  padding: 4px 14px 2px !important;
+  margin: 0 !important;
+}
+.sidebar .nav-section .text-section {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.2px !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+  margin-bottom: 2px !important;
+}
+
+/* ── Navigation Items: Compact, Elegant & Aligned ── */
+.sidebar .nav.nav-primary {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.sidebar .nav.nav-primary > .nav-item {
+  margin: 1px 8px !important;
+  padding: 0 !important;
+}
+.sidebar .nav.nav-primary > .nav-item a {
+  display: flex !important;
+  align-items: center !important;
+  padding: 5px 10px !important;
+  min-height: 31px !important;
+  border-radius: 6px !important;
+  color: #334155 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  transition: background-color 0.12s ease, color 0.12s ease !important;
+  margin: 0 !important;
+  background: transparent !important;
+  position: relative !important;
+}
+.sidebar .nav.nav-primary > .nav-item a i {
+  width: 22px !important;
+  min-width: 22px !important;
+  font-size: 13px !important;
+  text-align: center !important;
+  margin-right: 9px !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.12s ease !important;
+}
+.sidebar .nav.nav-primary > .nav-item a p {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  transition: color 0.12s ease !important;
+}
+
+/* Hover state */
+.sidebar .nav.nav-primary > .nav-item:not(.active) a:hover {
+  background: #f1f5f9 !important;
+}
+.sidebar .nav.nav-primary > .nav-item:not(.active) a:hover i {
+  color: #1572e8 !important;
+}
+.sidebar .nav.nav-primary > .nav-item:not(.active) a:hover p {
+  color: #1572e8 !important;
+}
+
+/* Active state */
+.sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a,
+.sidebar .nav.nav-primary > .nav-item.active > a {
+  background: #1572e8 !important;
+  box-shadow: 0 2px 6px rgba(21, 114, 232, 0.28) !important;
+  border-radius: 6px !important;
+}
+.sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a i,
+.sidebar .nav.nav-primary > .nav-item.active > a i {
+  color: #ffffff !important;
+}
+.sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a p,
+.sidebar .nav.nav-primary > .nav-item.active > a p {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+.sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a:before {
+  display: none !important;
+}
+

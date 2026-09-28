@@ -5,6 +5,8 @@
 <title>Balance Sheet - Susu9</title>
 <script src="/js/theme-preload.js"></script>
 <link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <style>
 /* Bolder, high-contrast typography and compact layout */
 .content label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
@@ -54,13 +56,27 @@
             <div class="col-md-3 col-sm-6">
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="fromDate">From Date</label>
-                <input type="date" class="form-control" id="fromDate">
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" class="form-control" id="fromDate" placeholder="dd/mm/yyyy"
+                    style="padding-right: 36px;">
+                  <button type="button" id="btnFromCal" aria-label="Open Calendar" tabindex="-1"
+                    style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="col-md-3 col-sm-6">
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="toDate">To Date</label>
-                <input type="date" class="form-control" id="toDate">
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" class="form-control" id="toDate" placeholder="dd/mm/yyyy"
+                    style="padding-right: 36px;">
+                  <button type="button" id="btnToCal" aria-label="Open Calendar" tabindex="-1"
+                    style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="col-md-2 col-sm-12">
@@ -132,18 +148,188 @@ let displayRows = [];
 
 const p = new URLSearchParams(location.search);
 
+let fpFrom, fpTo;
+
+function parseDmy(s) {
+  if (!s) return new Date();
+  const p = s.split('/');
+  if (p.length === 3) return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+  return new Date(s);
+}
+
+function bindAutoSlashDate(id, onDateApplied) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace') {
+      const val = this.value;
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      // If cursor is immediately after a slash, delete both the slash and the preceding digit
+      if (start === end && (start === 3 || start === 6) && val[start - 1] === '/') {
+        e.preventDefault();
+        this.value = val.slice(0, start - 2) + val.slice(start);
+        this.setSelectionRange(start - 2, start - 2);
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (id === 'fromDate') {
+        const toEl = document.getElementById('toDate');
+        if (toEl) { toEl.focus(); toEl.select?.(); }
+      } else if (id === 'toDate') {
+        const btn = document.getElementById('btnLoad');
+        if (btn) btn.click();
+      }
+    }
+  }, true);
+
+  el.addEventListener('input', function(e) {
+    if (e.inputType && e.inputType.startsWith('delete')) {
+      return;
+    }
+    const prevPos = this.selectionEnd;
+    const prevVal = this.value;
+    let v = prevVal.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    if (v.length > 4) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+    } else if (v.length > 2) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2);
+    } else if (v.length === 2) {
+      formatted = v + '/';
+    } else {
+      formatted = v;
+    }
+    if (v.length === 4 && formatted.length === 5) {
+      formatted += '/';
+    }
+    if (this.value !== formatted) {
+      this.value = formatted;
+      if (prevPos >= prevVal.length) {
+        this.setSelectionRange(formatted.length, formatted.length);
+      } else {
+        let slashesBefore = (formatted.slice(0, prevPos).match(/\//g) || []).length;
+        let oldSlashesBefore = (prevVal.slice(0, prevPos).match(/\//g) || []).length;
+        let newPos = prevPos + (slashesBefore - oldSlashesBefore);
+        this.setSelectionRange(newPos, newPos);
+      }
+    }
+
+    if (v.length === 8) {
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(formatted, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(formatted);
+      }
+    }
+  });
+
+  el.addEventListener('change', function() {
+    if (this.value) {
+      let v = this.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length === 8) {
+        this.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      }
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(this.value, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(this.value);
+      }
+    }
+  });
+}
+
+function bindCalButton(btnId, inputId) {
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const fp = document.getElementById(inputId)?._flatpickr;
+      if (fp) {
+        if (fp.isOpen) fp.close();
+        else fp.open();
+      }
+    };
+  }
+}
+
 async function init() {
   const u = await initPage('all-balance-sheet');
 
   const ist   = new Date(new Date().getTime() + 5.5*3600000);
-  const today = ist.toISOString().split('T')[0];
-  const first = today.substring(0,8) + '01';
+  const dd    = String(ist.getUTCDate()).padStart(2, '0');
+  const mm    = String(ist.getUTCMonth() + 1).padStart(2, '0');
+  const yyyy  = ist.getUTCFullYear();
+  const first = `01/${mm}/${yyyy}`;
+  const today = `${dd}/${mm}/${yyyy}`;
+
+  const fpCfg = {
+    dateFormat: 'd/m/Y',
+    clickOpens: false,
+    allowInput: true,
+    disableMobile: true,
+    maxDate: 'today',
+    parseDate: function (datestr) {
+      if (!datestr) return new Date();
+      if (datestr instanceof Date) return datestr;
+      const s = String(datestr).trim();
+      const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dmy) {
+        let p1 = parseInt(dmy[1], 10), p2 = parseInt(dmy[2], 10), yr = parseInt(dmy[3], 10);
+        if (p2 > 12 && p1 <= 12) return new Date(yr, p1 - 1, p2);
+        return new Date(yr, p2 - 1, p1);
+      }
+      const m8 = s.match(/^(\d{2})(\d{2})(\d{4})/);
+      if (m8) return new Date(parseInt(m8[3], 10), parseInt(m8[2], 10) - 1, parseInt(m8[1], 10));
+      const mo = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      const mAlpha = s.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+      if (mAlpha) {
+        const mKey = mAlpha[2].charAt(0).toUpperCase() + mAlpha[2].slice(1,3).toLowerCase();
+        return new Date(parseInt(mAlpha[3], 10), mo[mKey] !== undefined ? mo[mKey] : 0, parseInt(mAlpha[1], 10));
+      }
+      const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (iso) return new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? new Date() : d;
+    },
+    formatDate: function (date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    },
+    onClose: function(selectedDates, dateStr, instance) {
+      if (instance && instance.element) {
+        instance.element.blur();
+      }
+    }
+  };
+
+  try {
+    fpFrom = flatpickr('#fromDate', { ...fpCfg, defaultDate: parseDmy(first) });
+    fpTo   = flatpickr('#toDate',   { ...fpCfg, defaultDate: parseDmy(today) });
+  } catch(e) {
+    console.warn('Flatpickr failed:', e);
+  }
+
   const elFrom = document.getElementById('fromDate');
-  const elTo = document.getElementById('toDate');
-  elFrom.max = today;
-  elTo.max = today;
-  elFrom.value = first;
-  elTo.value   = today;
+  const elTo   = document.getElementById('toDate');
+  if (elFrom) elFrom.value = first;
+  if (elTo)   elTo.value   = today;
+
+  bindCalButton('btnFromCal', 'fromDate');
+  bindCalButton('btnToCal',   'toDate');
+
+  bindAutoSlashDate('fromDate');
+  bindAutoSlashDate('toDate');
 
   const uid = p.get('UID') || '';
   await loadCustomers(u);

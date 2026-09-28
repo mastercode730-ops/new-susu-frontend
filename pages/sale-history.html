@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sale History - Susu9</title>
 <script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <style>
 .hideGridColumn{display:none;}
 #myTable{width:100%;border-collapse:collapse;border:1px solid #999;margin:4px 0;}
@@ -340,7 +342,14 @@
             <div class="col-5 col-md-3">
               <div class="form-group">
                 <label for="txtDate">Date</label>
-                <input type="date" class="form-control" id="txtDate">
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" class="form-control" id="txtDate" placeholder="dd/mm/yyyy"
+                    style="padding-right: 36px;">
+                  <button type="button" id="btnDateCal" aria-label="Open Calendar" tabindex="-1"
+                    style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div class="col-4 col-md-6">
@@ -468,16 +477,211 @@ const JODE_SH=['11','22','33','44','55','66','77','88','99','100'];
 const S57_SH=['21','23','24','26','27','28','29','31','32','34','36','37','38','39','41','42','43','46','47','48','49','51','52','53','54','56','57','58','59','61','62','63','64','67','68','69','71','72','73','74','76','78','79','81','82','83','84','86','87','89','91','92','93','94','96','97','98'];
 const S43_SH=['01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','22','25','30','33','35','40','44','45','50','55','60','65','66','70','75','77','80','85','88','90','95','99','100'];
 
+let fpDate;
+
+function parseDmy(s) {
+  if (!s) return new Date();
+  const p = s.split('/');
+  if (p.length === 3) return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+  return new Date(s);
+}
+
+function formatToDdMmYyyy(dateInput) {
+  if (!dateInput) return '';
+  if (dateInput instanceof Date) {
+    const dd = String(dateInput.getDate()).padStart(2, '0');
+    const mm = String(dateInput.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${dateInput.getFullYear()}`;
+  }
+  const s = String(dateInput).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmy) {
+    return dmy[1].padStart(2, '0') + '/' + dmy[2].padStart(2, '0') + '/' + dmy[3];
+  }
+  const mo = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+  const mAlpha = s.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+  if (mAlpha) {
+    const d = mAlpha[1].padStart(2, '0');
+    const mKey = mAlpha[2].charAt(0).toUpperCase() + mAlpha[2].slice(1,3).toLowerCase();
+    const m = String(mo[mKey] !== undefined ? mo[mKey] : 1).padStart(2, '0');
+    return `${d}/${m}/${mAlpha[3]}`;
+  }
+  const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (iso) {
+    const d = String(parseInt(iso[3], 10)).padStart(2, '0');
+    const m = String(parseInt(iso[2], 10)).padStart(2, '0');
+    return `${d}/${m}/${iso[1]}`;
+  }
+  return s;
+}
+
+function bindAutoSlashDate(id, onDateApplied) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace') {
+      const val = this.value;
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      // If cursor is immediately after a slash, delete both the slash and the preceding digit
+      if (start === end && (start === 3 || start === 6) && val[start - 1] === '/') {
+        e.preventDefault();
+        this.value = val.slice(0, start - 2) + val.slice(start);
+        this.setSelectionRange(start - 2, start - 2);
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const msgEl = document.getElementById('txtMessage');
+      if (msgEl) { msgEl.focus(); msgEl.select?.(); }
+    }
+  }, true);
+
+  el.addEventListener('input', function(e) {
+    if (e.inputType && e.inputType.startsWith('delete')) {
+      return;
+    }
+    const prevPos = this.selectionEnd;
+    const prevVal = this.value;
+    let v = prevVal.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    if (v.length > 4) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+    } else if (v.length > 2) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2);
+    } else if (v.length === 2) {
+      formatted = v + '/';
+    } else {
+      formatted = v;
+    }
+    if (v.length === 4 && formatted.length === 5) {
+      formatted += '/';
+    }
+    if (this.value !== formatted) {
+      this.value = formatted;
+      if (prevPos >= prevVal.length) {
+        this.setSelectionRange(formatted.length, formatted.length);
+      } else {
+        let slashesBefore = (formatted.slice(0, prevPos).match(/\//g) || []).length;
+        let oldSlashesBefore = (prevVal.slice(0, prevPos).match(/\//g) || []).length;
+        let newPos = prevPos + (slashesBefore - oldSlashesBefore);
+        this.setSelectionRange(newPos, newPos);
+      }
+    }
+
+    if (v.length === 8) {
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(formatted, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(formatted);
+      }
+    }
+  });
+
+  el.addEventListener('change', function() {
+    if (this.value) {
+      let v = this.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length === 8) {
+        this.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      }
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(this.value, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(this.value);
+      }
+    }
+  });
+}
+
+function bindCalButton(btnId, inputId) {
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const fp = document.getElementById(inputId)?._flatpickr;
+      if (fp) {
+        if (fp.isOpen) fp.close();
+        else fp.open();
+      }
+    };
+  }
+}
+
 async function init(){
   const u=await initPage('sale-history');if(!u)return;
   sh_uid=u.UID;
-  SG('txtDate').value=new Date(Date.now()+5.5*3600000).toISOString().split('T')[0];
+  const ist = new Date(Date.now() + 5.5*3600000);
+  const dd = String(ist.getUTCDate()).padStart(2, '0');
+  const mm = String(ist.getUTCMonth() + 1).padStart(2, '0');
+  const yyyy = ist.getUTCFullYear();
+  let initialDate = `${dd}/${mm}/${yyyy}`;
+
   const p=new URLSearchParams(location.search);
-  if(p.get('Date'))SG('txtDate').value=shToInput(p.get('Date'));
+  if(p.get('Date')) initialDate = formatToDdMmYyyy(p.get('Date'));
+
+  const fpCfg = {
+    dateFormat: 'd/m/Y',
+    clickOpens: false,
+    allowInput: true,
+    disableMobile: true,
+    parseDate: function (datestr) {
+      if (!datestr) return new Date();
+      if (datestr instanceof Date) return datestr;
+      const s = String(datestr).trim();
+      const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dmy) {
+        let p1 = parseInt(dmy[1], 10), p2 = parseInt(dmy[2], 10), yr = parseInt(dmy[3], 10);
+        if (p2 > 12 && p1 <= 12) return new Date(yr, p1 - 1, p2);
+        return new Date(yr, p2 - 1, p1);
+      }
+      const m8 = s.match(/^(\d{2})(\d{2})(\d{4})/);
+      if (m8) return new Date(parseInt(m8[3], 10), parseInt(m8[2], 10) - 1, parseInt(m8[1], 10));
+      const mo = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      const mAlpha = s.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+      if (mAlpha) {
+        const mKey = mAlpha[2].charAt(0).toUpperCase() + mAlpha[2].slice(1,3).toLowerCase();
+        return new Date(parseInt(mAlpha[3], 10), mo[mKey] !== undefined ? mo[mKey] : 0, parseInt(mAlpha[1], 10));
+      }
+      const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (iso) return new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? new Date() : d;
+    },
+    formatDate: function (date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    },
+    onClose: function(selectedDates, dateStr, instance) {
+      if (instance && instance.element) {
+        instance.element.blur();
+      }
+    }
+  };
+
+  try {
+    fpDate = flatpickr('#txtDate', { ...fpCfg, defaultDate: parseDmy(initialDate) });
+  } catch(e) {
+    console.warn('Flatpickr failed:', e);
+  }
+
+  const el = SG('txtDate');
+  if (el) el.value = initialDate;
+
+  bindCalButton('btnDateCal', 'txtDate');
+  bindAutoSlashDate('txtDate');
+
   if(p.get('Msg')){SG('txtMessage').value=p.get('Msg');loadHistory();}
 }
-
-function shToInput(d){try{const dt=new Date(d);if(!isNaN(dt))return dt.toISOString().split('T')[0];const m={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};const pts=d.split('/');if(pts.length===3){const mon=m[pts[1]]||pts[1];return`${pts[2]}-${mon}-${pts[0].padStart(2,'0')}`;}return d;}catch{return d;}}
 
 // ── ASPX: Number/Amount mini-composer (isNumber/process/SaveBulkMessage/addRow/myFunction) ──
 function shIsNumber(e){const c=(e.which||e.keyCode);return!(c!==46&&c>31&&(c<48||c>57));}

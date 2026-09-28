@@ -295,9 +295,12 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <div class="card-title">
-            Payment/Receipt
-            <button class="btn btn-success" style="float:right;font-weight:900;" onclick="goToPrHistory()">P / R History</button>
+          <div class="card-title" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span>Payment/Receipt</span>
+              <span id="topSubUserBalance" class="net-bal" style="display: none; margin-top: 0; font-size: 0.95rem; font-weight: 800;"></span>
+            </div>
+            <button class="btn btn-success" style="font-weight:900;" onclick="goToPrHistory()">P / R History</button>
           </div>
         </div>
         <div class="card-body">
@@ -308,8 +311,20 @@
                 <div class="col-6">
                   <div class="form-group">
                     <label for="txtDate">Date</label>
-                    <input type="text" class="form-control" id="txtDate" placeholder="dd/MMM/yyyy" tabindex="1"
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();advanceFromDate();}">
+                    <div style="position: relative; display: flex; align-items: center;">
+                      <input type="text" class="form-control" id="txtDate" placeholder="dd/mm/yyyy" tabindex="1"
+                        style="padding-right: 38px;"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();advanceFromDate();}">
+                      <button type="button" id="btnDateCal" aria-label="Open Calendar" tabindex="-1"
+                        style="position: absolute; right: 0; top: 0; bottom: 0; width: 38px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div class="col-6">
@@ -429,24 +444,72 @@ function advanceFromNarration() {
   }
 }
 
+function parseInputDate(s) {
+  if (!s) return null;
+  const str = String(s).trim();
+  const mNum = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mNum) {
+    const day = parseInt(mNum[1], 10);
+    const month = parseInt(mNum[2], 10) - 1;
+    const year = parseInt(mNum[3], 10);
+    return new Date(year, month, day);
+  }
+  const mo = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const mAlpha = str.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+  if (mAlpha) {
+    const day = parseInt(mAlpha[1], 10);
+    const mKey = mAlpha[2].toLowerCase();
+    const month = mo[mKey] !== undefined ? mo[mKey] : 0;
+    const year = parseInt(mAlpha[3], 10);
+    return new Date(year, month, day);
+  }
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 function toIsoDate(dStr) {
   if (!dStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
-  const mo = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
-  const m = dStr.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
-  if (m) {
-    const day = m[1].padStart(2, '0');
-    const month = mo[m[2].slice(0,3).charAt(0).toUpperCase() + m[2].slice(1,3).toLowerCase()] || '01';
-    return `${m[3]}-${month}-${day}`;
-  }
-  const d = new Date(dStr);
-  if (!isNaN(d.getTime())) {
+  const d = parseInputDate(dStr);
+  if (d && !isNaN(d.getTime())) {
     const y = d.getFullYear();
     const moNum = String(d.getMonth() + 1).padStart(2, '0');
     const da = String(d.getDate()).padStart(2, '0');
     return `${y}-${moNum}-${da}`;
   }
   return '';
+}
+
+async function updateTopSubUserBalance(staffId, staffName) {
+  const el = document.getElementById('topSubUserBalance');
+  if (!el) return;
+  const targetId = mySubUID || staffId;
+  if (!targetId || targetId === '0' || String(targetId).startsWith('cust_') || targetId === 'Self') {
+    if (!mySubUID) {
+      el.style.display = 'none';
+      return;
+    }
+  }
+  try {
+    const url = mySubUID
+      ? '/api/balance/staff-balance'
+      : `/api/balance/staff-balance?staffID=${encodeURIComponent(targetId)}`;
+    const r = await API.get(url);
+    if (r?.success && r.balance !== undefined) {
+      const b = parseFloat(r.balance) || 0;
+      let label = staffName;
+      if (!label) {
+        if (r.subusername) label = r.subusername;
+        else if (mySubUID) label = `SubUser ${mySubUID}`;
+        else label = `SubUser ${targetId}`;
+      }
+      el.textContent = `Sub User (${label}) Balance : ${b < 0 ? '-' : ''}₹${Math.abs(b).toLocaleString('en-IN')}`;
+      el.className = 'net-bal ' + (b < 0 ? 'neg' : 'pos');
+      el.style.display = 'inline-block';
+    }
+  } catch (err) {
+    console.error('Error fetching top sub user balance:', err);
+  }
 }
 
 function goToPrHistory() {
@@ -465,16 +528,19 @@ async function init() {
     const u = await initPage('accounts');
     if (!u) return;
     mySubUID = u.SubUID || null;
+    if (mySubUID) {
+      updateTopSubUserBalance(mySubUID, u.subusername || u.SubUID);
+    }
 
     // Customer Name always shows the full/total customer list, regardless
     // of which Sub User is picked below — Sub User only decides who a
     // transaction gets attributed to, it doesn't filter the customer list.
     await loadCustomers();
     const savedDate = localStorage.getItem('accounts_last_date');
-    const parsedSaved = savedDate ? new Date(savedDate.replace(/(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/, '$2 $1, $3')) : null;
+    const parsedSaved = parseInputDate(savedDate);
     const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
     if (savedDate && parsedSaved && !isNaN(parsedSaved) && parsedSaved <= endToday) {
-      document.getElementById('txtDate').value = savedDate;
+      document.getElementById('txtDate').value = fmtDate(parsedSaved);
     } else {
       await setLatestDate();
     }
@@ -578,6 +644,8 @@ async function init() {
         $('#ddlStaff').val(savedStaff);
         $('#ddlStaff').select2('val', savedStaff);
         fetchStaffNetBal(savedStaff);
+        const optText = $('#ddlStaff option[value="' + savedStaff + '"]').text();
+        updateTopSubUserBalance(savedStaff, optText);
       }
 
       // DO NOT auto-save on Sub User selection! Only advance focus to Submit button
@@ -585,6 +653,8 @@ async function init() {
         const val = $(this).val();
         localStorage.setItem('accounts_last_staff', val || '0');
         fetchStaffNetBal(val);
+        const optText = $('#ddlStaff option:selected').text();
+        updateTopSubUserBalance(val, optText);
         setTimeout(() => document.getElementById('btnSubmit').focus(), 50);
       });
       $('#ddlStaff').on('select2-close', function(){
@@ -694,19 +764,18 @@ function getSelectedType() {
 
 // ── DATES ─────────────────────────────────────────────
 function initDatePickers() {
-  const fmt = { dateFormat: 'j/M/Y',
+  const fmt = {
+    dateFormat: 'd/m/Y',
     maxDate: 'today',
-    formatDate(d) {
-      const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return `${String(d.getDate()).padStart(2,'0')}/${mo[d.getMonth()]}/${d.getFullYear()}`;
-    },
-    parseDate(s) {
-      const mo = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
-      const m = s.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/);
-      return m ? new Date(parseInt(m[3]), mo[m[2]], parseInt(m[1])) : null;
-    },
+    clickOpens: false,
     allowInput: true,
     disableMobile: true,
+    formatDate(d) {
+      return fmtDate(d);
+    },
+    parseDate(s) {
+      return parseInputDate(s);
+    },
     onChange: function(selectedDates, dateStr, instance) {
       if (dateStr) localStorage.setItem('accounts_last_date', dateStr);
       const st = $('#ddlStaff').val();
@@ -734,13 +803,24 @@ function initDatePickers() {
       }
     }, true);
   }
+  const btnCal = document.getElementById('btnDateCal');
+  if (btnCal) {
+    btnCal.onclick = function(e) {
+      e.preventDefault();
+      const instance = document.getElementById('txtDate')?._flatpickr;
+      if (instance) {
+        if (instance.isOpen) instance.close();
+        else instance.open();
+      }
+    };
+  }
 }
 
 async function setLatestDate() {
   const r = await API.get('/api/accounts/latest-date');
   const today = fmtDate(new Date());
   let d = r?.date ? (fmtDate(new Date(r.date)) || today) : today;
-  const p = d ? new Date(d.replace(/(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/, '$2 $1, $3')) : null;
+  const p = parseInputDate(d);
   const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
   if (p && !isNaN(p) && p > endToday) d = today;
   document.getElementById('txtDate').value = d;
@@ -913,7 +993,7 @@ async function saveTransaction() {
   const staffID = mySubUID || (rawStaffVal.startsWith('cust_') || rawStaffVal === '0' || rawStaffVal === 'Self' ? '0' : rawStaffVal);
 
   const curDate = document.getElementById('txtDate').value;
-  const curParsed = curDate ? new Date(curDate.replace(/(\d{1,2})\/([A-Za-z]{3})\/(\d{4})/, '$2 $1, $3')) : null;
+  const curParsed = parseInputDate(curDate);
   const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
   if (curParsed && !isNaN(curParsed) && curParsed > endOfToday) {
@@ -943,6 +1023,8 @@ async function saveTransaction() {
       if (rawStaffVal && rawStaffVal !== '0') {
         fetchStaffNetBal(rawStaffVal);
       }
+      const staffOptText = $('#ddlStaff option:selected').text();
+      updateTopSubUserBalance(rawStaffVal, staffOptText);
       setTimeout(focusDateField, 60);
     } else {
       toast(r?.message || 'Error saving', 'err');
@@ -972,8 +1054,10 @@ function resetForm() {
 // ── HELPERS ───────────────────────────────────────────
 function fmtDate(d) {
   if (!d || isNaN(d)) return '';
-  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${String(d.getDate()).padStart(2,'0')}/${mo[d.getMonth()]}/${d.getFullYear()}`;
+  const day = String(d.getDate()).padStart(2, '0');
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const yr = d.getFullYear();
+  return `${day}/${mo}/${yr}`;
 }
 // ── SweetAlert-based feedback (matches ASPX SucessMessage/ErrorMessage) ──
 function toast(msg, type='ok') {

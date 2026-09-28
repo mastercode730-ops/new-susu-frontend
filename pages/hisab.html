@@ -487,6 +487,14 @@ function onSearchClick(e) {
   bindGrid();
 }
 
+// ── Customer Name Cleaner ──
+function getCleanCustName(r) {
+  if (!r) return '';
+  const val = typeof r === 'string' ? r : (r.CustomerName || r.CMobile || r.Mobile || r.UID || '');
+  const cleaned = String(val).replace(/\s*[\(\[]?\d+[\)\]]?$/, '').replace(/\s+\d+$/, '').trim();
+  return cleaned || String(val).trim();
+}
+
 // ── Render grvGameHisab ──
 // ASPX: Sorted CMobile ASC, Footer: SRNo|Total|Sum(TotalAmount)|Sum(Balance)
 function renderGameHisab(rows) {
@@ -496,12 +504,12 @@ function renderGameHisab(rows) {
     setText('ft_gh_sale','–'); setText('ft_gh_bal','–');
     return;
   }
-  const sorted = [...rows].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+  const sorted = [...rows].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || (a.CMobile||'').localeCompare(b.CMobile||''));
   tbody.innerHTML = sorted.map((r,i) => `
     <tr onclick="selectRow(this,'bodyGameHisab')" tabindex="0"
         onkeydown="arrowNav(event,this,'bodyGameHisab')">
       <td>${i+1}</td>
-      <td class="link-cell" onclick="event.stopPropagation();showHistory('${r.UID}','game')">${r.CMobile||r.UID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();showHistory('${r.UID}','game')">${getCleanCustName(r)}</td>
       <td>${r.TotalAmount||0}</td>
       <td>${r.Balance||0}</td>
     </tr>`).join('');
@@ -524,7 +532,7 @@ function renderMyHisab(rows) {
   tbody.innerHTML = rows.map(r => `
     <tr onclick="selectRow(this,'bodyMyHisab')" tabindex="0"
         onkeydown="arrowNav(event,this,'bodyMyHisab')">
-      <td class="link-cell" onclick="event.stopPropagation();showHistory('${r.UID}','myhisab')">${r.Mobile||r.UID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();showHistory('${r.UID}','myhisab')">${getCleanCustName(r.Mobile||r.UID)}</td>
       <td>${r.TotalAmount||0}</td>
       <td>${r.Balance||0}</td>
     </tr>`).join('');
@@ -535,11 +543,11 @@ function renderMyHisab(rows) {
   setText('ft_mh_bal',  totBal.toString());
 }
 
-// ── txtsearch_TextChanged → filter on CMobile ──
+// ── txtsearch_TextChanged → filter on CMobile / Customer Name ──
 function filterGameHisab(term) {
   const t = term.toLowerCase();
   const filtered = !t ? _vsGameHisab
-    : _vsGameHisab.filter(r => (r.CMobile||'').toLowerCase().includes(t));
+    : _vsGameHisab.filter(r => (r.CMobile||'').toLowerCase().includes(t) || getCleanCustName(r).toLowerCase().includes(t));
   renderGameHisab(filtered);
   document.getElementById('txtsearch').focus();
 }
@@ -573,7 +581,7 @@ async function showHistory(uid, mode) {
     // ASPX: h4Title = CustomerName + date + "All Game History" (from first row)
     if (mode === 'game' && data[0]?.CustomerName) {
       document.getElementById('histTitle').textContent =
-        `${data[0].CustomerName}  ${_currentDate}  All Game History`;
+        `${getCleanCustName(data[0].CustomerName)}  ${_currentDate}  All Game History`;
     }
 
     document.getElementById('bodyHist').innerHTML = data.map(d => `
@@ -656,9 +664,9 @@ function exportHisab() {
   const wb = XLSX.utils.book_new();
 
   if (_vsGameHisab.length) {
-    const sorted = [..._vsGameHisab].sort((a,b)=>(a.CMobile||'').localeCompare(b.CMobile||''));
+    const sorted = [..._vsGameHisab].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || (a.CMobile||'').localeCompare(b.CMobile||''));
     const rows = [['SRNo','Customer','Sale','Balance']];
-    sorted.forEach((r,i) => rows.push([i+1, r.CMobile||r.UID, parseFloat(r.TotalAmount)||0, parseFloat(r.Balance)||0]));
+    sorted.forEach((r,i) => rows.push([i+1, getCleanCustName(r), parseFloat(r.TotalAmount)||0, parseFloat(r.Balance)||0]));
     rows.push(['','Total',
       sorted.reduce((s,r)=>s+(parseFloat(r.TotalAmount)||0),0),
       sorted.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0)]);
@@ -667,7 +675,7 @@ function exportHisab() {
 
   if (_vsMyHisab.length) {
     const rows = [['Mobile','Sale','Amount']];
-    _vsMyHisab.forEach(r => rows.push([r.Mobile||r.UID, parseFloat(r.TotalAmount)||0, parseFloat(r.Balance)||0]));
+    _vsMyHisab.forEach(r => rows.push([getCleanCustName(r.Mobile||r.UID), parseFloat(r.TotalAmount)||0, parseFloat(r.Balance)||0]));
     rows.push(['Total',
       _vsMyHisab.reduce((s,r)=>s+(parseFloat(r.TotalAmount)||0),0),
       _vsMyHisab.reduce((s,r)=>s+(parseFloat(r.Balance)||0),0)]);

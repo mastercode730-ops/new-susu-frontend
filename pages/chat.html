@@ -118,8 +118,8 @@
       border-color: #6861ce;
     }
 
-    /* Yantri calendar icon */
-    #BtnYantri {
+    /* Yantri calendar icon & date picker button */
+    #BtnYantri, #btnDateCal {
       background: none;
       border: none;
       cursor: pointer;
@@ -1349,8 +1349,8 @@
         <span id="lblSelectedGameName" onclick="OpenYantri()" style="cursor:pointer;"></span>
 
         <input type="text" id="txtDate" placeholder="dd/mm/yyyy" onchange="FilterByDate(this)" autocomplete="off">
-
-        <button id="BtnYantri" onclick="OpenYantriagent()" title="Yantri">📅</button>
+        <button type="button" id="btnDateCal" onclick="toggleDateCalendar()" title="Calendar">📅</button>
+        <button id="BtnYantri" onclick="toggleDateCalendar()" title="Yantri" style="display:none;">📅</button>
         <button id="btnMoveMsg" onclick="openBulkMovePopup()">💬 Bulk</button>
 
         <div class="bet-search-container" id="betSearchContainer" title="Search bet number">
@@ -1668,6 +1668,7 @@
           : new Date();
         flatpickr('#txtDate', {
           disableMobile: true,
+          clickOpens: false,
           allowInput: true,
           defaultDate: _fpDefault,
           dateFormat: 'd/m/Y',
@@ -1680,6 +1681,10 @@
               let p1 = parseInt(dmy[1], 10), p2 = parseInt(dmy[2], 10), yr = parseInt(dmy[3], 10);
               if (p2 > 12 && p1 <= 12) return new Date(yr, p1 - 1, p2);
               return new Date(yr, p2 - 1, p1);
+            }
+            const m8 = s.match(/^(\d{2})(\d{2})(\d{4})/);
+            if (m8) {
+              return new Date(parseInt(m8[3], 10), parseInt(m8[2], 10) - 1, parseInt(m8[1], 10));
             }
             const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
             if (iso) return new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
@@ -1711,6 +1716,65 @@
           }
         });
 
+        // Auto-slash date typing for #txtDate
+        const dateInput = document.getElementById('txtDate');
+        if (dateInput) {
+          dateInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace') {
+              const val = this.value;
+              const start = this.selectionStart;
+              const end = this.selectionEnd;
+              if (start === end && (start === 3 || start === 6) && val[start - 1] === '/') {
+                e.preventDefault();
+                this.value = val.slice(0, start - 2) + val.slice(start);
+                this.setSelectionRange(start - 2, start - 2);
+                return;
+              }
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              FilterByDate(this);
+            }
+          }, true);
+
+          dateInput.addEventListener('input', function(e) {
+            if (e.inputType && e.inputType.startsWith('delete')) {
+              return;
+            }
+            const prevPos = this.selectionEnd;
+            const prevVal = this.value;
+            let v = prevVal.replace(/\D/g, '').slice(0, 8);
+            let formatted = '';
+            if (v.length > 4) {
+              formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+            } else if (v.length > 2) {
+              formatted = v.slice(0, 2) + '/' + v.slice(2);
+            } else if (v.length === 2) {
+              formatted = v + '/';
+            } else {
+              formatted = v;
+            }
+            if (v.length === 4 && formatted.length === 5) {
+              formatted += '/';
+            }
+            if (this.value !== formatted) {
+              this.value = formatted;
+              if (prevPos >= prevVal.length) {
+                this.setSelectionRange(formatted.length, formatted.length);
+              } else {
+                let slashesBefore = (formatted.slice(0, prevPos).match(/\//g) || []).length;
+                let oldSlashesBefore = (prevVal.slice(0, prevPos).match(/\//g) || []).length;
+                let newPos = prevPos + (slashesBefore - oldSlashesBefore);
+                this.setSelectionRange(newPos, newPos);
+              }
+            }
+
+            if (v.length === 8) {
+              FilterByDate(this);
+            }
+          });
+        }
+
         // Helper: date change apply karo + chat reload
         function applyDateChange(d, dateStr) {
           const fmt = dateStr || (String(d.getDate()).padStart(2, '0') + '/' +
@@ -1727,6 +1791,14 @@
 
         // bulkDate: native type="date" — no flatpickr needed, browser ki native calendar use karega
         // (flatpickr ka positioning issue modal ke andar tha)
+      }
+
+      function toggleDateCalendar() {
+        const fp = document.getElementById('txtDate')?._flatpickr;
+        if (fp) {
+          if (fp.isOpen) fp.close();
+          else fp.open();
+        }
       }
 
       async function loadCustomerName() {

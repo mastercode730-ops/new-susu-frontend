@@ -66,10 +66,10 @@
           <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
             <thead>
               <tr>
-                <th>Customer</th><th>Date</th><th>Paid</th><th>Received</th><th>Type</th><th>Narration</th><th>SubUser</th>
+                <th>Customer</th><th>Date</th><th>Paid</th><th>Received</th><th>Type</th><th>Narration</th><th id="thSubUser">SubUser</th>
               </tr>
             </thead>
-            <tbody id="txTbody"><tr><td colspan="7">Search to load</td></tr></tbody>
+            <tbody id="txTbody"><tr><td colspan="7" id="tdInit">Search to load</td></tr></tbody>
             <tfoot id="txFoot"></tfoot>
           </table>
         </div>
@@ -101,11 +101,18 @@ function toIsoDate(dStr) {
   return '';
 }
 
+let isSubUser = false;
+
 async function init() {
   const u = await initPage('show-transactions');
-  if (u?.SubUID) {
+  isSubUser = !!(u?.SubUID);
+  if (isSubUser) {
     const colStaff = document.getElementById('colStaff');
     if (colStaff) colStaff.style.display = 'none';
+    const thSubUser = document.getElementById('thSubUser');
+    if (thSubUser) thSubUser.style.display = 'none';
+    const tdInit = document.getElementById('tdInit');
+    if (tdInit) tdInit.colSpan = 6;
   } else {
     const sr = await API.get('/api/accounts/subusers');
     document.getElementById('txStaff').innerHTML = '<option value="">All Staff</option><option value="0">Self</option>' + (sr?.data||[]).map(s => `<option value="${s.SubUserID}">${s.subusername}</option>`).join('');
@@ -146,12 +153,14 @@ async function loadTx() {
   const btn = document.getElementById('btnSearch');
   const tbody = document.getElementById('txTbody');
   const tfoot = document.getElementById('txFoot');
+  const colSpan = isSubUser ? 6 : 7;
+  const netColSpan = isSubUser ? 2 : 3;
 
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Searching...';
   }
-  tbody.innerHTML = '<tr><td colspan="7" style="padding: 24px; font-weight: 800; color: #1572e8; font-size: 0.95rem;"><i class="fa fa-spinner fa-spin" style="font-size: 1.3rem; vertical-align: middle; margin-right: 8px;"></i> Loading Transactions...</td></tr>';
+  tbody.innerHTML = `<tr><td colspan="${colSpan}" style="padding: 24px; font-weight: 800; color: #1572e8; font-size: 0.95rem;"><i class="fa fa-spinner fa-spin" style="font-size: 1.3rem; vertical-align: middle; margin-right: 8px;"></i> Loading Transactions...</td></tr>`;
   tfoot.innerHTML = '';
 
   try {
@@ -176,13 +185,13 @@ async function loadTx() {
         <td>${d.Received||0}</td>
         <td>${d.EntryType||d.Type||''}</td>
         <td>${d.Narration||''}</td>
-        <td>${d.SubUser||d.StaffName||''}</td>
+        ${isSubUser ? '' : `<td>${d.SubUser||d.StaffName||''}</td>`}
       </tr>`;
-    }).join('') : '<tr><td colspan="7">No transactions</td></tr>';
+    }).join('') : `<tr><td colspan="${colSpan}">No transactions</td></tr>`;
     const net = paid - recv;
-    tfoot.innerHTML = `<tr><td colspan="2">Total (${data.length})</td><td>₹${paid.toFixed(0)}</td><td>₹${recv.toFixed(0)}</td><td colspan="3">Net: ₹${net.toFixed(0)}</td></tr>`;
+    tfoot.innerHTML = `<tr><td colspan="2">Total (${data.length})</td><td>₹${paid.toFixed(0)}</td><td>₹${recv.toFixed(0)}</td><td colspan="${netColSpan}">Net: ₹${net.toFixed(0)}</td></tr>`;
   } catch(err) {
-    tbody.innerHTML = '<tr><td colspan="7" style="color: #dc3545; padding: 16px;">Failed to load transactions</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${colSpan}" style="color: #dc3545; padding: 16px;">Failed to load transactions</td></tr>`;
   } finally {
     if (btn) {
       btn.disabled = false;

@@ -133,7 +133,7 @@ let displayRows = [];
 const p = new URLSearchParams(location.search);
 
 async function init() {
-  await initPage('all-balance-sheet');
+  const u = await initPage('all-balance-sheet');
 
   const ist   = new Date(new Date().getTime() + 5.5*3600000);
   const today = ist.toISOString().split('T')[0];
@@ -146,7 +146,7 @@ async function init() {
   elTo.value   = today;
 
   const uid = p.get('UID') || '';
-  await loadCustomers();
+  await loadCustomers(u);
 
   if (uid) {
     document.getElementById('custSel').value = uid;
@@ -159,12 +159,32 @@ async function init() {
   };
 }
 
-async function loadCustomers() {
+async function loadCustomers(user) {
   try {
-    const r = await API.get('/api/home/receiver-list');
+    if (!user) {
+      const userStr = localStorage.getItem('susu9_user');
+      if (userStr) {
+        try { user = JSON.parse(userStr); } catch(e) {}
+      }
+    }
+    let list = [];
+    if (user && user.SubUID) {
+      // SubUser: fetch assigned customers via /api/hisab/customers or /api/home/receiver-list
+      const hr = await API.get('/api/hisab/customers');
+      if (hr?.data && hr.data.length) {
+        list = hr.data;
+      } else {
+        const r = await API.get('/api/home/receiver-list');
+        list = r?.data || [];
+      }
+    } else {
+      const r = await API.get('/api/home/receiver-list');
+      list = r?.data || [];
+    }
+
     const sel = document.getElementById('custSel');
     sel.innerHTML = '<option value="">Select Customer</option>';
-    (r?.data || []).forEach(c => {
+    list.sort((a,b) => (a.CustomerName||'').localeCompare(b.CustomerName||'')).forEach(c => {
       sel.innerHTML += `<option value="${c.UID}">${c.CustomerName || c.Mobile}</option>`;
     });
   } catch(e) {}

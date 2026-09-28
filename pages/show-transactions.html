@@ -50,7 +50,7 @@
               <label>Customer Name</label>
               <select class="form-control" id="txCust" style="text-transform:capitalize;"><option value="">All Customers</option></select>
             </div>
-            <div class="col">
+            <div class="col" id="colStaff">
               <label>Sub User</label>
               <select class="form-control" id="txStaff" style="text-transform:capitalize;"><option value="">All Staff</option></select>
             </div>
@@ -102,11 +102,19 @@ function toIsoDate(dStr) {
 }
 
 async function init() {
-  await initPage('show-transactions');
+  const u = await initPage('show-transactions');
+  if (u?.SubUID) {
+    const colStaff = document.getElementById('colStaff');
+    if (colStaff) colStaff.style.display = 'none';
+  } else {
+    const sr = await API.get('/api/accounts/subusers');
+    document.getElementById('txStaff').innerHTML = '<option value="">All Staff</option><option value="0">Self</option>' + (sr?.data||[]).map(s => `<option value="${s.SubUserID}">${s.subusername}</option>`).join('');
+  }
   const cr = await API.get('/api/accounts/customers');
-  const sr = await API.get('/api/accounts/subusers');
-  document.getElementById('txCust').innerHTML = '<option value="">All Customers</option><option value="0">Self</option>' + (cr?.data||[]).map(c => `<option value="${c.UID||c.CID}">${c.Name||c.CustomerName}</option>`).join('');
-  document.getElementById('txStaff').innerHTML = '<option value="">All Staff</option><option value="0">Self</option>' + (sr?.data||[]).map(s => `<option value="${s.SubUserID}">${s.subusername}</option>`).join('');
+  document.getElementById('txCust').innerHTML = '<option value="">All Customers</option><option value="0">Self</option>' + (cr?.data||[]).map(c => {
+    const cName = (c.Name || c.CustomerName || '').replace(/\s+\d{4,5}$/, '').trim();
+    return `<option value="${c.UID||c.CID}">${cName}</option>`;
+  }).join('');
   const now = new Date(new Date().getTime()+5.5*3600000).toISOString().split('T')[0];
   const dr = await API.get('/api/accounts/latest-date');
   const lastEntry = localStorage.getItem('accounts_last_entry_date') || localStorage.getItem('accounts_last_date');
@@ -160,8 +168,9 @@ async function loadTx() {
     let paid=0, recv=0;
     tbody.innerHTML = data.length ? data.map(d => {
       paid += parseFloat(d.Paid||0); recv += parseFloat(d.Received||0);
+      const custName = (d.CustomerName1 || d.CustomerName || '').replace(/\s+\d{4,5}$/, '').trim();
       return `<tr>
-        <td>${d.CustomerName||''}</td>
+        <td>${custName}</td>
         <td>${d.Date ? new Date(d.Date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
         <td>${d.Paid||0}</td>
         <td>${d.Received||0}</td>

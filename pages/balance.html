@@ -71,9 +71,9 @@ tbody tr{cursor:pointer;}
 
       <div class="card">
         <div class="card-header">
-          <div class="card-title">
-            <span id="lblStaffNetbalance" style="display:none;font-weight:bold;"></span>
-            My Game Balance
+          <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+            <span>My Game Balance</span>
+            <span id="lblStaffNetbalance" style="display:none;margin-left:auto;font-weight:800;font-size:1.1rem;color:var(--text, #000);letter-spacing:0.3px;"></span>
           </div>
         </div>
         <div class="card-body">
@@ -330,7 +330,7 @@ async function init() {
     if (sr?.success) {
       const lbl = document.getElementById('lblStaffNetbalance');
       lbl.textContent = 'Net Bal of SubUser ' + _subUID + ' : ' + sr.balance;
-      lbl.style.display = 'inline';
+      lbl.style.display = 'inline-block';
     }
     document.getElementById('thAdd').style.display    = '';
     document.getElementById('ft_gb_add').style.display= '';
@@ -510,9 +510,9 @@ function renderMyBal(rows) {
 function renderStaff(rows) {
   const sorted = [...rows].sort((a,b)=>(a.subusername||'').localeCompare(b.subusername||''));
   document.getElementById('bodyStaff').innerHTML = sorted.map((r,i)=>`
-    <tr>
+    <tr style="cursor:pointer;" onclick="openStaffTransactions('${r.SubUserID}')">
       <td>${i+1}</td>
-      <td class="link-cell" onclick="window.open('/pages/accounts.html?SUID=${r.SubUserID}','_blank')">${r.subusername||r.SubUserID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openStaffTransactions('${r.SubUserID}')">${r.subusername||r.SubUserID}</td>
       <td>${nv(r.Balance)}</td>
     </tr>`).join('');
 }
@@ -710,6 +710,32 @@ function parseDate(s) {
   if(p.length===3&&M[p[1]]!==undefined) return new Date(parseInt(p[2]),M[p[1]],parseInt(p[0]));
   return new Date(s);
 }
+function toIsoDate(dStr) {
+  if (!dStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
+  const mo = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const m = String(dStr).match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+  if (m) {
+    const day = m[1].padStart(2, '0');
+    const month = mo[m[2].slice(0,3).charAt(0).toUpperCase() + m[2].slice(1,3).toLowerCase()] || '01';
+    return `${m[3]}-${month}-${day}`;
+  }
+  const d = new Date(dStr);
+  if (!isNaN(d.getTime())) {
+    const y = d.getFullYear();
+    const moNum = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${y}-${moNum}-${da}`;
+  }
+  return '';
+}
+
+function openStaffTransactions(subUserId) {
+  const iso = toIsoDate(_currentDate || fmtDateToday());
+  const url = `/pages/show-transactions.html?SUID=${encodeURIComponent(subUserId)}` + (iso ? `&from=${encodeURIComponent(iso)}&to=${encodeURIComponent(iso)}` : '');
+  window.location.href = url;
+}
+
 function fmtDateTime(dt) {
   if(!dt) return '';
   try { return new Date(dt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch { return dt; }

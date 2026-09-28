@@ -602,15 +602,21 @@ function renderUttarBal(rows) {
   if(!_subUID) calcNetBalance();
 }
 
+function openStaffTransactions(subUserId) {
+  const iso = toIsoDate(_currentDate || fmtDateToday());
+  const url = `/pages/show-transactions.html?SUID=${encodeURIComponent(subUserId)}` + (iso ? `&from=${encodeURIComponent(iso)}&to=${encodeURIComponent(iso)}` : '');
+  window.location.href = url;
+}
+
 // ─── Render Staff (GridViewStaffHissab) ───
 // subusername onclick → OpenAllStaffBalanceSheet(SubUserID)
 // Sort subusername ASC
 function renderStaff(rows) {
   const sorted = [...rows].sort((a,b)=>(a.subusername||'').localeCompare(b.subusername||''));
   document.getElementById('bodyStaff').innerHTML = sorted.map((r,i)=>`
-    <tr>
+    <tr style="cursor:pointer;" onclick="openStaffTransactions('${r.SubUserID}')">
       <td>${i+1}</td>
-      <td class="link-cell" onclick="window.open('/pages/accounts.html?SUID=${r.SubUserID}','_blank')">${r.subusername||r.SubUserID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openStaffTransactions('${r.SubUserID}')">${r.subusername||r.SubUserID}</td>
       <td>${nv(r.Balance)}</td>
     </tr>`).join('');
 }

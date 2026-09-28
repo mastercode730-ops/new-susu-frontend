@@ -1373,12 +1373,6 @@
     <!-- ASPX: card-body — GridView message log + input area ── -->
     <div class="card-body" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:0;position:relative;">
 
-    <!-- ASPX: btnMultipleShare — float:right fa-share icon above the message log -->
-    <button onclick="openBulkMovePopup()" title="Share"
-      style="position:absolute;top:4px;right:8px;z-index:2;background:none;border:none;color:#6861ce;font-size:1.1rem;cursor:pointer;padding:4px;">
-      <i class="fa fa-share"></i>
-    </button>
-
     <!-- ═══ CHAT MESSAGES (ASPX: GridView rptChatMessage) ═══ -->
     <div id="ScrollChatDiv">
       <div style="text-align:center;padding:28px;color:#aaa;"><span class="spin"></span></div>
@@ -2094,14 +2088,13 @@
           const subLbl = m.subuserID ? `<span class="subuser-lbl">${escHtml(String(m.subuserID))}</span>` : '';
 
           // Right-side action icons — ASPX screenshot: ↪ □ 📋 ✏ stacked vertically
-          // On cancelled/deleted entries, none of these action buttons or checkboxes should appear
-          const showEdit = !isCancelled && ((m.IsAccepted === 'Pending' && String(m.X) === '1')
+          const showEdit = isCancelled || ((m.IsAccepted === 'Pending' && String(m.X) === '1')
             || (isByAdmin && String(m.X) === '0' && m.IsAccepted !== 'Rejected'));
           const editBtn = showEdit
             ? `<button class="btn-edit" title="Edit" onclick="ReSendChat('${m.ChatID}','${escJs(m.Message || '')}')">✏️</button>` : '';
-          const shareBtn = !isCancelled ? `<button class="btn-share" title="Share">↪</button>` : '';
-          const copyBtn = !isCancelled ? `<button class="btn-copy" title="Copy" onclick="copyMsg('${escJs(m.Message || '')}')">📋</button>` : '';
-          const chkBtn = !isCancelled ? `<input type="checkbox" style="width:14px;height:14px;cursor:pointer;" title="Select">` : '';
+          const shareBtn = `<button class="btn-share" title="Share">↪</button>`;
+          const copyBtn = `<button class="btn-copy" title="Copy" onclick="copyMsg('${escJs(m.Message || '')}')">📋</button>`;
+          const chkBtn = `<input type="checkbox" style="width:14px;height:14px;cursor:pointer;" title="Select">`;
 
           const rightActions = `<div class="msg-actions-right">${shareBtn}${chkBtn}${copyBtn}${editBtn}</div>`;
 
@@ -2595,11 +2588,6 @@
       }
 
       function ReSendChat(chatId, msg) {
-        const found = (window._lastRenderedMsgs || []).find(x => String(x.ChatID) === String(chatId));
-        if (found && (found.IsAccepted === 'Rejected' || found.IsAccepted === 'Cancelled')) {
-          showToast('Cannot edit cancelled message');
-          return;
-        }
         document.getElementById('lblMessage').innerHTML = ''; cleartable();
         document.getElementById('lblSendBulkORMessage').innerText = '1';
         SaveBulkMessage(msg, '0');

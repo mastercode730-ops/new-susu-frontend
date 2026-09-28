@@ -454,6 +454,13 @@ function parseInputDate(s) {
     const year = parseInt(mNum[3], 10);
     return new Date(year, month, day);
   }
+  const m8 = str.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (m8) {
+    const day = parseInt(m8[1], 10);
+    const month = parseInt(m8[2], 10) - 1;
+    const year = parseInt(m8[3], 10);
+    return new Date(year, month, day);
+  }
   const mo = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
   const mAlpha = str.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
   if (mAlpha) {
@@ -788,20 +795,80 @@ function initDatePickers() {
   flatpickr('#txtDate', fmt);
   const dateInput = document.getElementById('txtDate');
   if (dateInput) {
-    dateInput.addEventListener('change', function() {
-      if (this.value) {
-        localStorage.setItem('accounts_last_date', this.value);
-        const st = $('#ddlStaff').val();
-        if (st && st !== '0') fetchStaffNetBal(st);
-      }
-    });
     dateInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace') {
+        const val = this.value;
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        // If cursor is immediately after a slash, delete both the slash and the preceding digit
+        if (start === end && (start === 3 || start === 6) && val[start - 1] === '/') {
+          e.preventDefault();
+          this.value = val.slice(0, start - 2) + val.slice(start);
+          this.setSelectionRange(start - 2, start - 2);
+          return;
+        }
+      }
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
         advanceFromDate();
       }
     }, true);
+
+    dateInput.addEventListener('input', function(e) {
+      if (e.inputType && e.inputType.startsWith('delete')) {
+        return;
+      }
+      const prevPos = this.selectionEnd;
+      const prevVal = this.value;
+      let v = prevVal.replace(/\D/g, '').slice(0, 8);
+      let formatted = '';
+      if (v.length > 4) {
+        formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      } else if (v.length > 2) {
+        formatted = v.slice(0, 2) + '/' + v.slice(2);
+      } else if (v.length === 2) {
+        formatted = v + '/';
+      } else {
+        formatted = v;
+      }
+      if (v.length === 4 && formatted.length === 5) {
+        formatted += '/';
+      }
+      if (this.value !== formatted) {
+        this.value = formatted;
+        if (prevPos >= prevVal.length) {
+          this.setSelectionRange(formatted.length, formatted.length);
+        } else {
+          let slashesBefore = (formatted.slice(0, prevPos).match(/\//g) || []).length;
+          let oldSlashesBefore = (prevVal.slice(0, prevPos).match(/\//g) || []).length;
+          let newPos = prevPos + (slashesBefore - oldSlashesBefore);
+          this.setSelectionRange(newPos, newPos);
+        }
+      }
+
+      if (v.length === 8) {
+        const fp = this._flatpickr;
+        if (fp) {
+          fp.setDate(formatted, false, 'd/m/Y');
+        }
+        localStorage.setItem('accounts_last_date', formatted);
+        const st = $('#ddlStaff').val();
+        if (st && st !== '0') fetchStaffNetBal(st);
+      }
+    });
+
+    dateInput.addEventListener('change', function() {
+      if (this.value) {
+        let v = this.value.replace(/\D/g, '').slice(0, 8);
+        if (v.length === 8) {
+          this.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+        }
+        localStorage.setItem('accounts_last_date', this.value);
+        const st = $('#ddlStaff').val();
+        if (st && st !== '0') fetchStaffNetBal(st);
+      }
+    });
   }
   const btnCal = document.getElementById('btnDateCal');
   if (btnCal) {

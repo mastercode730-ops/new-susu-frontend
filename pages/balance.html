@@ -410,6 +410,14 @@ async function BindGrid() {
   }
 }
 
+// ─── Customer Name Cleaner ──────────────────────────────────────────────────
+function getCleanCustName(r) {
+  if (!r) return '';
+  const val = typeof r === 'string' ? r : (r.CustomerName || r.CMobile || r.UID || '');
+  const cleaned = String(val).replace(/\s+\d+$/, '').trim();
+  return cleaned || String(val).trim();
+}
+
 // ─── renderGameBal — ASPX grvGameHisab ─────────────────────────────────────
 // Sort: CMobile ASC (dt.DefaultView.Sort = "CMobile ASC")
 // Footer: Cells[0]=SRNo, [1]=Total, [2]=Opening, [3]=Today, [4]=WinAmount
@@ -423,14 +431,17 @@ function renderGameBal(rows) {
     _falseUttar = 0; if(!_subUID) calcNetBalance(); return;
   }
   // ASPX: dt.DefaultView.Sort = "CMobile ASC"
-  const sorted = [...rows].sort((a,b)=>String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
-  tbody.innerHTML = sorted.map((r,i)=>`
+  const sorted = [...rows].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
+  tbody.innerHTML = sorted.map((r,i)=>{
+    const cName = getCleanCustName(r);
+    return `
     <tr onclick="selectRow(this,'bodyGameBal')">
       <td>${i+1}</td>
-      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',1)">${r.CMobile||r.UID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',1)">${cName}</td>
       <td>${nv(r.Opening)}</td><td>${nv(r.Today)}</td><td>${nv(r.WinAmount)}</td>
-      ${_subUID?`<td><button class="btn-add" onclick="event.stopPropagation();openTxn('${r.CID}','${esc(r.CMobile||r.UID)}')">ADD</button></td>`:''}
-    </tr>`).join('');
+      ${_subUID?`<td><button class="btn-add" onclick="event.stopPropagation();openTxn('${r.CID}','${esc(cName)}')">ADD</button></td>`:''}
+    </tr>`;
+  }).join('');
   // ASPX: decimal sum → FalseUttarTotalNetBalance = WinAmount
   const totOpen  = rows.reduce((s,r)=>s+(parseFloat(r.Opening)||0),0);
   const totToday = rows.reduce((s,r)=>s+(parseFloat(r.Today)||0),0);
@@ -451,14 +462,17 @@ function renderUttarBal(rows) {
     ['ft_ub_open','ft_ub_today','ft_ub_bal'].forEach(id=>setText(id,'0'));
     _trueUttar = 0; if(!_subUID) calcNetBalance(); return;
   }
-  const sorted = [...rows].sort((a,b)=>String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
-  tbody.innerHTML = sorted.map((r,i)=>`
+  const sorted = [...rows].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
+  tbody.innerHTML = sorted.map((r,i)=>{
+    const cName = getCleanCustName(r);
+    return `
     <tr onclick="selectRow(this,'bodyUttarBal')">
       <td>${i+1}</td>
-      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',1)">${r.CMobile||r.UID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',1)">${cName}</td>
       <td>${nv(r.Opening)}</td><td>${nv(r.Today)}</td><td>${nv(r.WinAmount)}</td>
-      ${_subUID?`<td><button class="btn-add" onclick="event.stopPropagation();openTxn('${r.CID}','${esc(r.CMobile||r.UID)}')">ADD</button></td>`:''}
-    </tr>`).join('');
+      ${_subUID?`<td><button class="btn-add" onclick="event.stopPropagation();openTxn('${r.CID}','${esc(cName)}')">ADD</button></td>`:''}
+    </tr>`;
+  }).join('');
   const totOpen  = rows.reduce((s,r)=>s+(parseFloat(r.Opening)||0),0);
   const totToday = rows.reduce((s,r)=>s+(parseFloat(r.Today)||0),0);
   _trueUttar     = rows.reduce((s,r)=>s+(parseFloat(r.WinAmount)||0),0);
@@ -476,13 +490,16 @@ function renderMyBal(rows) {
     tbody.innerHTML = '<tr><td colspan="5" class="emsg">No Data Found!</td></tr>';
     ['ft_mb_open','ft_mb_today','ft_mb_bal'].forEach(id=>setText(id,'0')); return;
   }
-  const sorted = [...rows].sort((a,b)=>String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
-  tbody.innerHTML = sorted.map((r,i)=>`
+  const sorted = [...rows].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
+  tbody.innerHTML = sorted.map((r,i)=>{
+    const cName = getCleanCustName(r);
+    return `
     <tr onclick="selectRow(this,'bodyMyBal')">
       <td>${i+1}</td>
-      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',2)">${r.CMobile||r.UID}</td>
+      <td class="link-cell" onclick="event.stopPropagation();openAllBalance('${r.UID}',2)">${cName}</td>
       <td>${nv(r.Opening)}</td><td>${nv(r.Today)}</td><td>${nv(r.WinAmount)}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   setText('ft_mb_open',  Math.trunc(rows.reduce((s,r)=>s+(parseFloat(r.Opening)||0),0)).toString());
   setText('ft_mb_today', Math.trunc(rows.reduce((s,r)=>s+(parseFloat(r.Today)||0),0)).toString());
   setText('ft_mb_bal',   Math.trunc(rows.reduce((s,r)=>s+(parseFloat(r.WinAmount)||0),0)).toString());
@@ -518,21 +535,33 @@ function calcNetBalance() {
 // ─── txtsearch_TextChanged — filters myViewState ────────────────────────────
 function filterGameBal(term) {
   const t = term.toLowerCase();
-  const filtered = !t ? _vsGameBal : _vsGameBal.filter(r=>(r.CMobile||'').toLowerCase().includes(t));
+  const filtered = !t ? _vsGameBal : _vsGameBal.filter(r=>
+    (r.CMobile||'').toLowerCase().includes(t) ||
+    (r.CustomerName||'').toLowerCase().includes(t) ||
+    getCleanCustName(r).toLowerCase().includes(t)
+  );
   renderGameBal(filtered);
   document.getElementById('txtsearch').focus();
 }
 // ─── txtsearch1_TextChanged — filters myViewState2 ──────────────────────────
 function filterUttarBal(term) {
   const t = term.toLowerCase();
-  const filtered = !t ? _vsUttarBal : _vsUttarBal.filter(r=>(r.CMobile||'').toLowerCase().includes(t));
+  const filtered = !t ? _vsUttarBal : _vsUttarBal.filter(r=>
+    (r.CMobile||'').toLowerCase().includes(t) ||
+    (r.CustomerName||'').toLowerCase().includes(t) ||
+    getCleanCustName(r).toLowerCase().includes(t)
+  );
   renderUttarBal(filtered);
   document.getElementById('txtSearchuttar').focus();
 }
 // ─── txtSearchMyUttar_TextChanged — filters myViewState1 ────────────────────
 function filterMyBal(term) {
   const t = term.toLowerCase();
-  const filtered = !t ? _vsMyBal : _vsMyBal.filter(r=>(r.CMobile||'').toLowerCase().includes(t));
+  const filtered = !t ? _vsMyBal : _vsMyBal.filter(r=>
+    (r.CMobile||'').toLowerCase().includes(t) ||
+    (r.CustomerName||'').toLowerCase().includes(t) ||
+    getCleanCustName(r).toLowerCase().includes(t)
+  );
   renderMyBal(filtered);
   document.getElementById('txtSearchMyUttar').focus();
 }
@@ -569,11 +598,11 @@ async function reloadHistory() {
   let titleSet = false;
   for (const d of r.data) {
     if (d.Type === 'Sale' && !titleSet) {
-      setText('histTitle', (d.Mobile||_histMobile) + ' Balance History');
+      setText('histTitle', getCleanCustName(d.Mobile||_histMobile) + ' Balance History');
       titleSet = true; break;
     }
   }
-  if (!titleSet) setText('histTitle', _histMobile + ' Balance History');
+  if (!titleSet) setText('histTitle', getCleanCustName(_histMobile) + ' Balance History');
   document.getElementById('bodyHist').innerHTML = r.data.map(d=>{
     const fmtDt = fmtDateTime(d.MessageDateTime);
     const isSale = d.Type==='Sale'||d.Type==='Self Hissa';
@@ -594,7 +623,7 @@ function setHistType(t) {
   reloadHistory();
 }
 
-// ─── Summary Modal (divGameHisabHistorySummary) ─────────────────────────────
+// ─── Summary Modal (divGameHisabHistorySummary) ─────────────────────
 // ASPX: grvGameHisabHistory_RowCommand "History" → Sale/SelfHissa
 async function loadSummary(date, type) {
   if (type!=='Sale' && type!=='Self Hissa') return;
@@ -609,8 +638,8 @@ async function loadSummary(date, type) {
   }
   const data = r.data;
   // ASPX: h1Summary = CustomerName + date + "All Game History"
-  if (data[0]?.CustomerName) setText('summaryTitle', data[0].CustomerName + '  ' + date + '  All Game History');
-  else setText('summaryTitle', _histMobile + '  ' + date + '  All Game History');
+  if (data[0]?.CustomerName) setText('summaryTitle', getCleanCustName(data[0].CustomerName) + '  ' + date + '  All Game History');
+  else setText('summaryTitle', getCleanCustName(_histMobile) + '  ' + date + '  All Game History');
   document.getElementById('bodySummary').innerHTML = data.map(d=>`
     <tr>
       <td>${d.GameName||'–'}</td><td>${d.Rates||'–'}</td>
@@ -711,9 +740,9 @@ function exportBalance() {
   const fname = 'Balance_' + (_currentDate||'').replace(/\//g,'-') + '.xlsx';
 
   if (_vsGameBal.length) {
-    const sorted = [..._vsGameBal].sort((a,b)=>String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
+    const sorted = [..._vsGameBal].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
     const rows = [['SRNo','Customer','Opening','Today','Balance']];
-    sorted.forEach((r,i) => rows.push([i+1, r.CMobile||r.UID, parseFloat(r.Opening)||0, parseFloat(r.Today)||0, parseFloat(r.WinAmount)||0]));
+    sorted.forEach((r,i) => rows.push([i+1, getCleanCustName(r), parseFloat(r.Opening)||0, parseFloat(r.Today)||0, parseFloat(r.WinAmount)||0]));
     rows.push(['','Total',
       sorted.reduce((s,r)=>s+(parseFloat(r.Opening)||0),0),
       sorted.reduce((s,r)=>s+(parseFloat(r.Today)||0),0),
@@ -722,9 +751,9 @@ function exportBalance() {
   }
 
   if (_vsUttarBal.length) {
-    const sorted = [..._vsUttarBal].sort((a,b)=>String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
+    const sorted = [..._vsUttarBal].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
     const rows = [['SRNo','Customer','Opening','Today','Balance']];
-    sorted.forEach((r,i) => rows.push([i+1, r.CMobile||r.UID, parseFloat(r.Opening)||0, parseFloat(r.Today)||0, parseFloat(r.WinAmount)||0]));
+    sorted.forEach((r,i) => rows.push([i+1, getCleanCustName(r), parseFloat(r.Opening)||0, parseFloat(r.Today)||0, parseFloat(r.WinAmount)||0]));
     rows.push(['','Total',
       sorted.reduce((s,r)=>s+(parseFloat(r.Opening)||0),0),
       sorted.reduce((s,r)=>s+(parseFloat(r.Today)||0),0),
@@ -741,9 +770,9 @@ function exportBalance() {
   }
 
   if (_vsMyBal.length) {
-    const sorted = [..._vsMyBal].sort((a,b)=>String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
+    const sorted = [..._vsMyBal].sort((a,b)=>getCleanCustName(a).localeCompare(getCleanCustName(b)) || String(a.CMobile||'').localeCompare(String(b.CMobile||'')));
     const rows = [['SRNo','Name','Opening','Today','Balance']];
-    sorted.forEach((r,i) => rows.push([i+1, r.CMobile||r.UID, parseFloat(r.Opening)||0, parseFloat(r.Today)||0, parseFloat(r.WinAmount)||0]));
+    sorted.forEach((r,i) => rows.push([i+1, getCleanCustName(r), parseFloat(r.Opening)||0, parseFloat(r.Today)||0, parseFloat(r.WinAmount)||0]));
     rows.push(['','Total',
       sorted.reduce((s,r)=>s+(parseFloat(r.Opening)||0),0),
       sorted.reduce((s,r)=>s+(parseFloat(r.Today)||0),0),

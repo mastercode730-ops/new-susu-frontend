@@ -1950,12 +1950,14 @@
           const isByAdmin = isTrue(m.IsSendByReceiver);
           const isSettledFalse = !isTrue(m.IsSettled);
 
+          const isCancelled = m.IsAccepted === 'Rejected' || m.IsAccepted === 'Cancelled';
+
           let msgBody = '';
           let isRowMatch = false;
           if (String(m.IsTextChat) === 'False' || m.IsTextChat === false) {
             msgBody = `<img src="${m.Message || ''}" style="max-width:180px;border-radius:4px;" alt="img">`;
           } else {
-            if (query) {
+            if (query && !isCancelled) {
               const highlightResult = highlightBetText(m.Message || '', query);
               msgBody = `<span class="msg-text">${highlightResult.html}</span>`;
               if (highlightResult.hasMatch) {
@@ -1988,19 +1990,20 @@
           const subLbl = m.subuserID ? `<span class="subuser-lbl">${escHtml(String(m.subuserID))}</span>` : '';
 
           // Right-side action icons — ASPX screenshot: ↪ □ 📋 ✏ stacked vertically
-          const showEdit = (m.IsAccepted === 'Pending' && String(m.X) === '1')
-            || (isByAdmin && String(m.X) === '0' && m.IsAccepted !== 'Rejected');
+          // On cancelled/deleted entries, none of these action buttons or checkboxes should appear
+          const showEdit = !isCancelled && ((m.IsAccepted === 'Pending' && String(m.X) === '1')
+            || (isByAdmin && String(m.X) === '0' && m.IsAccepted !== 'Rejected'));
           const editBtn = showEdit
             ? `<button class="btn-edit" title="Edit" onclick="ReSendChat('${m.ChatID}','${escJs(m.Message || '')}')">✏️</button>` : '';
-          const shareBtn = `<button class="btn-share" title="Share">↪</button>`;
-          const copyBtn = `<button class="btn-copy" title="Copy" onclick="copyMsg('${escJs(m.Message || '')}')">📋</button>`;
-          const chkBtn = `<input type="checkbox" style="width:14px;height:14px;cursor:pointer;" title="Select">`;
+          const shareBtn = !isCancelled ? `<button class="btn-share" title="Share">↪</button>` : '';
+          const copyBtn = !isCancelled ? `<button class="btn-copy" title="Copy" onclick="copyMsg('${escJs(m.Message || '')}')">📋</button>` : '';
+          const chkBtn = !isCancelled ? `<input type="checkbox" style="width:14px;height:14px;cursor:pointer;" title="Select">` : '';
 
           const rightActions = `<div class="msg-actions-right">${shareBtn}${chkBtn}${copyBtn}${editBtn}</div>`;
 
-          const acBtn = (m.IsAccepted === 'Pending' && isYantri)
+          const acBtn = (!isCancelled && m.IsAccepted === 'Pending' && isYantri)
             ? `<button class="btn-acc" onclick="btnAccepted_Click('${m.ChatID}')">✔</button>` : '';
-          const rejBtn = (m.IsAccepted !== 'Rejected' && isYantri && isSettledFalse)
+          const rejBtn = (!isCancelled && m.IsAccepted !== 'Rejected' && isYantri && isSettledFalse)
             ? `<button class="btn-rej" onclick="btnRejected_Click('${m.ChatID}')">✕</button>` : '';
 
           if (isSent) {
@@ -2117,9 +2120,24 @@
       }
 
       // Accept/Reject/Delete
-      async function btnAccepted_Click(chatId) { const r = await API.post('/api/chat/accept-reject', { chatId, status: 'Accepted' }); if (r?.success) getTime(); }
-      async function btnRejected_Click(chatId) { const r = await API.post('/api/chat/accept-reject', { chatId, status: 'Rejected' }); if (r?.success) getTime(); }
-      async function GetSelectedRow(chatId) { await API.delete(`/api/chat/${chatId}`); getTime(); }
+      async function btnAccepted_Click(chatId) {
+        const found = (window._lastRenderedMsgs || []).find(x => String(x.ChatID) === String(chatId));
+        if (found && (found.IsAccepted === 'Rejected' || found.IsAccepted === 'Cancelled')) return;
+        const r = await API.post('/api/chat/accept-reject', { chatId, status: 'Accepted' });
+        if (r?.success) getTime();
+      }
+      async function btnRejected_Click(chatId) {
+        const found = (window._lastRenderedMsgs || []).find(x => String(x.ChatID) === String(chatId));
+        if (found && (found.IsAccepted === 'Rejected' || found.IsAccepted === 'Cancelled')) return;
+        const r = await API.post('/api/chat/accept-reject', { chatId, status: 'Rejected' });
+        if (r?.success) getTime();
+      }
+      async function GetSelectedRow(chatId) {
+        const found = (window._lastRenderedMsgs || []).find(x => String(x.ChatID) === String(chatId));
+        if (found && (found.IsAccepted === 'Rejected' || found.IsAccepted === 'Cancelled')) return;
+        await API.delete(`/api/chat/${chatId}`);
+        getTime();
+      }
 
       function copyMsg(msg) {
         if (!msg) return;
@@ -2473,6 +2491,11 @@
       }
 
       function ReSendChat(chatId, msg) {
+        const found = (window._lastRenderedMsgs || []).find(x => String(x.ChatID) === String(chatId));
+        if (found && (found.IsAccepted === 'Rejected' || found.IsAccepted === 'Cancelled')) {
+          showToast('Cannot edit cancelled message');
+          return;
+        }
         document.getElementById('lblMessage').innerHTML = ''; cleartable();
         document.getElementById('lblSendBulkORMessage').innerText = '1';
         SaveBulkMessage(msg, '0');

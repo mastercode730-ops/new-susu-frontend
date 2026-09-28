@@ -624,6 +624,7 @@ function sh_renderMsgs(msgs){
   if(!msgs.length){el.innerHTML='<div style="text-align:center;padding:16px;color:#aaa;font-size:.8rem;">No messages</div>';return;}
   el.innerHTML=msgs.map(m=>{
     const isSent=String(m.Sender)==='0',rowCls=isSent?'sh-sent':'sh-recv',isY=m.IsYantriStyle==='True';
+    const isCancelled=m.IsAccepted==='Rejected'||m.IsAccepted==='Cancelled';
     const body=m.IsTextChat==='False'?`<img src="${m.Message||''}" style="max-width:150px;border-radius:4px;">`:`<span class="sh-mtxt">${shEsc(m.Message||'')}</span>`;
     let extra='';if(isY&&m.TotalAmount)extra+=`<div><span class="sh-ltot">Total Amt: ${m.TotalAmount}</span></div>`;
     const ds=m.MessageDateTime?sh_fmtShort(m.MessageDateTime):'';
@@ -631,11 +632,12 @@ function sh_renderMsgs(msgs){
     const full=m.MessageDateTime?sh_fmtFull(m.MessageDateTime):'';
     const lastLine=`<div><span class="sh-lupd">Last Updated: ${full}</span></div>`;
     const byA=m.IsSendByReceiver==='True'?`<span class="sh-bad">BY ADMIN</span>`:'';
-    const share=`<button class="sh-shr">↪</button>`;const copy=`<button class="sh-cpy" onclick="sh_copy('${shEscJs(m.Message||'')}')">📋</button>`;
-    const chk=`<input type="checkbox" style="width:12px;height:12px;margin-top:2px;">`;
+    const share=isCancelled?'':`<button class="sh-shr">↪</button>`;
+    const copy=isCancelled?'':`<button class="sh-cpy" onclick="sh_copy('${shEscJs(m.Message||'')}')">📋</button>`;
+    const chk=isCancelled?'':`<input type="checkbox" style="width:12px;height:12px;margin-top:2px;">`;
     const isSettledFalse=!(m.IsSettled===true||m.IsSettled==='True'||m.IsSettled==='true'||m.IsSettled===1||m.IsSettled==='1');
-    const acBtn=(m.IsAccepted==='Pending'&&isY)?`<button class="sh-acc" onclick="sh_accept('${m.ChatID}')">✔</button>`:'';
-    const rejBtn=(m.IsAccepted!=='Rejected'&&isY&&isSettledFalse)?`<button class="sh-rej" onclick="sh_reject('${m.ChatID}')">✕</button>`:'';
+    const acBtn=(!isCancelled&&m.IsAccepted==='Pending'&&isY)?`<button class="sh-acc" onclick="sh_accept('${m.ChatID}')">✔</button>`:'';
+    const rejBtn=(!isCancelled&&m.IsAccepted!=='Rejected'&&isY&&isSettledFalse)?`<button class="sh-rej" onclick="sh_reject('${m.ChatID}')">✕</button>`:'';
     if(isSent){let st='';if(m.IsAccepted==='Accepted')st=`<span class="sh-sok">Ok</span>`;else if(m.IsAccepted==='Rejected')st=`<span class="sh-sca">Cancelled</span>`;else if(isY)st=`<span class="sh-sno">Sent ✔</span>`;const del=m.IsAccepted==='Pending'?`<button class="sh-del" onclick="sh_delRow('${m.ChatID}')">🗑</button>`:'';return`<div class="sh-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div>${del}<div style="text-align:right;">${body}${extra}${lastLine}<div>${st}${byA}${acBtn}${rejBtn}</div></div><div class="sh-sep"></div></div>`;}
     else{let st='';if(m.IsAccepted==='Rejected')st=`<span class="sh-sca">Cancelled</span>`;else if(m.IsAccepted==='Accepted'&&isY)st=`<span class="sh-sok">Ok</span>`;return`<div class="sh-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div><div style="text-align:left;">${body}${extra}${lastLine}<div>${st}${byA}${acBtn}${rejBtn}</div></div><div class="sh-sep"></div></div>`;}
   }).join('');sh_scrollBottom();

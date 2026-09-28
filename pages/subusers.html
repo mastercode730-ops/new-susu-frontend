@@ -7,6 +7,22 @@
 <script src="/js/theme-preload.js"></script>
 <style>
 .hideGridColumn { display:none; }
+.content .form-group input[type=checkbox] { width:16px; height:16px; vertical-align:middle; }
+.content .form-group label[for^="chk"] { display:inline!important; margin:0 0 0 4px!important; vertical-align:middle; font-weight:800!important; cursor:pointer; }
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
 </style>
 </head>
 <body>
@@ -87,6 +103,42 @@
           </table>
         </div>
       </div>
+
+      <!-- Access Right Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Access Right</div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="ddlSubUsers">Sub User</label>
+                <select id="ddlSubUsers" class="form-control" onchange="loadAccessRights()">
+                  <option value="">Select Sub User</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDContacts"> <label for="chkADDContacts">Contacts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDGames"> <label for="chkADDGames">Games</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkResult"> <label for="chkResult">Result</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisab"> <label for="chkHisab">Hisab</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisabSummary"> <label for="chkHisabSummary">Hisab Summary</label></div></div>
+            <div class="col-md-2" style="display:none;"><div class="form-group"><input type="checkbox" id="chkDateWiseHisab"> <label>Date Wise Hisab</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkAccounts"> <label for="chkAccounts">Accounts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkShowAllAccounts"> <label for="chkShowAllAccounts">Show All Accounts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkBalance"> <label for="chkBalance">Balance</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkLC"> <label for="chkLC">LC</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkYantri"> <label for="chkYantri">Yantri</label></div></div>
+          </div>
+        </div>
+        <div class="card-action">
+          <button class="btn btn-success" id="btnSaveAccess" onclick="saveAccessRights()">Save Access Rights</button>
+          <button class="btn btn-danger" onclick="resetAccess()">Reset</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -135,6 +187,20 @@ async function loadUsers() {
       </td>
     </tr>`;
   }).join('');
+
+  const ddl = document.getElementById('ddlSubUsers');
+  if (ddl) {
+    const selVal = ddl.value;
+    ddl.innerHTML = '<option value="">Select Sub User</option>';
+    r.data.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.SubUserID;
+      const name = u.subusername ? `${u.subusername} (${u.Mobile})` : (u.Mobile || u.SubUserID);
+      opt.textContent = name;
+      if (String(u.SubUserID) === String(selVal)) opt.selected = true;
+      ddl.appendChild(opt);
+    });
+  }
 }
 
 // ── savesubuser_Click ──
@@ -203,6 +269,12 @@ function editUser(subid, name, mobile, password, isActive) {
   document.getElementById('btnSave').textContent = 'Update';
   document.getElementById('formTitle').textContent = 'All Sub Users';
   document.getElementById('txtMobile').focus();
+
+  const ddl = document.getElementById('ddlSubUsers');
+  if (ddl) {
+    ddl.value = subid;
+    loadAccessRights();
+  }
 }
 
 // ── btnCancel_Click → Refresh() ──
@@ -215,6 +287,91 @@ function cancelForm() {
   document.getElementById('btnSave').textContent = 'Save';
   ['errName','errMobile','errPwd'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('txtName').focus();
+
+  resetAccess();
+  const ddl = document.getElementById('ddlSubUsers');
+  if (ddl) ddl.value = '';
+}
+
+// ── ACCESS RIGHTS FUNCTIONS ──
+async function loadAccessRights() {
+  const subUserID = document.getElementById('ddlSubUsers').value;
+  if (!subUserID) { resetAccess(); return; }
+
+  let res = await API.get(`/api/admin/access-rights/${subUserID}`);
+  if (!res || !res.success || !res.data) {
+    res = await API.get(`/api/admin/access-rights?subUID=${subUserID}`);
+  }
+  const ar = res && res.data ? (Array.isArray(res.data) ? res.data[0] : res.data) : null;
+  if (!ar) {
+    resetAccess();
+    return;
+  }
+
+  const isTrue = v => v === true || v === 'True' || v === 1 || String(v) === '1' || String(v).toLowerCase() === 'true';
+  document.getElementById('chkADDContacts').checked = isTrue(ar.ADDContacts);
+  document.getElementById('chkADDGames').checked = isTrue(ar.ADDGames);
+  document.getElementById('chkResult').checked = isTrue(ar.Result);
+  document.getElementById('chkHisab').checked = isTrue(ar.Hisab);
+  document.getElementById('chkHisabSummary').checked = isTrue(ar.HisabSummary);
+  document.getElementById('chkDateWiseHisab').checked = isTrue(ar.DateWiseHisab);
+  document.getElementById('chkAccounts').checked = isTrue(ar.Accounts);
+  document.getElementById('chkShowAllAccounts').checked = isTrue(ar.ShowAllAccounts);
+  document.getElementById('chkBalance').checked = isTrue(ar.Balance);
+  document.getElementById('chkLC').checked = isTrue(ar.LC);
+  document.getElementById('chkYantri').checked = isTrue(ar.Yantri);
+}
+
+function resetAccess() {
+  ['chkADDContacts','chkADDGames','chkResult','chkHisab','chkHisabSummary',
+   'chkDateWiseHisab','chkAccounts','chkShowAllAccounts','chkBalance','chkLC','chkYantri']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+}
+
+async function saveAccessRights() {
+  const subUserID = document.getElementById('ddlSubUsers').value;
+  if (!subUserID) {
+    showToast('Select a user first', true);
+    return;
+  }
+
+  const btn = document.getElementById('btnSaveAccess');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Saving...';
+  }
+
+  try {
+    const body = {
+      subUserID,
+      addContacts: document.getElementById('chkADDContacts').checked,
+      addGames: document.getElementById('chkADDGames').checked,
+      result: document.getElementById('chkResult').checked,
+      hisab: document.getElementById('chkHisab').checked,
+      hisabSummary: document.getElementById('chkHisabSummary').checked,
+      dateWiseHisab: document.getElementById('chkDateWiseHisab').checked,
+      accounts: document.getElementById('chkAccounts').checked,
+      showAllAccounts: document.getElementById('chkShowAllAccounts').checked,
+      balance: document.getElementById('chkBalance').checked,
+      lc: document.getElementById('chkLC').checked,
+      yantri: document.getElementById('chkYantri').checked
+    };
+
+    const res = await API.post('/api/admin/access-rights', body);
+    if (res && res.success) {
+      showToast('Access rights saved!');
+    } else {
+      showToast(res?.message || 'Error saving access rights', true);
+    }
+  } catch (err) {
+    showToast('Error saving access rights', true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
 }
 
 // ── Tab Index Enter → next field ──

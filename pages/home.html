@@ -252,13 +252,13 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);d
           <li><a class="pill" id="c_Laddi" onclick="c_LaddiClick()">Laddi (F4)</a></li>
           <li><a class="pill" id="c_Jode" onclick="c_JodeClick()">Jode (F8)</a></li>
           <li><a class="pill" id="c_Cross" onclick="c_CrossClick()">Cross (F9)</a></li>
-          <li><a class="pill" id="c_Pahada" onclick="c_PahadaClick()">Pahada(P)</a></li>
-          <li><a class="pill" id="c_Ander" onclick="c_AnderClick()">Ander(A)</a></li>
-          <li><a class="pill" id="c_Bahar" onclick="c_BaharClick()">Bahar(B)</a></li>
+          <li><a class="pill" id="c_Pahada" onclick="c_PahadaClick()">Pahada</a></li>
+          <li><a class="pill" id="c_Ander" onclick="c_AnderClick()">Ander</a></li>
+          <li><a class="pill" id="c_Bahar" onclick="c_BaharClick()">Bahar</a></li>
           <li><a class="pill" id="c_Yantri" onclick="c_YantriClick()">Yantri(End)</a></li>
           <li><a class="pill" id="c_57" onclick="c_57Click()">57</a></li>
           <li><a class="pill" id="c_43" onclick="c_43Click()">43</a></li>
-          <li><a class="pill" id="c_Palat" onclick="c_PalatClick()">Palat</a></li>
+          <li><a class="pill" id="c_Palat" onclick="c_PalatClick()">Palat(P)</a></li>
           <li><a class="pill" id="c_Chat" onclick="c_ChatClick()">Chat</a></li>
         </ul>
         <input class="hid-r" type="radio" id="c_rCross" name="cr"><input class="hid-r" type="radio" id="c_rJode" name="cr">
@@ -466,7 +466,7 @@ window.__escPageHandler = function() {
   if (G('cp').style.display === 'flex') { chatBack(); return true; }
   return false;
 };
-document.addEventListener('keyup',e=>{if(G('cp').style.display==='none')return;const k=e.keyCode||e.which;if(k===65&&G('c_isBulk').innerText==='1')c_AnderClick();if(k===66&&G('c_isBulk').innerText==='1')c_BaharClick();if(k===80&&G('c_isBulk').innerText==='1')c_PahadaClick();if(k===115)c_LaddiClick();if(k===119)c_JodeClick();if(k===120)c_CrossClick();if(k===36)c_BulkClick();if(k===35)c_YantriClick();if(k===113){G('c_btnSave').click();c_scrollBottom();}});
+document.addEventListener('keyup',e=>{if(G('cp').style.display==='none')return;const k=e.keyCode||e.which;if(k===80&&G('c_isBulk').innerText==='1')c_PalatClick();if(k===115)c_LaddiClick();if(k===119)c_JodeClick();if(k===120)c_CrossClick();if(k===36)c_BulkClick();if(k===35)c_YantriClick();if(k===113){G('c_btnSave').click();c_scrollBottom();}});
 function cEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function cEscJs(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"');}
 function esc(s){return String(s||'').replace(/'/g,"\\'");}

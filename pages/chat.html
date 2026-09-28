@@ -1444,13 +1444,13 @@
         <li><a class="chat-pill" id="ALaddi" onclick="ALaddiClick()">Laddi (F4)</a></li>
         <li><a class="chat-pill" id="AJode" onclick="AJodeClick()">Jode (F8)</a></li>
         <li><a class="chat-pill" id="ACrossing" onclick="ACrossingClick()">Cross (F9)</a></li>
-        <li><a class="chat-pill" id="APahada" onclick="APahadaClick()">Pahada(P)</a></li>
-        <li><a class="chat-pill" id="A1Ander" onclick="A1AnderClick()">Ander(A)</a></li>
-        <li><a class="chat-pill" id="A2Bahar" onclick="A2BaharClick()">Bahar(B)</a></li>
+        <li><a class="chat-pill" id="APahada" onclick="APahadaClick()">Pahada</a></li>
+        <li><a class="chat-pill" id="A1Ander" onclick="A1AnderClick()">Ander</a></li>
+        <li><a class="chat-pill" id="A2Bahar" onclick="A2BaharClick()">Bahar</a></li>
         <li><a class="chat-pill" id="AYantri" onclick="AYantriClick()">Yantri(End)</a></li>
         <li><a class="chat-pill" id="A57" onclick="A57Click()">57</a></li>
         <li><a class="chat-pill" id="A43" onclick="A43Click()">43</a></li>
-        <li><a class="chat-pill" id="APalat" onclick="APalatClick()">Palat</a></li>
+        <li><a class="chat-pill" id="APalat" onclick="APalatClick()">Palat(P)</a></li>
         <li><a class="chat-pill" id="Typingpills" onclick="TypingpillsClick()">Chat</a></li>
       </ul>
 
@@ -2832,9 +2832,7 @@
       document.addEventListener('keyup', e => {
         const k = e.keyCode || e.which;
         if (k === 34 || k === 40) scrollBottom();
-        if (k === 65 && document.getElementById('lblSendBulkORMessage').innerText === '1') A1AnderClick();
-        if (k === 66 && document.getElementById('lblSendBulkORMessage').innerText === '1') A2BaharClick();
-        if (k === 80 && document.getElementById('lblSendBulkORMessage').innerText === '1') APahadaClick();
+        if (k === 80 && document.getElementById('lblSendBulkORMessage').innerText === '1') APalatClick();
         if (k === 115) ALaddiClick();
         if (k === 119) AJodeClick();
         if (k === 120) ACrossingClick();

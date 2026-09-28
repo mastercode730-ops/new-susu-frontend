@@ -201,12 +201,7 @@ let _allClients = []; // for client-side filter (ASPX: filterGrid) — Assign Cu
 let _subUserMap = {};
 
 async function init() {
-  const user = await initPage('access');
-  if (!user) return;
-  if (user.SubUID) { window.location.href = '/pages/home.html'; return; }
-
-  await loadSubUsers();
-  await Promise.all([loadAccessRightsList(), loadAssignUserDropdown()]);
+  window.location.replace('/pages/subusers.html');
 }
 
 async function loadSubUsers() {

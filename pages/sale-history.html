@@ -436,13 +436,13 @@
             <li><a class="sh-pill"        id="sh_Laddi"  onclick="sh_LaddiClick()">Laddi (F4)</a></li>
             <li><a class="sh-pill"        id="sh_Jode"   onclick="sh_JodeClick()">Jode (F8)</a></li>
             <li><a class="sh-pill"        id="sh_Cross"  onclick="sh_CrossClick()">Cross (F9)</a></li>
-            <li><a class="sh-pill"        id="sh_Pahada" onclick="sh_PahadaClick()">Pahada(P)</a></li>
-            <li><a class="sh-pill"        id="sh_Ander"  onclick="sh_AnderClick()">Ander(A)</a></li>
-            <li><a class="sh-pill"        id="sh_Bahar"  onclick="sh_BaharClick()">Bahar(B)</a></li>
+            <li><a class="sh-pill"        id="sh_Pahada" onclick="sh_PahadaClick()">Pahada</a></li>
+            <li><a class="sh-pill"        id="sh_Ander"  onclick="sh_AnderClick()">Ander</a></li>
+            <li><a class="sh-pill"        id="sh_Bahar"  onclick="sh_BaharClick()">Bahar</a></li>
             <li><a class="sh-pill"        id="sh_Yantri" onclick="sh_YantriClick()">Yantri(End)</a></li>
             <li><a class="sh-pill"        id="sh_57"     onclick="sh_57Click()">57</a></li>
             <li><a class="sh-pill"        id="sh_43"     onclick="sh_43Click()">43</a></li>
-            <li><a class="sh-pill"        id="sh_Palat"  onclick="sh_PalatClick()">Palat</a></li>
+            <li><a class="sh-pill"        id="sh_Palat"  onclick="sh_PalatClick()">Palat(P)</a></li>
             <li><a class="sh-pill"        id="sh_Chat"   onclick="sh_ChatClick()">Chat</a></li>
           </ul>
           <input class="sh-hid" type="radio" id="sh_rCross" name="shr"><input class="sh-hid" type="radio" id="sh_rJode" name="shr">
@@ -714,9 +714,7 @@ window.__escPageHandler=function(){
 document.addEventListener('keyup',e=>{
   if(SG('chatView').style.display==='none')return;
   const k=e.keyCode||e.which;
-  if(k===65&&SG('sh_isBulk').innerText==='1')sh_AnderClick();
-  if(k===66&&SG('sh_isBulk').innerText==='1')sh_BaharClick();
-  if(k===80&&SG('sh_isBulk').innerText==='1')sh_PahadaClick();
+  if(k===80&&SG('sh_isBulk').innerText==='1')sh_PalatClick();
   if(k===115)sh_LaddiClick();if(k===119)sh_JodeClick();if(k===120)sh_CrossClick();
   if(k===36)sh_BulkClick();if(k===35)sh_YantriClick();
   if(k===113){SG('sh_btnSave').click();sh_scrollBottom();}

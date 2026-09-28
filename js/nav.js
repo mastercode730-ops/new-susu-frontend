@@ -171,7 +171,6 @@ function renderShell(active) {
           ${item('pl-yantri', '/pages/pl-yantri.html', 'fas fa-chart-line', 'P&L Yantri')}
           ${item('yantri', '/pages/yantri.html', 'fas fa-sort-numeric-up', 'Yantri')}
           ${item('absent-customers', '/pages/absent-customers.html', 'fas fa-user-times', 'Absent Report')}
-          ${item('access', '/pages/access-rights.html', 'fas fa-lock', 'Access Rights')}
           ${item('change-password', '/pages/change-password.html', 'fas fa-user-lock', 'Change Password')}
           <li class="nav-item" id="nav-admin" style="display:none;">
             <a href="/pages/admin/dashboard.html">

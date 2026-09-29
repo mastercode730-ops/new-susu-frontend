@@ -411,6 +411,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
             <span class="chk-item"><input type="checkbox" id="chkIsUttar"> <label for="chkIsUttar">Uttar</label></span>
           </div>
           <input type="hidden" id="hidCID">
+          <input type="hidden" id="hidActiveRateID">
         </div>
         <div class="card-action">
           <button class="btn btn-success" onclick="saveCustomer()" id="btnSave">Save</button>
@@ -636,10 +637,12 @@ function selectCustomer(cid, name, mob, data) {
   if (el) el.classList.add('table-active');
 
   document.getElementById('hidCID').value = cid;
+  const hidActiveRateEl = document.getElementById('hidActiveRateID');
+  if (hidActiveRateEl) hidActiveRateEl.value = '';
   document.getElementById('txtCustomerName').value = data.CustomerName || name;
   document.getElementById('txtCity').value = data.City || '';
   document.getElementById('txtMobileNo').value = data.Mobile || data.MobileNo || mob;
-  document.getElementById('txtMobileNo').readOnly = true;
+  document.getElementById('txtMobileNo').readOnly = false;
   document.getElementById('txtD_PComm').value = data.D_PComm || '0';
   document.getElementById('txtD_Amt').value = data.D_Amt || '100';
   document.getElementById('txtA_PComm').value = data.A_PComm || '0';
@@ -672,20 +675,25 @@ function selectCustomer(cid, name, mob, data) {
 }
 
 async function checkRatesReadonly(cid) {
-  const r = await API.get(`/api/customer/${cid}/rates`);
   const fields = ['txtD_PComm','txtD_Amt','txtA_PComm','txtA_Amt','txtPatti'];
-  if (r && r.success && r.data && r.data.length > 1) {
-    fields.forEach(id => document.getElementById(id).readOnly = true);
-  } else if (r && r.success && r.data && r.data.length === 1) {
-    fields.forEach(id => document.getElementById(id).readOnly = false);
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.readOnly = false;
+  });
+
+  const r = await API.get(`/api/customer/${cid}/rates`);
+  if (r && r.success && r.data && r.data.length > 0) {
     const rate = r.data[0];
     document.getElementById('txtD_PComm').value = rate.D_PComm;
     document.getElementById('txtD_Amt').value = rate.D_Amt;
     document.getElementById('txtA_PComm').value = rate.A_PComm;
     document.getElementById('txtA_Amt').value = rate.A_Amt;
     document.getElementById('txtPatti').value = rate.Patti;
+    const hidRate = document.getElementById('hidActiveRateID');
+    if (hidRate) hidRate.value = rate.RateID || '';
   } else {
-    fields.forEach(id => document.getElementById(id).readOnly = false);
+    const hidRate = document.getElementById('hidActiveRateID');
+    if (hidRate) hidRate.value = '';
   }
 }
 
@@ -724,7 +732,8 @@ async function saveCustomer() {
     thirdPartyAkharComm: commID !== '0' ? document.getElementById('txtAkharCommPer').value : 0,
     thirdPartyLCID: lcID !== '0' ? lcID : 0,
     thirdPartyLCPer: lcID !== '0' ? document.getElementById('txtLCCommPer').value : 0,
-    cid: cid || ''
+    cid: cid || '',
+    rateID: document.getElementById('hidActiveRateID')?.value || ''
   };
 
   const r = cid
@@ -899,6 +908,8 @@ function closeRates() {
 // ============ RESET FORM ============
 function resetForm() {
   document.getElementById('hidCID').value = '';
+  const hidActiveRateEl = document.getElementById('hidActiveRateID');
+  if (hidActiveRateEl) hidActiveRateEl.value = '';
   document.getElementById('txtCustomerName').value = '';
   document.getElementById('txtCity').value = '';
   document.getElementById('txtMobileNo').value = '';

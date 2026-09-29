@@ -29,6 +29,13 @@
 @keyframes spin{to{transform:rotate(360deg)}}
 /* Vendor theme reserves 62px above .content */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+/* Flatpickr calendar popup - bold, clear text throughout */
+.flatpickr-weekday{font-weight:800!important;color:#000!important;}
+.flatpickr-day{font-weight:800!important;color:#000!important;}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay,.flatpickr-day.notAllowed{color:#999!important;font-weight:700!important;}
+.flatpickr-day.today{font-weight:900!important;}
+.flatpickr-current-month .cur-month,.flatpickr-current-month input.cur-year{font-weight:800!important;color:#000!important;}
+.flatpickr-months .flatpickr-month,.flatpickr-current-month{font-weight:800!important;}
 </style>
 </head>
 <body>
@@ -276,7 +283,6 @@ async function init() {
     clickOpens: false,
     allowInput: true,
     disableMobile: true,
-    maxDate: 'today',
     parseDate: function (datestr) {
       if (!datestr) return new Date();
       if (datestr instanceof Date) return datestr;
@@ -310,6 +316,13 @@ async function init() {
       if (instance && instance.element) {
         instance.element.blur();
       }
+    },
+    onChange: function(selectedDates, dateStr, instance) {
+      if (instance && instance.element) {
+        instance.element.blur();
+      }
+      const el = instance ? instance.element : null;
+      if (el) el.dispatchEvent(new Event('change'));
     }
   };
 
@@ -328,8 +341,14 @@ async function init() {
   bindCalButton('btnFromCal', 'fromDate');
   bindCalButton('btnToCal',   'toDate');
 
-  bindAutoSlashDate('fromDate');
-  bindAutoSlashDate('toDate');
+  bindAutoSlashDate('fromDate', () => {
+    const nextEl = document.getElementById('toDate');
+    if (nextEl) { nextEl.focus(); nextEl.select?.(); }
+  });
+  bindAutoSlashDate('toDate', () => {
+    const btn = document.getElementById('btnLoad');
+    if (btn) btn.click();
+  });
 
   const uid = p.get('UID') || '';
   await loadCustomers(u);

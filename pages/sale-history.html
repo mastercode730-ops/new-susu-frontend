@@ -759,6 +759,42 @@ function copyMessage(){
   SG('txtMessage').value=final;
 }
 
+function formatUpdateTime(val) {
+  if (!val) return '';
+  const s = String(val).trim();
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*([AP]M)?$/i);
+  if (m1) {
+    const dd = m1[1].padStart(2, '0');
+    const mm = m1[2].padStart(2, '0');
+    let yy = m1[3];
+    if (yy.length === 2) yy = '20' + yy;
+    let h = parseInt(m1[4], 10);
+    const mn = m1[5].padStart(2, '0');
+    let ap = m1[6] ? m1[6].toUpperCase() : '';
+    if (!ap && h >= 0 && h <= 23) {
+      ap = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+    }
+    return `${dd}/${mm}/${yy} ${h}:${mn}${ap ? ' ' + ap : ''}`;
+  }
+  const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{1,2}):(\d{2})/);
+  if (m2) {
+    const yy = m2[1];
+    const mm = m2[2];
+    const dd = m2[3];
+    let h24 = parseInt(m2[4], 10);
+    const mn = m2[5].padStart(2, '0');
+    const ap = h24 >= 12 ? 'PM' : 'AM';
+    const h12 = h24 % 12 || 12;
+    return `${dd}/${mm}/${yy} ${h12}:${mn} ${ap}`;
+  }
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleString('en-GB');
+  }
+  return s;
+}
+
 // ── ASPX: BtnSearch_Click → BindGrid() → SP ShowSaleHistory(@fUID,@Date,@Filter) ──
 async function loadHistory(){
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -774,7 +810,7 @@ async function loadHistory(){
       <td>${d.GameName||''}</td>
       <td>${d.Rate||''}</td>
       <td>${d.subuserID||''}</td>
-      <td>${d.MessageDateTime?new Date(d.MessageDateTime).toLocaleString('en-GB'):''}</td>
+      <td>${formatUpdateTime(d.MessageDateTime)}</td>
       <td>${d.TotalAmount||0}</td>
       <td style="text-align:left;">${d.Message||''}</td>
     </tr>`;
@@ -846,7 +882,7 @@ function sh_renderMsgs(msgs){
     else{let st='';if(m.IsAccepted==='Rejected')st=`<span class="sh-sca">Cancelled</span>`;else if(m.IsAccepted==='Accepted'&&isY)st=`<span class="sh-sok">Ok</span>`;return`<div class="sh-row ${rowCls}"><div style="float:right;display:flex;flex-direction:column;align-items:center;gap:1px;">${share}${copy}${chk}</div><div style="text-align:left;">${body}${extra}${lastLine}<div>${st}${byA}${acBtn}${rejBtn}</div></div><div class="sh-sep"></div></div>`;}
   }).join('');sh_scrollBottom();
 }
-function sh_parseSPDate(str){if(!str)return null;if(str instanceof Date)return str;const d=new Date(str);if(!isNaN(d))return d;const m=String(str).match(/^(\d{1,2})\/(\d{2})\/(\d{2})\s+(\d{1,2}):(\d{2})(AM|PM)$/i);if(m){let h=parseInt(m[4]);const mn=parseInt(m[5]),ap=m[6].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return new Date(2000+parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),h,mn,0);}return null;}
+function sh_parseSPDate(str){if(!str)return null;if(str instanceof Date)return isNaN(str.getTime())?null:str;const d=new Date(str);if(!isNaN(d.getTime()))return d;const m=String(str).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);if(m){let h=parseInt(m[4],10);const mn=parseInt(m[5],10),ap=(m[6]||'').toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;const yStr=m[3];const y=yStr.length===2?2000+parseInt(yStr,10):parseInt(yStr,10);return new Date(y,parseInt(m[2],10)-1,parseInt(m[1],10),h,mn,0);}return null;}
 function sh_fmtShort(str){const d=sh_parseSPDate(str);if(!d||isNaN(d))return'';return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2);}
 function sh_fmtFull(str){const d=sh_parseSPDate(str);if(!d||isNaN(d))return'';const h=d.getHours(),mn=d.getMinutes(),ap=h>=12?'PM':'AM',h12=h%12||12;return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2)+' '+h12+':'+String(mn).padStart(2,'0')+ap;}
 function sh_fmtDate(dt){try{const d=new Date(dt);if(isNaN(d))return String(dt).split('T')[0];return String(d.getDate()).padStart(2,'0')+'/'+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+'/'+d.getFullYear();}catch{return String(dt);}}

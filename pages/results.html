@@ -670,24 +670,9 @@ async function bindLastedDate() {
   } catch(e) { console.error('bindLastedDate:', e); }
 }
 
-// ── GAME CHANGE (Update Date based on Next Day / DrawTime rule) ──
+// ── GAME CHANGE (ASPX: GameSelection_SelectedIndexChanged → GetResult) ──
 async function onGameChange() {
-  const gid = document.getElementById('gameSelection').value;
-  if (gid) {
-    try {
-      const r = await API.get(`/api/chat/date?gameId=${encodeURIComponent(gid)}`);
-      if (r?.date) {
-        const gameDateStr = formatToDdMmYyyy(r.date);
-        setDateVal('txtDate',      gameDateStr);
-        setDateVal('txtStartDate', gameDateStr);
-        setDateVal('txtEndDate',   gameDateStr);
-      }
-    } catch(e) {
-      console.error('onGameChange date fetch error:', e);
-    }
-  }
   await getResult();
-  await bindGrid();
 }
 
 // ── GET RESULT (ASPX: GetResult) ──────────────────────────

@@ -3298,9 +3298,11 @@
             o.dataset.apcomm = rt.A_PComm || 0; o.dataset.aamt = rt.A_Amt || 10;
             o.dataset.pati = rt.Patti || rt.Pati_PComm || 0;
             o.dataset.targetuid = rt.fUserUID || rt.UID || ''; o.dataset.mobile = rt.MobileNo || '';
-            o.dataset.hissaid = rt.ThirdPartyHissaID || '0'; o.dataset.hissaper = rt.ThirdPartyHissaPer || '0';
-            o.dataset.tpcommid = rt.ThirdPartyCommID || '0'; o.dataset.tpdara = rt.ThirdPartyDaraComm || '0';
-            o.dataset.tpakhar = rt.ThirdPartyAkharComm || '0';
+            o.dataset.hissaid = rt.ThirdPartyHissaID !== undefined ? rt.ThirdPartyHissaID : (rt.thirdPartyHissaID !== undefined ? rt.thirdPartyHissaID : '0');
+            o.dataset.hissaper = rt.ThirdPartyHissaPer !== undefined ? rt.ThirdPartyHissaPer : (rt.thirdPartyHissaPer !== undefined ? rt.thirdPartyHissaPer : '0');
+            o.dataset.tpcommid = rt.ThirdPartyCommID !== undefined ? rt.ThirdPartyCommID : (rt.thirdPartyCommID !== undefined ? rt.thirdPartyCommID : '0');
+            o.dataset.tpdara = rt.ThirdPartyDaraComm !== undefined ? rt.ThirdPartyDaraComm : (rt.thirdPartyDaraComm !== undefined ? rt.thirdPartyDaraComm : '0');
+            o.dataset.tpakhar = rt.ThirdPartyAkharComm !== undefined ? rt.ThirdPartyAkharComm : (rt.thirdPartyAkharComm !== undefined ? rt.thirdPartyAkharComm : '0');
             o.textContent = rt.Rate || ((rt.D_PComm || 0) + '/' +
               (rt.D_Amt || 100) + '-' + (rt.A_PComm || 0) + '/' + (rt.A_Amt || 10) + '-' + (rt.Patti || rt.Pati_PComm || 0));
             rateSel.appendChild(o);
@@ -3394,6 +3396,9 @@
             // DEST rate
             fHissaPartyID: rate.hissaID || 0,
             hissaPerc: rate.hissaPer || 0,
+            ThirdPartyCommID: rate.tpCommID || 0,
+            ThirdPartyDaraComm: rate.tpDara || 0,
+            ThirdPartyAkharComm: rate.tpAkhar || 0,
             D_PComm: rate.D_PComm, D_Amt: rate.D_Amt,
             A_PComm: rate.A_PComm, A_Amt: rate.A_Amt,
             Pati_PComm: rate.Pati

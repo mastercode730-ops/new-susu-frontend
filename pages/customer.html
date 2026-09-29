@@ -314,6 +314,89 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
     max-height: 350px !important;
   }
 }
+.hissa-combo-wrap {
+  position: relative;
+  width: 100%;
+}
+.hissa-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.hissa-input-box input.form-control {
+  padding-right: 44px !important;
+  text-transform: capitalize;
+}
+.hissa-clear-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2cca0;
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  color: #5a1010;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  display: none;
+  z-index: 2;
+  transition: background 0.15s, color 0.15s;
+}
+.hissa-clear-btn:hover {
+  background: #f25961;
+  color: #fff;
+}
+.hissa-arrow-btn {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7b6f30;
+  font-size: 9px;
+  cursor: pointer;
+  padding: 2px;
+  user-select: none;
+  z-index: 2;
+}
+.hissa-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid #bda838;
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  z-index: 1050;
+  display: none;
+}
+.hissa-item {
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #222;
+  cursor: pointer;
+  border-bottom: 1px solid #f6f1d8;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hissa-item:hover, .hissa-item.active {
+  background: #fbf1b3;
+  color: #8b1d1d;
+}
+.hissa-item:last-child {
+  border-bottom: none;
+}
 </style>
 </head>
 <body>
@@ -379,7 +462,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
           </div>
           <div class="row">
             <div class="col-7 col-md-6">
-              <div class="form-group"><label for="ddlSrchCustomers">3rd Hissa Party</label><select class="form-control" id="ddlSrchCustomers"><option value="0">Select Customer Name</option></select></div>
+              <div class="form-group">
+                <label for="txt3rdPartyHissaSearch">3rd Hissa Party</label>
+                <div class="hissa-combo-wrap">
+                  <div class="hissa-input-box">
+                    <input type="text" class="form-control" id="txt3rdPartyHissaSearch"
+                           placeholder="Select Customer Name" autocomplete="off"
+                           onfocus="openHissaDropdown()" oninput="filterHissaDropdown()" onclick="openHissaDropdown()">
+                    <button type="button" class="hissa-clear-btn" id="btnClearHissaParty" onclick="clearHissaParty(event)" title="Cancel selection">✕</button>
+                    <span class="hissa-arrow-btn" onclick="toggleHissaDropdown(event)">▼</span>
+                  </div>
+                  <div id="hissaDropdownList" class="hissa-dropdown-menu"></div>
+                  <select class="form-control" id="ddlSrchCustomers" style="display:none;"><option value="0">Select Customer Name</option></select>
+                </div>
+              </div>
             </div>
             <div class="col-5 col-md-6">
               <div class="form-group"><label for="txt3rdPartyHissaPer">Hissa (%)</label><input type="text" class="form-control" id="txt3rdPartyHissaPer" value="0"></div>
@@ -624,10 +720,12 @@ function populateDropdowns(data) {
     data.map(c => `<option value="${c.CID}">${c.CustomerName}</option>`).join('');
   ['ddlSrchCustomers','ddlCommParty','ddlLCParty'].forEach(id => {
     const el = document.getElementById(id);
+    if (!el) return;
     const prev = el.value;
     el.innerHTML = opts;
     if (prev && prev !== '0') el.value = prev;
   });
+  syncHissaDisplay();
 }
 
 // ============ SELECT CUSTOMER ============
@@ -659,7 +757,11 @@ function selectCustomer(cid, name, mob, data) {
   document.getElementById('txtAkharCommPer').value = data.ThirdPartyAkharComm || '0';
   document.getElementById('txtLCCommPer').value = data.ThirdPartyLCPer || '0';
 
-  if (data.ThirdPartyHissaID && data.ThirdPartyHissaID !== '0') document.getElementById('ddlSrchCustomers').value = data.ThirdPartyHissaID;
+  if (data.ThirdPartyHissaID && data.ThirdPartyHissaID !== '0') {
+    setHissaParty(data.ThirdPartyHissaID, data.ThirdPartyHissaName);
+  } else {
+    setHissaParty('0');
+  }
   if (data.ThirdPartyCommID && data.ThirdPartyCommID !== '0') document.getElementById('ddlCommParty').value = data.ThirdPartyCommID;
   if (data.ThirdPartyLCID && data.ThirdPartyLCID !== '0') document.getElementById('ddlLCParty').value = data.ThirdPartyLCID;
 
@@ -931,7 +1033,7 @@ function resetForm() {
   document.getElementById('chkYantriTo').checked = false;
   document.getElementById('chkIsLimit').checked = false;
   document.getElementById('chkIsUttar').checked = false;
-  document.getElementById('ddlSrchCustomers').value = '0';
+  setHissaParty('0');
   document.getElementById('ddlCommParty').value = '0';
   document.getElementById('ddlLCParty').value = '0';
   document.getElementById('btnSave').textContent = 'Save';
@@ -953,12 +1055,147 @@ function toast(msg, type='ok') {
 }
 function esc(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"'); }
 
+// ============ 3rd HISSA PARTY SEARCHABLE COMBOBOX ============
+function renderHissaDropdown(filteredList) {
+  const listEl = document.getElementById('hissaDropdownList');
+  if (!listEl) return;
+  const currCID = document.getElementById('ddlSrchCustomers')?.value || '0';
+  const list = filteredList !== undefined ? filteredList : (allCustomers || []);
+
+  let html = `<div class="hissa-item" onclick="selectHissaParty('0', '')" style="color:#777;font-weight:600;font-style:italic;">-- Select Customer Name --</div>`;
+  if (!list.length) {
+    html += `<div style="padding:6px 8px;color:#888;font-size:0.78rem;text-align:center;">No match found</div>`;
+  } else {
+    html += list.map(c => {
+      const isSel = (String(c.CID) === String(currCID));
+      return `<div class="hissa-item ${isSel ? 'active' : ''}" onclick="selectHissaParty('${c.CID}', '${esc(c.CustomerName)}')">
+        <span>${c.CustomerName}</span>
+        <span style="font-size:0.7rem;color:#888;font-weight:normal;margin-left:auto;">${c.Mobile || c.MobileNo || ''}</span>
+      </div>`;
+    }).join('');
+  }
+  listEl.innerHTML = html;
+}
+
+function openHissaDropdown() {
+  const listEl = document.getElementById('hissaDropdownList');
+  if (!listEl) return;
+  filterHissaDropdown();
+  listEl.style.display = 'block';
+}
+
+function closeHissaDropdown() {
+  const listEl = document.getElementById('hissaDropdownList');
+  if (listEl) listEl.style.display = 'none';
+}
+
+function toggleHissaDropdown(e) {
+  if (e) e.stopPropagation();
+  const listEl = document.getElementById('hissaDropdownList');
+  if (!listEl) return;
+  if (listEl.style.display === 'block') {
+    closeHissaDropdown();
+  } else {
+    const input = document.getElementById('txt3rdPartyHissaSearch');
+    if (input) input.focus();
+    openHissaDropdown();
+  }
+}
+
+function filterHissaDropdown() {
+  const input = document.getElementById('txt3rdPartyHissaSearch');
+  const term = (input ? input.value : '').trim().toLowerCase();
+  const filtered = (allCustomers || []).filter(c =>
+    (c.CustomerName || '').toLowerCase().includes(term) ||
+    (c.Mobile || c.MobileNo || '').toLowerCase().includes(term)
+  );
+  renderHissaDropdown(filtered);
+  const listEl = document.getElementById('hissaDropdownList');
+  if (listEl) listEl.style.display = 'block';
+}
+
+function selectHissaParty(cid, name) {
+  const ddl = document.getElementById('ddlSrchCustomers');
+  const input = document.getElementById('txt3rdPartyHissaSearch');
+  const btnClear = document.getElementById('btnClearHissaParty');
+
+  if (ddl) ddl.value = cid || '0';
+  if (input) {
+    input.value = (cid && cid !== '0') ? name : '';
+  }
+  if (btnClear) {
+    btnClear.style.display = (cid && cid !== '0') ? 'inline-block' : 'none';
+  }
+  closeHissaDropdown();
+}
+
+function clearHissaParty(e) {
+  if (e) e.stopPropagation();
+  const ddl = document.getElementById('ddlSrchCustomers');
+  const input = document.getElementById('txt3rdPartyHissaSearch');
+  const btnClear = document.getElementById('btnClearHissaParty');
+
+  if (ddl) ddl.value = '0';
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  if (btnClear) btnClear.style.display = 'none';
+  openHissaDropdown();
+}
+
+function setHissaParty(cid, fallbackName) {
+  const ddl = document.getElementById('ddlSrchCustomers');
+  const input = document.getElementById('txt3rdPartyHissaSearch');
+  const btnClear = document.getElementById('btnClearHissaParty');
+
+  if (ddl) ddl.value = cid || '0';
+  if (!cid || cid === '0') {
+    if (input) input.value = '';
+    if (btnClear) btnClear.style.display = 'none';
+  } else {
+    let name = fallbackName || '';
+    if (!name && allCustomers && allCustomers.length) {
+      const match = allCustomers.find(c => String(c.CID) === String(cid));
+      if (match) name = match.CustomerName;
+    }
+    if (input) input.value = name;
+    if (btnClear) btnClear.style.display = 'inline-block';
+  }
+}
+
+function syncHissaDisplay() {
+  const ddl = document.getElementById('ddlSrchCustomers');
+  if (ddl && ddl.value && ddl.value !== '0') {
+    setHissaParty(ddl.value);
+  }
+}
+
+// Close hissa dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.hissa-combo-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    closeHissaDropdown();
+    // If input text was modified without selecting, revert to selected party name
+    const ddl = document.getElementById('ddlSrchCustomers');
+    const input = document.getElementById('txt3rdPartyHissaSearch');
+    if (ddl && input) {
+      if (ddl.value && ddl.value !== '0') {
+        const match = (allCustomers || []).find(c => String(c.CID) === String(ddl.value));
+        if (match) input.value = match.CustomerName;
+      } else {
+        input.value = '';
+      }
+    }
+  }
+});
+
 // Enter key navigation
 (function(){
   const fields = [
     'txtCustomerName','txtCity','txtMobileNo',
     'txtD_PComm','txtD_Amt','txtA_PComm','txtA_Amt','txtPatti','txtLC',
-    'ddlSrchCustomers','txt3rdPartyHissaPer',
+    'txt3rdPartyHissaSearch','txt3rdPartyHissaPer',
     'ddlCommParty','txtDaraCommPer','txtAkharCommPer',
     'ddlLCParty','txtLCCommPer'
   ];
@@ -967,11 +1204,46 @@ function esc(s) { return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"'); 
     if (!el) return;
     el.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
+        const listEl = document.getElementById('hissaDropdownList');
+        if (id === 'txt3rdPartyHissaSearch' && listEl && listEl.style.display === 'block') {
+          const activeItem = listEl.querySelector('.hissa-item.active') || listEl.querySelector('.hissa-item');
+          if (activeItem) {
+            e.preventDefault();
+            activeItem.click();
+            const next = document.getElementById('txt3rdPartyHissaPer');
+            if (next) { next.focus(); next.select && next.select(); }
+            return;
+          }
+        }
         e.preventDefault();
         if (idx === fields.length - 1) { document.getElementById('btnSave').click(); return; }
         for (let i = idx + 1; i < fields.length; i++) {
           const next = document.getElementById(fields[i]);
           if (next && !next.readOnly) { next.focus(); next.select && next.select(); break; }
+        }
+      } else if (id === 'txt3rdPartyHissaSearch') {
+        const listEl = document.getElementById('hissaDropdownList');
+        const isOpen = listEl && listEl.style.display === 'block';
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (!isOpen) { openHissaDropdown(); return; }
+          const items = listEl.querySelectorAll('.hissa-item');
+          if (!items.length) return;
+          let activeIdx = Array.from(items).findIndex(el => el.classList.contains('active'));
+          if (activeIdx < items.length - 1) activeIdx++; else activeIdx = 0;
+          items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
+          items[activeIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!isOpen) { openHissaDropdown(); return; }
+          const items = listEl.querySelectorAll('.hissa-item');
+          if (!items.length) return;
+          let activeIdx = Array.from(items).findIndex(el => el.classList.contains('active'));
+          if (activeIdx > 0) activeIdx--; else activeIdx = items.length - 1;
+          items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
+          items[activeIdx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Escape') {
+          closeHissaDropdown();
         }
       }
     });

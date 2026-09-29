@@ -545,8 +545,7 @@ async function init() {
     await loadCustomers();
     const savedDate = localStorage.getItem('accounts_last_date');
     const parsedSaved = parseInputDate(savedDate);
-    const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
-    if (savedDate && parsedSaved && !isNaN(parsedSaved) && parsedSaved <= endToday) {
+    if (savedDate && parsedSaved && !isNaN(parsedSaved)) {
       document.getElementById('txtDate').value = fmtDate(parsedSaved);
     } else {
       await setLatestDate();
@@ -773,7 +772,6 @@ function getSelectedType() {
 function initDatePickers() {
   const fmt = {
     dateFormat: 'd/m/Y',
-    maxDate: 'today',
     clickOpens: false,
     allowInput: true,
     disableMobile: true,
@@ -887,9 +885,6 @@ async function setLatestDate() {
   const r = await API.get('/api/accounts/latest-date');
   const today = fmtDate(new Date());
   let d = r?.date ? (fmtDate(new Date(r.date)) || today) : today;
-  const p = parseInputDate(d);
-  const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
-  if (p && !isNaN(p) && p > endToday) d = today;
   document.getElementById('txtDate').value = d;
 }
 
@@ -1061,10 +1056,10 @@ async function saveTransaction() {
 
   const curDate = document.getElementById('txtDate').value;
   const curParsed = parseInputDate(curDate);
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-  if (curParsed && !isNaN(curParsed) && curParsed > endOfToday) {
-    toast('Future date allow nahi hai', 'err');
+  if (!curDate || !curParsed || isNaN(curParsed.getTime())) {
+    toast('Sahi date daalo (dd/mm/yyyy)', 'err');
+    document.getElementById('btnSubmit').disabled = false;
+    focusDateField();
     return;
   }
   localStorage.setItem('accounts_last_date', curDate);

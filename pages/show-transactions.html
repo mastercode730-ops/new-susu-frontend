@@ -4,8 +4,17 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Susu9 - All Transactions</title>
 <script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <link rel="stylesheet" href="/css/main.css">
 <style>
+/* Flatpickr calendar popup — bold, clear text throughout */
+.flatpickr-weekday{font-weight:800!important;color:#000!important;}
+.flatpickr-day{font-weight:800!important;color:#000!important;}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay,.flatpickr-day.notAllowed{color:#999!important;font-weight:700!important;}
+.flatpickr-day.today{font-weight:900!important;}
+.flatpickr-current-month .cur-month,.flatpickr-current-month input.cur-year{font-weight:800!important;color:#000!important;}
+.flatpickr-months .flatpickr-month,.flatpickr-current-month{font-weight:800!important;}
 /* Bolder, higher-contrast text — visual only, no behavior change */
 .content label{font-weight:800!important;color:var(--text)!important;display:block;font-size:.78rem!important;margin-bottom:3px!important;}
 .content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
@@ -40,11 +49,23 @@
           <div class="row">
             <div class="col">
               <label>From Date</label>
-              <input type="date" class="form-control" id="txFrom">
+              <div style="position: relative; display: flex; align-items: center;">
+                <input type="text" class="form-control" id="txFrom" placeholder="dd/mm/yyyy" style="padding-right: 36px;" onfocus="this.select()">
+                <button type="button" id="btnFromCal" aria-label="Open Calendar" tabindex="-1"
+                  style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </button>
+              </div>
             </div>
             <div class="col">
               <label>To Date</label>
-              <input type="date" class="form-control" id="txTo">
+              <div style="position: relative; display: flex; align-items: center;">
+                <input type="text" class="form-control" id="txTo" placeholder="dd/mm/yyyy" style="padding-right: 36px;" onfocus="this.select()">
+                <button type="button" id="btnToCal" aria-label="Open Calendar" tabindex="-1"
+                  style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </button>
+              </div>
             </div>
             <div class="col">
               <label>Customer Name</label>
@@ -84,8 +105,15 @@
 function toIsoDate(dStr) {
   if (!dStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
+  const dmy = String(dStr).trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmy) {
+    let p1 = parseInt(dmy[1], 10), p2 = parseInt(dmy[2], 10), yr = parseInt(dmy[3], 10);
+    let day = p1, mo = p2;
+    if (p2 > 12 && p1 <= 12) { day = p2; mo = p1; }
+    return `${yr}-${String(mo).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
   const mo = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
-  const m = dStr.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+  const m = String(dStr).trim().match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
   if (m) {
     const day = m[1].padStart(2, '0');
     const month = mo[m[2].slice(0,3).charAt(0).toUpperCase() + m[2].slice(1,3).toLowerCase()] || '01';
@@ -101,7 +129,200 @@ function toIsoDate(dStr) {
   return '';
 }
 
+function fmtDate(d) {
+  if (!d) return '';
+  if (typeof d === 'string') {
+    const s = d.trim();
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+    const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (dmy) return `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}`;
+    const p = new Date(s);
+    if (!isNaN(p.getTime())) {
+      return `${String(p.getDate()).padStart(2, '0')}/${String(p.getMonth() + 1).padStart(2, '0')}/${p.getFullYear()}`;
+    }
+    return s;
+  }
+  const day = String(d.getDate()).padStart(2, '0');
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  const yr = d.getFullYear();
+  return `${day}/${mon}/${yr}`;
+}
+
 let isSubUser = false;
+
+function bindCalButton(btnId, inputId) {
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = document.getElementById(inputId);
+      const fp = el ? el._flatpickr : null;
+      if (fp) {
+        if (fp.isOpen) fp.close();
+        else fp.open();
+      }
+    };
+  }
+}
+
+function bindAutoSlashDate(id, onDateApplied) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace') {
+      const val = this.value;
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      if (start === end && (start === 3 || start === 6) && val[start - 1] === '/') {
+        e.preventDefault();
+        this.value = val.slice(0, start - 2) + val.slice(start);
+        this.setSelectionRange(start - 2, start - 2);
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (id === 'txFrom') {
+        const toEl = document.getElementById('txTo');
+        if (toEl) { toEl.focus(); toEl.select?.(); }
+      } else if (id === 'txTo') {
+        const cEl = document.getElementById('txCust');
+        if (cEl) cEl.focus();
+        loadTx();
+      }
+    }
+  }, true);
+
+  el.addEventListener('input', function(e) {
+    if (e.inputType && e.inputType.startsWith('delete')) {
+      return;
+    }
+    const prevPos = this.selectionEnd;
+    const prevVal = this.value;
+    let v = prevVal.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    if (v.length > 4) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+    } else if (v.length > 2) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2);
+    } else if (v.length === 2) {
+      formatted = v + '/';
+    } else {
+      formatted = v;
+    }
+    if (v.length === 4 && formatted.length === 5) {
+      formatted += '/';
+    }
+    if (this.value !== formatted) {
+      this.value = formatted;
+      if (prevPos >= prevVal.length) {
+        this.setSelectionRange(formatted.length, formatted.length);
+      } else {
+        let slashesBefore = (formatted.slice(0, prevPos).match(/\//g) || []).length;
+        let oldSlashesBefore = (prevVal.slice(0, prevPos).match(/\//g) || []).length;
+        let newPos = prevPos + (slashesBefore - oldSlashesBefore);
+        this.setSelectionRange(newPos, newPos);
+      }
+    }
+
+    if (v.length === 8) {
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(formatted, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(formatted);
+      }
+    }
+  });
+
+  el.addEventListener('change', function() {
+    if (this.value) {
+      let v = this.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length === 8) {
+        this.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      }
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(this.value, false, 'd/m/Y');
+      }
+    }
+  });
+}
+
+function initDatePickers() {
+  const ids = ['txFrom', 'txTo'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el._flatpickr) return;
+
+    const fpCfg = {
+      dateFormat: 'd/m/Y',
+      clickOpens: false,
+      allowInput: true,
+      disableMobile: true,
+      parseDate: function (datestr) {
+        if (!datestr) return new Date();
+        if (datestr instanceof Date) return datestr;
+        const s = String(datestr).trim();
+        const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (dmy) {
+          let p1 = parseInt(dmy[1], 10), p2 = parseInt(dmy[2], 10), yr = parseInt(dmy[3], 10);
+          if (p2 > 12 && p1 <= 12) return new Date(yr, p1 - 1, p2);
+          return new Date(yr, p2 - 1, p1);
+        }
+        const m8 = s.match(/^(\d{2})(\d{2})(\d{4})/);
+        if (m8) return new Date(parseInt(m8[3], 10), parseInt(m8[2], 10) - 1, parseInt(m8[1], 10));
+        const mo = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+        const mAlpha = s.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+        if (mAlpha) {
+          const mKey = mAlpha[2].charAt(0).toUpperCase() + mAlpha[2].slice(1,3).toLowerCase();
+          return new Date(parseInt(mAlpha[3], 10), mo[mKey] !== undefined ? mo[mKey] : 0, parseInt(mAlpha[1], 10));
+        }
+        const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+        if (iso) return new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+        const d = new Date(s);
+        return isNaN(d.getTime()) ? new Date() : d;
+      },
+      formatDate: function (date) {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
+      },
+      onClose: function(selectedDates, dateStr, instance) {
+        if (instance && instance.element) instance.element.blur();
+      },
+      onChange: function(selectedDates, dateStr, instance) {
+        if (instance && instance.element) instance.element.blur();
+        el.dispatchEvent(new Event('change'));
+      }
+    };
+
+    try {
+      flatpickr(el, fpCfg);
+    } catch(e) {
+      console.warn('Flatpickr init error for ' + id + ':', e);
+    }
+  });
+
+  bindCalButton('btnFromCal', 'txFrom');
+  bindCalButton('btnToCal', 'txTo');
+
+  bindAutoSlashDate('txFrom', () => {
+    const nextEl = document.getElementById('txTo');
+    if (nextEl) { nextEl.focus(); nextEl.select?.(); }
+  });
+  bindAutoSlashDate('txTo', () => {
+    const cEl = document.getElementById('txCust');
+    if (cEl) cEl.focus();
+    loadTx();
+  });
+}
 
 async function init() {
   const u = await initPage('show-transactions');
@@ -126,26 +347,24 @@ async function init() {
   const dr = await API.get('/api/accounts/latest-date');
   const lastEntry = localStorage.getItem('accounts_last_entry_date') || localStorage.getItem('accounts_last_date');
   let defaultDate = toIsoDate(lastEntry) || toIsoDate(dr?.date) || now;
-  if (defaultDate > now) defaultDate = now;
 
   const elFrom = document.getElementById('txFrom');
   const elTo = document.getElementById('txTo');
-  elFrom.max = now;
-  elTo.max = now;
-  elFrom.value = defaultDate;
-  elTo.value = defaultDate;
+  elFrom.value = fmtDate(defaultDate);
+  elTo.value = fmtDate(defaultDate);
 
   const p = new URLSearchParams(location.search);
   if (p.get('SUID')) document.getElementById('txStaff').value = p.get('SUID');
   if (p.get('customerUID')) document.getElementById('txCust').value = p.get('customerUID');
   if (p.get('from')) {
     const f = toIsoDate(p.get('from'));
-    if (f) elFrom.value = f > now ? now : f;
+    if (f) elFrom.value = fmtDate(f);
   }
   if (p.get('to')) {
     const t = toIsoDate(p.get('to'));
-    if (t) elTo.value = t > now ? now : t;
+    if (t) elTo.value = fmtDate(t);
   }
+  initDatePickers();
   loadTx();
 }
 
@@ -164,11 +383,8 @@ async function loadTx() {
   tfoot.innerHTML = '';
 
   try {
-    const now = new Date(new Date().getTime()+5.5*3600000).toISOString().split('T')[0];
-    let from = document.getElementById('txFrom').value;
-    let to = document.getElementById('txTo').value;
-    if (from > now) { from = now; document.getElementById('txFrom').value = now; }
-    if (to > now) { to = now; document.getElementById('txTo').value = now; }
+    let from = toIsoDate(document.getElementById('txFrom').value);
+    let to = toIsoDate(document.getElementById('txTo').value);
     const cust = document.getElementById('txCust').value;
     const staff = document.getElementById('txStaff').value;
 

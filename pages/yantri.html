@@ -130,6 +130,139 @@
       margin-left: -4px;
     }
 
+    /* AGENT SEARCHABLE COMBOBOX */
+    .agent-combo-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      width: 175px;
+    }
+
+    .agent-input-box {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .agent-search-input {
+      width: 100%;
+      height: 28px;
+      border: 1px solid rgba(255, 255, 255, .4);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, .15);
+      color: #fff;
+      padding: 0 38px 0 8px;
+      font-size: .8rem;
+      outline: none;
+      box-sizing: border-box;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .agent-search-input:focus {
+      border-color: #25d366;
+      background: rgba(255, 255, 255, .22);
+    }
+
+    .agent-search-input::placeholder {
+      color: rgba(255, 255, 255, .7);
+    }
+
+    .agent-clear-btn {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, .25);
+      border: none;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      z-index: 2;
+      transition: background 0.15s;
+    }
+
+    .agent-clear-btn:hover {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .agent-arrow-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255, 255, 255, .8);
+      font-size: 8px;
+      cursor: pointer;
+      padding: 2px;
+      user-select: none;
+      z-index: 2;
+    }
+
+    .agent-arrow-btn:hover {
+      color: #fff;
+    }
+
+    .agent-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 3px);
+      left: 0;
+      width: 230px;
+      max-height: 250px;
+      overflow-y: auto;
+      background: #075e54;
+      border: 1px solid rgba(255, 255, 255, .3);
+      border-radius: 5px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+      z-index: 1050;
+      display: none;
+    }
+
+    .agent-item {
+      padding: 6px 10px;
+      font-size: .8rem;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      user-select: none;
+    }
+
+    .agent-item:last-child {
+      border-bottom: none;
+    }
+
+    .agent-item:hover,
+    .agent-item.active {
+      background: #1572e8;
+      color: #fff;
+    }
+
+    .agent-item.default-opt {
+      font-style: italic;
+      color: rgba(255, 255, 255, .7);
+      font-weight: 600;
+    }
+
+    .agent-item.default-opt:hover {
+      background: rgba(255, 255, 255, .15);
+      color: #fff;
+    }
+
     /* MODE BAR */
     .modebar {
       background: #fff;
@@ -709,10 +842,21 @@
     <select id="gamesDropdown" onchange="onGameChange()" style="width:120px;">
       <option value="">Loading...</option>
     </select>
-    <!-- Agent dropdown (hidden by default) -->
-    <select id="agentDropdown" style="display:none;width:130px;" onchange="onAgentChange()">
-      <option value="">-- Choose Agent --</option>
-    </select>
+    <!-- Agent searchable dropdown (hidden by default) -->
+    <div id="wrapAgentSearch" class="agent-combo-wrap" style="display:none;">
+      <div class="agent-input-box">
+        <input type="text" id="txtAgentSearch" class="agent-search-input"
+               placeholder="-- Choose Agent --" autocomplete="off"
+               onfocus="openAgentDropdown()" oninput="onAgentSearchInput()" onclick="openAgentDropdown()"
+               onkeydown="onAgentSearchKeyDown(event)">
+        <button type="button" class="agent-clear-btn" id="btnClearAgent" onclick="clearAgent(event)" title="Clear selection">✕</button>
+        <span class="agent-arrow-btn" onclick="toggleAgentDropdown(event)">▼</span>
+      </div>
+      <div id="agentDropdownList" class="agent-dropdown-menu"></div>
+      <select id="agentDropdown" style="display:none;" onchange="onAgentChange()">
+        <option value="">-- Choose Agent --</option>
+      </select>
+    </div>
     <!-- Rates label (shown in agent mode from URL) -->
     <span id="lblRates" style="color:#fff;font-weight:bold;font-size:.8rem;"></span>
   </div>
@@ -1031,10 +1175,11 @@
         document.getElementById('lblRates').textContent = RATES_PARAM;
         setDate(DATE_PARAM);
         await loadAgents();
-        document.getElementById('agentDropdown').value = SEL_UID_PARAM;
+        setAgentValue(SEL_UID_PARAM);
         await loadData();
       } else {
         await loadLatestDate();
+        loadAgents();
         await loadData();
       }
 
@@ -1282,39 +1427,231 @@
     }
 
     // ─── AGENTS ─────────────────────────────────────
+    let agentsList = [];
+
+    function esc(s) {
+      return String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function renderAgentDropdown(filteredList) {
+      const listEl = document.getElementById('agentDropdownList');
+      if (!listEl) return;
+      const currVal = document.getElementById('agentDropdown')?.value || '';
+      const list = filteredList !== undefined ? filteredList : (agentsList || []);
+
+      let html = `<div class="agent-item default-opt" onclick="selectAgent('', '')">-- Choose Agent --</div>`;
+      if (!list.length) {
+        html += `<div style="padding:6px 10px;color:rgba(255,255,255,0.7);font-size:0.78rem;text-align:center;">No match found</div>`;
+      } else {
+        html += list.map(a => {
+          const val = String(a.fSenderID || a.UID || '');
+          const isSel = (val && val === String(currVal));
+          const name = a.CustomerName || a.Name || '';
+          return `<div class="agent-item ${isSel ? 'active' : ''}" onclick="selectAgent('${val}', '${esc(name)}')">
+            <span>${name}</span>
+          </div>`;
+        }).join('');
+      }
+      listEl.innerHTML = html;
+    }
+
+    function openAgentDropdown() {
+      const listEl = document.getElementById('agentDropdownList');
+      if (!listEl) return;
+      filterAgentDropdown();
+      listEl.style.display = 'block';
+    }
+
+    function closeAgentDropdown() {
+      const listEl = document.getElementById('agentDropdownList');
+      if (listEl) listEl.style.display = 'none';
+    }
+
+    function toggleAgentDropdown(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const listEl = document.getElementById('agentDropdownList');
+      if (!listEl) return;
+      if (listEl.style.display === 'block') {
+        closeAgentDropdown();
+      } else {
+        const input = document.getElementById('txtAgentSearch');
+        if (input) input.focus();
+        openAgentDropdown();
+      }
+    }
+
+    function filterAgentDropdown(term) {
+      const input = document.getElementById('txtAgentSearch');
+      const q = (term !== undefined ? term : (input ? input.value : '')).trim().toLowerCase();
+      const filtered = (agentsList || []).filter(a => {
+        const name = (a.CustomerName || a.Name || '').toLowerCase();
+        const mob = (a.Mobile || '').toLowerCase();
+        return name.includes(q) || mob.includes(q);
+      });
+      renderAgentDropdown(filtered);
+    }
+
+    function onAgentSearchInput() {
+      const input = document.getElementById('txtAgentSearch');
+      const btnClear = document.getElementById('btnClearAgent');
+      if (btnClear) {
+        btnClear.style.display = (input && input.value) ? 'inline-flex' : 'none';
+      }
+      if (!input || !input.value) {
+        const sel = document.getElementById('agentDropdown');
+        if (sel && sel.value) {
+          sel.value = '';
+          onAgentChange();
+        }
+      }
+      filterAgentDropdown();
+      openAgentDropdown();
+    }
+
+    function onAgentSearchKeyDown(e) {
+      const listEl = document.getElementById('agentDropdownList');
+      if (!listEl || listEl.style.display !== 'block') {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          openAgentDropdown();
+        }
+        return;
+      }
+
+      const items = listEl.querySelectorAll('.agent-item');
+      if (!items.length) return;
+
+      let activeIdx = -1;
+      items.forEach((item, idx) => {
+        if (item.classList.contains('active')) activeIdx = idx;
+      });
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIdx = (activeIdx + 1) < items.length ? activeIdx + 1 : 0;
+        items.forEach(i => i.classList.remove('active'));
+        items[nextIdx].classList.add('active');
+        items[nextIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIdx = (activeIdx - 1) >= 0 ? activeIdx - 1 : items.length - 1;
+        items.forEach(i => i.classList.remove('active'));
+        items[prevIdx].classList.add('active');
+        items[prevIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeIdx >= 0 && items[activeIdx]) {
+          items[activeIdx].click();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeAgentDropdown();
+      }
+    }
+
+    function selectAgent(val, name) {
+      setAgentValue(val, name);
+      closeAgentDropdown();
+      onAgentChange();
+    }
+
+    function clearAgent(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setAgentValue('', '');
+      closeAgentDropdown();
+      const input = document.getElementById('txtAgentSearch');
+      if (input) input.focus();
+      onAgentChange();
+    }
+
+    function setAgentValue(val, fallbackName) {
+      const sel = document.getElementById('agentDropdown');
+      const input = document.getElementById('txtAgentSearch');
+      const btnClear = document.getElementById('btnClearAgent');
+
+      if (sel) sel.value = val || '';
+      if (!val) {
+        if (input) input.value = '';
+        if (btnClear) btnClear.style.display = 'none';
+      } else {
+        let name = fallbackName || '';
+        if (!name && agentsList && agentsList.length) {
+          const match = agentsList.find(a => String(a.fSenderID || a.UID || '') === String(val));
+          if (match) name = match.CustomerName || match.Name || '';
+        }
+        if (!name && sel && sel.options) {
+          for (let i = 0; i < sel.options.length; i++) {
+            if (sel.options[i].value === String(val)) {
+              name = sel.options[i].textContent;
+              break;
+            }
+          }
+        }
+        if (input) input.value = name || '';
+        if (btnClear) btnClear.style.display = 'inline-flex';
+      }
+      renderAgentDropdown();
+    }
+
     async function loadAgents() {
       try {
         const gid = document.getElementById('gamesDropdown').value;
         const date = getDate();
         const r = await API.get(`/api/yantri/agents?gid=${gid}&date=${encodeURIComponent(date)}`);
+        agentsList = r?.data || [];
         const sel = document.getElementById('agentDropdown');
+        if (!sel) return;
         const prev = sel.value;
         sel.innerHTML = '<option value="">-- Choose Agent --</option>';
-        (r?.data || []).forEach(a => {
+        agentsList.forEach(a => {
           const o = document.createElement('option');
-          o.value = a.fSenderID; o.textContent = a.CustomerName;
+          const val = a.fSenderID || a.UID || '';
+          o.value = val;
+          o.textContent = a.CustomerName || a.Name || '';
           sel.appendChild(o);
         });
-        if (prev) sel.value = prev;
-      } catch (e) { console.error(e); }
+        if (prev) {
+          sel.value = prev;
+          setAgentValue(prev);
+        } else {
+          renderAgentDropdown();
+        }
+      } catch (e) { console.error('Error loading agents:', e); }
     }
 
     async function onAgentChange() { await loadData(); }
 
     // ─── MODE ────────────────────────────────────────
-    function onModeChange(el) {
+    async function onModeChange(el) {
       currentMode = el.value;
       setModeUI(currentMode);
-      loadData();
+      if (currentMode === 'agent') {
+        await loadAgents();
+      }
+      await loadData();
     }
 
     function setModeUI(mode) {
       document.querySelectorAll('.rb-lbl').forEach(l => l.classList.remove('active'));
       const map = { actual: 'rbActualLbl', daily: 'rbDailyLbl', agent: 'rbAgentLbl', special: 'rbSpecialLbl' };
       if (map[mode]) document.getElementById(map[mode])?.classList.add('active');
-      document.getElementById('agentDropdown').style.display = (mode === 'agent') ? '' : 'none';
+      const wrap = document.getElementById('wrapAgentSearch');
+      if (wrap) wrap.style.display = (mode === 'agent') ? 'inline-flex' : 'none';
       document.getElementById('btnManage').style.display = (mode === 'special') ? '' : 'none';
     }
+
+    document.addEventListener('click', function(e) {
+      const wrap = document.getElementById('wrapAgentSearch');
+      if (wrap && !wrap.contains(e.target)) {
+        closeAgentDropdown();
+      }
+    });
 
     function onCutModeChange(el) {
       cutMode = el.value;

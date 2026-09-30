@@ -464,7 +464,7 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
             <div class="col-7 col-md-6">
               <div class="form-group">
                 <label for="txt3rdPartyHissaSearch">3rd Hissa Party</label>
-                <div class="hissa-combo-wrap">
+                <div class="hissa-combo-wrap" id="wrapHissaParty">
                   <div class="hissa-input-box">
                     <input type="text" class="form-control" id="txt3rdPartyHissaSearch"
                            placeholder="Select Customer Name" autocomplete="off"
@@ -483,7 +483,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
           </div>
           <div class="row">
             <div class="col-6 col-md-4">
-              <div class="form-group"><label for="ddlCommParty">3rd Comm Party</label><select class="form-control" id="ddlCommParty"><option value="0">Select Customer Name</option></select></div>
+              <div class="form-group">
+                <label for="txt3rdPartyCommSearch">3rd Comm Party</label>
+                <div class="hissa-combo-wrap" id="wrapCommParty">
+                  <div class="hissa-input-box">
+                    <input type="text" class="form-control" id="txt3rdPartyCommSearch"
+                           placeholder="Select Customer Name" autocomplete="off"
+                           onfocus="openCommDropdown()" oninput="filterCommDropdown()" onclick="openCommDropdown()">
+                    <button type="button" class="hissa-clear-btn" id="btnClearCommParty" onclick="clearCommParty(event)" title="Cancel selection">✕</button>
+                    <span class="hissa-arrow-btn" onclick="toggleCommDropdown(event)">▼</span>
+                  </div>
+                  <div id="commDropdownList" class="hissa-dropdown-menu"></div>
+                  <select class="form-control" id="ddlCommParty" style="display:none;"><option value="0">Select Customer Name</option></select>
+                </div>
+              </div>
             </div>
             <div class="col-3 col-md-4">
               <div class="form-group"><label for="txtDaraCommPer">Dara (%)</label><input type="text" class="form-control" id="txtDaraCommPer" value="0"></div>
@@ -494,7 +507,20 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
           </div>
           <div class="row">
             <div class="col-7 col-md-6">
-              <div class="form-group"><label for="ddlLCParty">3rd LC Party</label><select class="form-control" id="ddlLCParty"><option value="0">Select Customer Name</option></select></div>
+              <div class="form-group">
+                <label for="txt3rdPartyLCSearch">3rd LC Party</label>
+                <div class="hissa-combo-wrap" id="wrapLCParty">
+                  <div class="hissa-input-box">
+                    <input type="text" class="form-control" id="txt3rdPartyLCSearch"
+                           placeholder="Select Customer Name" autocomplete="off"
+                           onfocus="openLCDropdown()" oninput="filterLCDropdown()" onclick="openLCDropdown()">
+                    <button type="button" class="hissa-clear-btn" id="btnClearLCParty" onclick="clearLCParty(event)" title="Cancel selection">✕</button>
+                    <span class="hissa-arrow-btn" onclick="toggleLCDropdown(event)">▼</span>
+                  </div>
+                  <div id="lcDropdownList" class="hissa-dropdown-menu"></div>
+                  <select class="form-control" id="ddlLCParty" style="display:none;"><option value="0">Select Customer Name</option></select>
+                </div>
+              </div>
             </div>
             <div class="col-5 col-md-6">
               <div class="form-group"><label for="txtLCCommPer">LC (%)</label><input type="text" class="form-control" id="txtLCCommPer" value="0"></div>
@@ -726,6 +752,8 @@ function populateDropdowns(data) {
     if (prev && prev !== '0') el.value = prev;
   });
   syncHissaDisplay();
+  syncCommDisplay();
+  syncLCDisplay();
 }
 
 // ============ SELECT CUSTOMER ============
@@ -762,8 +790,16 @@ function selectCustomer(cid, name, mob, data) {
   } else {
     setHissaParty('0');
   }
-  if (data.ThirdPartyCommID && data.ThirdPartyCommID !== '0') document.getElementById('ddlCommParty').value = data.ThirdPartyCommID;
-  if (data.ThirdPartyLCID && data.ThirdPartyLCID !== '0') document.getElementById('ddlLCParty').value = data.ThirdPartyLCID;
+  if (data.ThirdPartyCommID && data.ThirdPartyCommID !== '0') {
+    setCommParty(data.ThirdPartyCommID, data.ThirdPartyCommName);
+  } else {
+    setCommParty('0');
+  }
+  if (data.ThirdPartyLCID && data.ThirdPartyLCID !== '0') {
+    setLCParty(data.ThirdPartyLCID, data.ThirdPartyLCName);
+  } else {
+    setLCParty('0');
+  }
 
   document.getElementById('btnSave').textContent = 'Update';
   document.getElementById('btnDelete').style.display = 'inline-block';
@@ -1034,8 +1070,8 @@ function resetForm() {
   document.getElementById('chkIsLimit').checked = false;
   document.getElementById('chkIsUttar').checked = false;
   setHissaParty('0');
-  document.getElementById('ddlCommParty').value = '0';
-  document.getElementById('ddlLCParty').value = '0';
+  setCommParty('0');
+  setLCParty('0');
   document.getElementById('btnSave').textContent = 'Save';
   document.getElementById('btnDelete').style.display = 'none';
   document.getElementById('btnNewTop').style.display = 'none';
@@ -1171,12 +1207,243 @@ function syncHissaDisplay() {
   }
 }
 
-// Close hissa dropdown when clicking outside
+// ============ 3rd COMM PARTY SEARCHABLE COMBOBOX ============
+function renderCommDropdown(filteredList) {
+  const listEl = document.getElementById('commDropdownList');
+  if (!listEl) return;
+  const currCID = document.getElementById('ddlCommParty')?.value || '0';
+  const list = filteredList !== undefined ? filteredList : (allCustomers || []);
+
+  let html = `<div class="hissa-item" onclick="selectCommParty('0', '')" style="color:#777;font-weight:600;font-style:italic;">-- Select Customer Name --</div>`;
+  if (!list.length) {
+    html += `<div style="padding:6px 8px;color:#888;font-size:0.78rem;text-align:center;">No match found</div>`;
+  } else {
+    html += list.map(c => {
+      const isSel = (String(c.CID) === String(currCID));
+      return `<div class="hissa-item ${isSel ? 'active' : ''}" onclick="selectCommParty('${c.CID}', '${esc(c.CustomerName)}')">
+        <span>${c.CustomerName}</span>
+        <span style="font-size:0.7rem;color:#888;font-weight:normal;margin-left:auto;">${c.Mobile || c.MobileNo || ''}</span>
+      </div>`;
+    }).join('');
+  }
+  listEl.innerHTML = html;
+}
+
+function openCommDropdown() {
+  const listEl = document.getElementById('commDropdownList');
+  if (!listEl) return;
+  filterCommDropdown();
+  listEl.style.display = 'block';
+}
+
+function closeCommDropdown() {
+  const listEl = document.getElementById('commDropdownList');
+  if (listEl) listEl.style.display = 'none';
+}
+
+function toggleCommDropdown(e) {
+  if (e) e.stopPropagation();
+  const listEl = document.getElementById('commDropdownList');
+  if (!listEl) return;
+  if (listEl.style.display === 'block') {
+    closeCommDropdown();
+  } else {
+    const input = document.getElementById('txt3rdPartyCommSearch');
+    if (input) input.focus();
+    openCommDropdown();
+  }
+}
+
+function filterCommDropdown() {
+  const input = document.getElementById('txt3rdPartyCommSearch');
+  const term = (input ? input.value : '').trim().toLowerCase();
+  const filtered = (allCustomers || []).filter(c =>
+    (c.CustomerName || '').toLowerCase().includes(term) ||
+    (c.Mobile || c.MobileNo || '').toLowerCase().includes(term)
+  );
+  renderCommDropdown(filtered);
+  const listEl = document.getElementById('commDropdownList');
+  if (listEl) listEl.style.display = 'block';
+}
+
+function selectCommParty(cid, name) {
+  const ddl = document.getElementById('ddlCommParty');
+  const input = document.getElementById('txt3rdPartyCommSearch');
+  const btnClear = document.getElementById('btnClearCommParty');
+
+  if (ddl) ddl.value = cid || '0';
+  if (input) {
+    input.value = (cid && cid !== '0') ? name : '';
+  }
+  if (btnClear) {
+    btnClear.style.display = (cid && cid !== '0') ? 'inline-block' : 'none';
+  }
+  closeCommDropdown();
+}
+
+function clearCommParty(e) {
+  if (e) e.stopPropagation();
+  const ddl = document.getElementById('ddlCommParty');
+  const input = document.getElementById('txt3rdPartyCommSearch');
+  const btnClear = document.getElementById('btnClearCommParty');
+
+  if (ddl) ddl.value = '0';
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  if (btnClear) btnClear.style.display = 'none';
+  openCommDropdown();
+}
+
+function setCommParty(cid, fallbackName) {
+  const ddl = document.getElementById('ddlCommParty');
+  const input = document.getElementById('txt3rdPartyCommSearch');
+  const btnClear = document.getElementById('btnClearCommParty');
+
+  if (ddl) ddl.value = cid || '0';
+  if (!cid || cid === '0') {
+    if (input) input.value = '';
+    if (btnClear) btnClear.style.display = 'none';
+  } else {
+    let name = fallbackName || '';
+    if (!name && allCustomers && allCustomers.length) {
+      const match = allCustomers.find(c => String(c.CID) === String(cid));
+      if (match) name = match.CustomerName;
+    }
+    if (input) input.value = name;
+    if (btnClear) btnClear.style.display = 'inline-block';
+  }
+}
+
+function syncCommDisplay() {
+  const ddl = document.getElementById('ddlCommParty');
+  if (ddl && ddl.value && ddl.value !== '0') {
+    setCommParty(ddl.value);
+  }
+}
+
+// ============ 3rd LC PARTY SEARCHABLE COMBOBOX ============
+function renderLCDropdown(filteredList) {
+  const listEl = document.getElementById('lcDropdownList');
+  if (!listEl) return;
+  const currCID = document.getElementById('ddlLCParty')?.value || '0';
+  const list = filteredList !== undefined ? filteredList : (allCustomers || []);
+
+  let html = `<div class="hissa-item" onclick="selectLCParty('0', '')" style="color:#777;font-weight:600;font-style:italic;">-- Select Customer Name --</div>`;
+  if (!list.length) {
+    html += `<div style="padding:6px 8px;color:#888;font-size:0.78rem;text-align:center;">No match found</div>`;
+  } else {
+    html += list.map(c => {
+      const isSel = (String(c.CID) === String(currCID));
+      return `<div class="hissa-item ${isSel ? 'active' : ''}" onclick="selectLCParty('${c.CID}', '${esc(c.CustomerName)}')">
+        <span>${c.CustomerName}</span>
+        <span style="font-size:0.7rem;color:#888;font-weight:normal;margin-left:auto;">${c.Mobile || c.MobileNo || ''}</span>
+      </div>`;
+    }).join('');
+  }
+  listEl.innerHTML = html;
+}
+
+function openLCDropdown() {
+  const listEl = document.getElementById('lcDropdownList');
+  if (!listEl) return;
+  filterLCDropdown();
+  listEl.style.display = 'block';
+}
+
+function closeLCDropdown() {
+  const listEl = document.getElementById('lcDropdownList');
+  if (listEl) listEl.style.display = 'none';
+}
+
+function toggleLCDropdown(e) {
+  if (e) e.stopPropagation();
+  const listEl = document.getElementById('lcDropdownList');
+  if (!listEl) return;
+  if (listEl.style.display === 'block') {
+    closeLCDropdown();
+  } else {
+    const input = document.getElementById('txt3rdPartyLCSearch');
+    if (input) input.focus();
+    openLCDropdown();
+  }
+}
+
+function filterLCDropdown() {
+  const input = document.getElementById('txt3rdPartyLCSearch');
+  const term = (input ? input.value : '').trim().toLowerCase();
+  const filtered = (allCustomers || []).filter(c =>
+    (c.CustomerName || '').toLowerCase().includes(term) ||
+    (c.Mobile || c.MobileNo || '').toLowerCase().includes(term)
+  );
+  renderLCDropdown(filtered);
+  const listEl = document.getElementById('lcDropdownList');
+  if (listEl) listEl.style.display = 'block';
+}
+
+function selectLCParty(cid, name) {
+  const ddl = document.getElementById('ddlLCParty');
+  const input = document.getElementById('txt3rdPartyLCSearch');
+  const btnClear = document.getElementById('btnClearLCParty');
+
+  if (ddl) ddl.value = cid || '0';
+  if (input) {
+    input.value = (cid && cid !== '0') ? name : '';
+  }
+  if (btnClear) {
+    btnClear.style.display = (cid && cid !== '0') ? 'inline-block' : 'none';
+  }
+  closeLCDropdown();
+}
+
+function clearLCParty(e) {
+  if (e) e.stopPropagation();
+  const ddl = document.getElementById('ddlLCParty');
+  const input = document.getElementById('txt3rdPartyLCSearch');
+  const btnClear = document.getElementById('btnClearLCParty');
+
+  if (ddl) ddl.value = '0';
+  if (input) {
+    input.value = '';
+    input.focus();
+  }
+  if (btnClear) btnClear.style.display = 'none';
+  openLCDropdown();
+}
+
+function setLCParty(cid, fallbackName) {
+  const ddl = document.getElementById('ddlLCParty');
+  const input = document.getElementById('txt3rdPartyLCSearch');
+  const btnClear = document.getElementById('btnClearLCParty');
+
+  if (ddl) ddl.value = cid || '0';
+  if (!cid || cid === '0') {
+    if (input) input.value = '';
+    if (btnClear) btnClear.style.display = 'none';
+  } else {
+    let name = fallbackName || '';
+    if (!name && allCustomers && allCustomers.length) {
+      const match = allCustomers.find(c => String(c.CID) === String(cid));
+      if (match) name = match.CustomerName;
+    }
+    if (input) input.value = name;
+    if (btnClear) btnClear.style.display = 'inline-block';
+  }
+}
+
+function syncLCDisplay() {
+  const ddl = document.getElementById('ddlLCParty');
+  if (ddl && ddl.value && ddl.value !== '0') {
+    setLCParty(ddl.value);
+  }
+}
+
+// Close dropdowns when clicking outside
 document.addEventListener('click', (e) => {
-  const wrap = document.querySelector('.hissa-combo-wrap');
-  if (wrap && !wrap.contains(e.target)) {
+  const hissaWrap = document.getElementById('wrapHissaParty');
+  if (hissaWrap && !hissaWrap.contains(e.target)) {
     closeHissaDropdown();
-    // If input text was modified without selecting, revert to selected party name
     const ddl = document.getElementById('ddlSrchCustomers');
     const input = document.getElementById('txt3rdPartyHissaSearch');
     if (ddl && input) {
@@ -1188,62 +1455,124 @@ document.addEventListener('click', (e) => {
       }
     }
   }
+
+  const commWrap = document.getElementById('wrapCommParty');
+  if (commWrap && !commWrap.contains(e.target)) {
+    closeCommDropdown();
+    const ddl = document.getElementById('ddlCommParty');
+    const input = document.getElementById('txt3rdPartyCommSearch');
+    if (ddl && input) {
+      if (ddl.value && ddl.value !== '0') {
+        const match = (allCustomers || []).find(c => String(c.CID) === String(ddl.value));
+        if (match) input.value = match.CustomerName;
+      } else {
+        input.value = '';
+      }
+    }
+  }
+
+  const lcWrap = document.getElementById('wrapLCParty');
+  if (lcWrap && !lcWrap.contains(e.target)) {
+    closeLCDropdown();
+    const ddl = document.getElementById('ddlLCParty');
+    const input = document.getElementById('txt3rdPartyLCSearch');
+    if (ddl && input) {
+      if (ddl.value && ddl.value !== '0') {
+        const match = (allCustomers || []).find(c => String(c.CID) === String(ddl.value));
+        if (match) input.value = match.CustomerName;
+      } else {
+        input.value = '';
+      }
+    }
+  }
 });
 
-// Enter key navigation
+// Enter key navigation & Arrow key support for searchable dropdowns
 (function(){
   const fields = [
     'txtCustomerName','txtCity','txtMobileNo',
     'txtD_PComm','txtD_Amt','txtA_PComm','txtA_Amt','txtPatti','txtLC',
     'txt3rdPartyHissaSearch','txt3rdPartyHissaPer',
-    'ddlCommParty','txtDaraCommPer','txtAkharCommPer',
-    'ddlLCParty','txtLCCommPer'
+    'txt3rdPartyCommSearch','txtDaraCommPer','txtAkharCommPer',
+    'txt3rdPartyLCSearch','txtLCCommPer'
   ];
+
+  function setupComboKeyNav(inputId, listId, nextFieldId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    input.addEventListener('keydown', function(e) {
+      const listEl = document.getElementById(listId);
+      const isOpen = listEl && listEl.style.display === 'block';
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) {
+          if (inputId === 'txt3rdPartyHissaSearch') openHissaDropdown();
+          else if (inputId === 'txt3rdPartyCommSearch') openCommDropdown();
+          else if (inputId === 'txt3rdPartyLCSearch') openLCDropdown();
+          return;
+        }
+        const items = listEl.querySelectorAll('.hissa-item');
+        if (!items.length) return;
+        let activeIdx = Array.from(items).findIndex(el => el.classList.contains('active'));
+        if (activeIdx < items.length - 1) activeIdx++; else activeIdx = 0;
+        items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
+        items[activeIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!isOpen) {
+          if (inputId === 'txt3rdPartyHissaSearch') openHissaDropdown();
+          else if (inputId === 'txt3rdPartyCommSearch') openCommDropdown();
+          else if (inputId === 'txt3rdPartyLCSearch') openLCDropdown();
+          return;
+        }
+        const items = listEl.querySelectorAll('.hissa-item');
+        if (!items.length) return;
+        let activeIdx = Array.from(items).findIndex(el => el.classList.contains('active'));
+        if (activeIdx > 0) activeIdx--; else activeIdx = items.length - 1;
+        items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
+        items[activeIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        if (isOpen) {
+          const activeItem = listEl.querySelector('.hissa-item.active') || listEl.querySelector('.hissa-item');
+          if (activeItem) {
+            e.preventDefault();
+            activeItem.click();
+            const next = document.getElementById(nextFieldId);
+            if (next) { next.focus(); next.select && next.select(); }
+          }
+        }
+      } else if (e.key === 'Escape') {
+        if (inputId === 'txt3rdPartyHissaSearch') closeHissaDropdown();
+        else if (inputId === 'txt3rdPartyCommSearch') closeCommDropdown();
+        else if (inputId === 'txt3rdPartyLCSearch') closeLCDropdown();
+      }
+    });
+  }
+
+  setupComboKeyNav('txt3rdPartyHissaSearch', 'hissaDropdownList', 'txt3rdPartyHissaPer');
+  setupComboKeyNav('txt3rdPartyCommSearch', 'commDropdownList', 'txtDaraCommPer');
+  setupComboKeyNav('txt3rdPartyLCSearch', 'lcDropdownList', 'txtLCCommPer');
+
   fields.forEach((id, idx) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
-        const listEl = document.getElementById('hissaDropdownList');
-        if (id === 'txt3rdPartyHissaSearch' && listEl && listEl.style.display === 'block') {
-          const activeItem = listEl.querySelector('.hissa-item.active') || listEl.querySelector('.hissa-item');
-          if (activeItem) {
-            e.preventDefault();
-            activeItem.click();
-            const next = document.getElementById('txt3rdPartyHissaPer');
-            if (next) { next.focus(); next.select && next.select(); }
-            return;
-          }
+        if (['txt3rdPartyHissaSearch','txt3rdPartyCommSearch','txt3rdPartyLCSearch'].includes(id)) {
+          const listMap = {
+            txt3rdPartyHissaSearch: 'hissaDropdownList',
+            txt3rdPartyCommSearch: 'commDropdownList',
+            txt3rdPartyLCSearch: 'lcDropdownList'
+          };
+          const listEl = document.getElementById(listMap[id]);
+          if (listEl && listEl.style.display === 'block') return;
         }
         e.preventDefault();
         if (idx === fields.length - 1) { document.getElementById('btnSave').click(); return; }
         for (let i = idx + 1; i < fields.length; i++) {
           const next = document.getElementById(fields[i]);
           if (next && !next.readOnly) { next.focus(); next.select && next.select(); break; }
-        }
-      } else if (id === 'txt3rdPartyHissaSearch') {
-        const listEl = document.getElementById('hissaDropdownList');
-        const isOpen = listEl && listEl.style.display === 'block';
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          if (!isOpen) { openHissaDropdown(); return; }
-          const items = listEl.querySelectorAll('.hissa-item');
-          if (!items.length) return;
-          let activeIdx = Array.from(items).findIndex(el => el.classList.contains('active'));
-          if (activeIdx < items.length - 1) activeIdx++; else activeIdx = 0;
-          items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
-          items[activeIdx].scrollIntoView({ block: 'nearest' });
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          if (!isOpen) { openHissaDropdown(); return; }
-          const items = listEl.querySelectorAll('.hissa-item');
-          if (!items.length) return;
-          let activeIdx = Array.from(items).findIndex(el => el.classList.contains('active'));
-          if (activeIdx > 0) activeIdx--; else activeIdx = items.length - 1;
-          items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
-          items[activeIdx].scrollIntoView({ block: 'nearest' });
-        } else if (e.key === 'Escape') {
-          closeHissaDropdown();
         }
       }
     });

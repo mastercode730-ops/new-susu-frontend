@@ -283,6 +283,10 @@
 .content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
 .content table tfoot td{background:#eee!important;}
 .content table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr.recent-entry-row{cursor:pointer;user-select:none;}
+.content table tbody tr.recent-entry-row.selected-entry td,
+.content table tbody tr.recent-entry-row.selected-entry:hover td{background-color:#ffeaa7!important;color:#000!important;font-weight:900!important;}
+.content table tbody tr.recent-entry-row.selected-entry{outline:2px solid #e67e22!important;outline-offset:-2px;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
@@ -405,6 +409,11 @@
                     </thead>
                     <tbody id="miniHistTbody"></tbody>
                   </table>
+                </div>
+                <div id="miniHistActionRow" style="display:none; margin-top: 8px; text-align: right;">
+                  <button type="button" class="btn btn-danger btn-sm" id="btnDeleteRecentEntry" onclick="deleteSelectedRecentEntry()" style="font-weight: 800; padding: 6px 18px; border-radius: 4px; background: #dc3545 !important; color: #fff !important; border: 1px solid #dc3545 !important; cursor: pointer;">
+                    <i class="fa fa-trash"></i> Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -921,6 +930,7 @@ async function fetchNetBal(uid) {
     if (rightBal) { rightBal.textContent = ''; }
     if (placeholder) placeholder.style.display = 'block';
     if (miniHist) miniHist.style.display = 'none';
+    deselectRecentEntry();
     return;
   }
   // A "staff_"-prefixed pick (a Sub User selected in this merged list) has
@@ -932,6 +942,7 @@ async function fetchNetBal(uid) {
     if (rightBal) { rightBal.textContent = ''; }
     if (placeholder) placeholder.style.display = 'block';
     if (miniHist) miniHist.style.display = 'none';
+    deselectRecentEntry();
     return;
   }
   if (placeholder) placeholder.style.display = 'none';
@@ -981,12 +992,90 @@ async function fetchStaffNetBal(val) {
   } catch { badge.textContent = ''; badge.className = 'net-bal'; }
 }
 
+let selectedRecentAID = null;
 
+function selectRecentEntryRow(tr, aid) {
+  if (selectedRecentAID === String(aid)) {
+    deselectRecentEntry();
+    return;
+  }
+  selectedRecentAID = String(aid);
+  document.querySelectorAll('#miniHistTbody tr.recent-entry-row').forEach(r => {
+    r.classList.remove('selected-entry');
+  });
+  if (tr) {
+    tr.classList.add('selected-entry');
+  }
+  const actionRow = document.getElementById('miniHistActionRow');
+  if (actionRow) actionRow.style.display = 'block';
+}
+
+function deselectRecentEntry() {
+  selectedRecentAID = null;
+  document.querySelectorAll('#miniHistTbody tr.recent-entry-row').forEach(r => {
+    r.classList.remove('selected-entry');
+  });
+  const actionRow = document.getElementById('miniHistActionRow');
+  if (actionRow) actionRow.style.display = 'none';
+}
+
+async function deleteSelectedRecentEntry() {
+  const targetAID = selectedRecentAID || document.querySelector('#miniHistTbody tr.recent-entry-row.selected-entry')?.getAttribute('data-aid');
+  if (!targetAID) {
+    toast('Pehle ek entry select karein', 'err');
+    return;
+  }
+
+  let confirmed = false;
+  if (typeof swal === 'function') {
+    const res = await swal({
+      title: 'Delete this entry?',
+      text: 'Are you sure you want to delete this recent entry?',
+      icon: 'warning',
+      buttons: ['Cancel', 'Delete'],
+      dangerMode: true
+    });
+    confirmed = !!res;
+  } else {
+    confirmed = confirm('Are you sure you want to delete this entry?');
+  }
+
+  if (!confirmed) return;
+
+  const btn = document.getElementById('btnDeleteRecentEntry');
+  if (btn) btn.disabled = true;
+
+  try {
+    const r = await API.delete(`/api/accounts/${targetAID}`);
+    if (r && r.success) {
+      toast('Entry deleted successfully!', 'ok');
+      const uid = $('#ddlAccounts').val();
+      deselectRecentEntry();
+      if (uid && uid !== 'Self' && !uid.startsWith('staff_')) {
+        await fetchNetBal(uid);
+      }
+      const rawStaffVal = $('#ddlStaff').val() || document.getElementById('ddlStaff')?.value || '0';
+      if (rawStaffVal && rawStaffVal !== '0') {
+        fetchStaffNetBal(rawStaffVal);
+      }
+      const staffOptText = $('#ddlStaff option:selected').text();
+      updateTopSubUserBalance(rawStaffVal, staffOptText);
+    } else {
+      toast(r?.message || 'Error deleting entry', 'err');
+    }
+  } catch(e) {
+    console.error('deleteSelectedRecentEntry error:', e);
+    toast('Error deleting entry', 'err');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
 
 // Compact "recent entries for this party" table right in the Entry form —
 // no date range (whole history for that customer), newest first, capped to
 // the last 10 and scroll-boxed short (~4 rows) same as the desktop reference.
 async function loadMiniHistory(uid) {
+  deselectRecentEntry();
   const row = document.getElementById('miniHistRow');
   const tbody = document.getElementById('miniHistTbody');
   row.style.display = 'block';
@@ -997,10 +1086,10 @@ async function loadMiniHistory(uid) {
   // unbounded for real data, unlike actually leaving the params out.
   const r = await API.get(`/api/accounts/list?customerUID=${uid}&fromDate=2000-01-01&toDate=2099-12-31`);
   let data = r?.data || [];
-  data.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+  data.sort((a, b) => (new Date(b.Date) - new Date(a.Date)) || (Number(b.AID) - Number(a.AID)));
   data = data.slice(0, 10);
   tbody.innerHTML = data.length ? data.map(d => `
-    <tr>
+    <tr data-aid="${d.AID}" class="recent-entry-row" onclick="selectRecentEntryRow(this, '${d.AID}')">
       <td>${d.Date ? new Date(d.Date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : ''}</td>
       <td>${d.Paid || 0}</td>
       <td>${d.Received || 0}</td>
@@ -1105,6 +1194,7 @@ function resetForm() {
   if (placeholder) placeholder.style.display = 'block';
   const miniHist = document.getElementById('miniHistRow');
   if (miniHist) miniHist.style.display = 'none';
+  deselectRecentEntry();
   const rawStaffVal = $('#ddlStaff').val() || document.getElementById('ddlStaff')?.value || '0';
   if (rawStaffVal && rawStaffVal !== '0') {
     fetchStaffNetBal(rawStaffVal);

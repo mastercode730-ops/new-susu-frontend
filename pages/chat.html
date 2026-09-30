@@ -118,8 +118,8 @@
       border-color: #6861ce;
     }
 
-    /* Yantri calendar icon & date picker button */
-    #BtnYantri, #btnDateCal {
+    /* Calendar date picker button */
+    #btnDateCal {
       background: none;
       border: none;
       cursor: pointer;
@@ -128,6 +128,48 @@
       font-size: 1.1rem;
       line-height: 1;
       padding: 0;
+    }
+
+    /* Yantri header button wrap */
+    .yantri-btn-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 6px;
+      padding: 1px 7px;
+      background: #eefdf3;
+      border: 1.5px solid #25d366;
+      border-radius: 4px;
+      height: 26px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    .yantri-btn-wrap:hover {
+      background: #dcfce7;
+      border-color: #16a34a;
+      box-shadow: 0 0 5px rgba(37, 211, 102, 0.4);
+    }
+    .yantri-btn-text {
+      font-size: 0.82rem;
+      font-weight: 900;
+      color: #075e54;
+      text-transform: capitalize;
+      letter-spacing: 0.3px;
+      user-select: none;
+      line-height: 1;
+    }
+    #BtnYantri {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      line-height: 1;
+      padding: 0;
+      margin: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Bulk button */
@@ -1350,7 +1392,6 @@
 
         <input type="text" id="txtDate" placeholder="dd/mm/yyyy" onchange="FilterByDate(this)" autocomplete="off">
         <button type="button" id="btnDateCal" onclick="toggleDateCalendar()" title="Calendar">📅</button>
-        <button id="BtnYantri" onclick="toggleDateCalendar()" title="Yantri" style="display:none;">📅</button>
         <button id="btnMoveMsg" onclick="openBulkMovePopup()">💬 Bulk</button>
 
         <div class="bet-search-container" id="betSearchContainer" title="Search bet number">
@@ -1360,6 +1401,11 @@
             onkeydown="if(event.key==='Escape')clearBetSearch()">
           <button type="button" id="btnClearBetSearch" onclick="clearBetSearch()" title="Clear search">&times;</button>
           <span id="betSearchMatchCount" style="display:none;"></span>
+        </div>
+
+        <div id="btnYantriWrap" class="yantri-btn-wrap" onclick="OpenYantriagent()" title="Customer Yantri">
+          <span class="yantri-btn-text">Yantri</span>
+          <button type="button" id="BtnYantri" onclick="event.stopPropagation();OpenYantriagent()" title="Customer Yantri">📅</button>
         </div>
 
         <span id="lblUserBalance"></span>
@@ -1645,7 +1691,8 @@
         document.getElementById('txtMessageAmount').style.display = 'block';
         document.getElementById('txtMessageAmount').value = '';
         if (P.selPage !== '1') {
-          document.getElementById('BtnYantri').style.display = 'none';
+          const byw = document.getElementById('btnYantriWrap');
+          if (byw) byw.style.display = 'none';
           document.getElementById('btnMoveMsg').style.display = 'none';
         }
         document.getElementById('SpanClearTable').style.display = 'none';
@@ -2460,7 +2507,11 @@
         document.getElementById('lblSendBulkORMessage').innerText = '1';
         document.getElementById('txtMessageAmount').style.display = 'block';
         document.getElementById('txtMessageAmount').value = '';
-        if (P.selPage !== '1') { document.getElementById('BtnYantri').style.display = 'none'; document.getElementById('btnMoveMsg').style.display = 'none'; }
+        if (P.selPage !== '1') {
+          const byw = document.getElementById('btnYantriWrap');
+          if (byw) byw.style.display = 'none';
+          document.getElementById('btnMoveMsg').style.display = 'none';
+        }
         document.getElementById('lblMessage').innerHTML = '';
         document.getElementById('lblTotalAmount').innerText = '';
         Amount = 0; CleartxtNumbersamt();

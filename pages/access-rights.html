@@ -25,8 +25,8 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
    and scroll internally past a height instead of growing the whole page. */
 .content table{border-collapse:collapse!important;width:100%!important;}
 .content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 12px!important;font-size:.85rem!important;position:sticky;top:0;}
-.content table td{border:1px solid #ccc!important;padding:6px 12px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
-.content table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr:hover{outline:2px solid #16a34a!important;outline-offset:-2px;}
+.content table tbody tr:hover td{background:#bbf7d0!important;}
 #subUsersList,#accessRightsList{max-height:360px;overflow-y:auto;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
@@ -71,14 +71,19 @@ thead th.assign-hd { background-color:#1572e8!important; color:White!important; 
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDContacts"> <label for="chkADDContacts">Contacts</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDGames"> <label for="chkADDGames">Games</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkResult"> <label for="chkResult">Result</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkFindChat"> <label for="chkFindChat">Find Chat</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisab"> <label for="chkHisab">Hisab</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisabSummary"> <label for="chkHisabSummary">Hisab Summary</label></div></div>
             <div class="col-md-2" style="display:none;"><div class="form-group"><input type="checkbox" id="chkDateWiseHisab"> <label>Date Wise Hisab</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkAccounts"> <label for="chkAccounts">Accounts</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkShowAllAccounts"> <label for="chkShowAllAccounts">Show All Accounts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkSubUsers"> <label for="chkSubUsers">Sub User</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkBalance"> <label for="chkBalance">Balance</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkLC"> <label for="chkLC">LC</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkPLYantri"> <label for="chkPLYantri">P&L Yantri</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkYantri"> <label for="chkYantri">Yantri</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkAbsentReport"> <label for="chkAbsentReport">Absent Report</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkChangePassword"> <label for="chkChangePassword">Change Password</label></div></div>
           </div>
         </div>
         <div class="card-action">
@@ -265,14 +270,26 @@ async function loadAccessRights() {
   document.getElementById('chkADDContacts').checked = isTrue(ar.ADDContacts);
   document.getElementById('chkADDGames').checked = isTrue(ar.ADDGames);
   document.getElementById('chkResult').checked = isTrue(ar.Result);
+  document.getElementById('chkFindChat').checked = isTrue(ar.FindChat);
   document.getElementById('chkHisab').checked = isTrue(ar.Hisab);
   document.getElementById('chkHisabSummary').checked = isTrue(ar.HisabSummary);
   document.getElementById('chkDateWiseHisab').checked = isTrue(ar.DateWiseHisab);
   document.getElementById('chkAccounts').checked = isTrue(ar.Accounts);
   document.getElementById('chkShowAllAccounts').checked = isTrue(ar.ShowAllAccounts);
+  document.getElementById('chkSubUsers').checked = isTrue(ar.SubUsers);
   document.getElementById('chkBalance').checked = isTrue(ar.Balance);
   document.getElementById('chkLC').checked = isTrue(ar.LC);
+  document.getElementById('chkPLYantri').checked = isTrue(ar.PLYantri);
   document.getElementById('chkYantri').checked = isTrue(ar.Yantri);
+  document.getElementById('chkAbsentReport').checked = isTrue(ar.AbsentReport);
+  document.getElementById('chkChangePassword').checked = isTrue(ar.ChangePassword);
+}
+
+function resetAccess() {
+  ['chkADDContacts','chkADDGames','chkResult','chkFindChat','chkHisab','chkHisabSummary',
+   'chkDateWiseHisab','chkAccounts','chkShowAllAccounts','chkSubUsers','chkBalance',
+   'chkLC','chkPLYantri','chkYantri','chkAbsentReport','chkChangePassword']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
 }
 
 async function loadAccessRightsList() {
@@ -340,14 +357,19 @@ async function saveAccessRights() {
       addContacts: document.getElementById('chkADDContacts').checked,
       addGames: document.getElementById('chkADDGames').checked,
       result: document.getElementById('chkResult').checked,
+      findChat: document.getElementById('chkFindChat').checked,
       hisab: document.getElementById('chkHisab').checked,
       hisabSummary: document.getElementById('chkHisabSummary').checked,
       dateWiseHisab: document.getElementById('chkDateWiseHisab').checked,
       accounts: document.getElementById('chkAccounts').checked,
       showAllAccounts: document.getElementById('chkShowAllAccounts').checked,
+      subUsers: document.getElementById('chkSubUsers').checked,
       balance: document.getElementById('chkBalance').checked,
       lc: document.getElementById('chkLC').checked,
-      yantri: document.getElementById('chkYantri').checked
+      plYantri: document.getElementById('chkPLYantri').checked,
+      yantri: document.getElementById('chkYantri').checked,
+      absentReport: document.getElementById('chkAbsentReport').checked,
+      changePassword: document.getElementById('chkChangePassword').checked
     };
 
     const res = await API.post('/api/admin/access-rights', body);

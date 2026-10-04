@@ -248,8 +248,16 @@
 
     .agent-item:hover,
     .agent-item.active {
-      background: #1572e8;
-      color: #fff;
+      background: #bbf7d0 !important;
+      color: #064e3b !important;
+      outline: 2px solid #16a34a !important;
+      outline-offset: -2px;
+      font-weight: 800 !important;
+    }
+
+    .agent-item:hover *,
+    .agent-item.active * {
+      color: #064e3b !important;
     }
 
     .agent-item.default-opt {
@@ -259,8 +267,11 @@
     }
 
     .agent-item.default-opt:hover {
-      background: rgba(255, 255, 255, .15);
-      color: #fff;
+      background: #bbf7d0 !important;
+      color: #064e3b !important;
+      outline: 2px solid #16a34a !important;
+      outline-offset: -2px;
+      font-weight: 800 !important;
     }
 
     /* MODE BAR */
@@ -681,7 +692,11 @@
     }
 
     .client-item:hover {
-      background: #f8f9fa;
+      background: #bbf7d0 !important;
+      outline: 2px solid #16a34a !important;
+      outline-offset: -2px;
+      color: #064e3b !important;
+      font-weight: 800 !important;
     }
 
     .client-item input[type=checkbox] {

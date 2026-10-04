@@ -23,6 +23,37 @@
 @keyframes btn-spin {
   to { transform: rotate(360deg); }
 }
+.subusers-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: LightGray;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.select2-container{width:100%!important;}
+.select2-container, .select2-container.form-control{border:none!important;padding:0!important;height:auto!important;background:transparent!important;box-shadow:none!important;display:block!important;}
+.select2-container .select2-choice{
+  height:40px!important;line-height:38px!important;border:1px solid #ced4da!important;border-radius:4px!important;
+  padding:0 12px!important;font-size:.95rem!important;font-family:Arial,sans-serif;text-transform:capitalize;
+  background:#fff!important;box-shadow:none!important;background-image:none!important;
+}
+.select2-container .select2-choice .select2-chosen{color:#000!important;font-size:.95rem!important;font-family:Arial,sans-serif;text-transform:capitalize;font-weight:700!important;}
+.select2-container .select2-choice .select2-arrow{
+  height:38px!important;width:28px!important;background:none!important;border-left:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+.select2-container-active .select2-choice,
+.select2-drop-active{
+  border-color:#1572e8!important;
+  box-shadow:0 0 0 3px rgba(21,114,232,0.18)!important;
+}
+.select2-drop{border:1px solid #ced4da;border-radius:0 0 4px 4px;z-index:9999;box-shadow:0 8px 16px rgba(0,0,0,0.1);box-sizing:border-box!important;}
+.select2-drop .select2-search{padding:8px 10px!important;}
+.select2-drop .select2-search input{width:100%!important;box-sizing:border-box!important;border:1px solid #ced4da!important;border-radius:4px!important;padding:8px 10px!important;font-size:.95rem!important;font-weight:600!important;background:#fff!important;}
+.select2-results{width:100%!important;max-height:360px;margin:0!important;padding:4px 0!important;}
+.select2-results .select2-highlighted, .select2-results li:hover{background-color:#bbf7d0!important;outline:2px solid #16a34a!important;outline-offset:-2px;color:#064e3b!important;font-weight:800!important;}
+.select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.9rem;font-weight:600;padding:8px 12px;line-height:1.5;color:#222;}
+.select2-results li.select2-highlighted{color:#064e3b!important;font-weight:800!important;}
 </style>
 </head>
 <body>
@@ -84,8 +115,8 @@
         <div class="card-header">
           <div class="card-title" id="formTitle">All Sub Users</div>
         </div>
-        <div class="table-responsive">
-          <table class="table-bordered-bd-primary table-hover" cellpadding="4"
+        <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
+          <table class="table-bordered-bd-primary table-hover subusers-table" cellpadding="4"
             style="text-transform:capitalize;text-align:center;width:100%;">
             <thead>
               <tr style="background-color:LightGray;">
@@ -124,14 +155,19 @@
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDContacts"> <label for="chkADDContacts">Contacts</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkADDGames"> <label for="chkADDGames">Games</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkResult"> <label for="chkResult">Result</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkFindChat"> <label for="chkFindChat">Find Chat</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisab"> <label for="chkHisab">Hisab</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkHisabSummary"> <label for="chkHisabSummary">Hisab Summary</label></div></div>
             <div class="col-md-2" style="display:none;"><div class="form-group"><input type="checkbox" id="chkDateWiseHisab"> <label>Date Wise Hisab</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkAccounts"> <label for="chkAccounts">Accounts</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkShowAllAccounts"> <label for="chkShowAllAccounts">Show All Accounts</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkSubUsers"> <label for="chkSubUsers">Sub User</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkBalance"> <label for="chkBalance">Balance</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkLC"> <label for="chkLC">LC</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkPLYantri"> <label for="chkPLYantri">P&L Yantri</label></div></div>
             <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkYantri"> <label for="chkYantri">Yantri</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkAbsentReport"> <label for="chkAbsentReport">Absent Report</label></div></div>
+            <div class="col-md-2"><div class="form-group"><input type="checkbox" id="chkChangePassword"> <label for="chkChangePassword">Change Password</label></div></div>
           </div>
         </div>
         <div class="card-action">
@@ -200,6 +236,26 @@ async function loadUsers() {
       if (String(u.SubUserID) === String(selVal)) opt.selected = true;
       ddl.appendChild(opt);
     });
+
+    if (window.$ && $.fn.select2) {
+      if ($('#ddlSubUsers').data('select2')) {
+        $('#ddlSubUsers').select2('destroy');
+      }
+      $('#ddlSubUsers').select2({
+        width: '100%',
+        placeholder: 'Select Sub User',
+        allowClear: true,
+        matcher: function(term, text, opt) {
+          if (!term || !term.trim()) return true;
+          const t = term.trim().toLowerCase();
+          const txt = (text || '').toLowerCase();
+          const val = (opt && opt.val ? opt.val() : (opt && opt.value ? opt.value : '')).toLowerCase();
+          return txt.indexOf(t) > -1 || val.indexOf(t) > -1;
+        }
+      }).off('change.access').on('change.access', function() {
+        loadAccessRights();
+      });
+    }
   }
 }
 
@@ -273,6 +329,9 @@ function editUser(subid, name, mobile, password, isActive) {
   const ddl = document.getElementById('ddlSubUsers');
   if (ddl) {
     ddl.value = subid;
+    if (window.$ && $.fn.select2) {
+      $('#ddlSubUsers').val(subid).trigger('change.select2');
+    }
     loadAccessRights();
   }
 }
@@ -290,7 +349,12 @@ function cancelForm() {
 
   resetAccess();
   const ddl = document.getElementById('ddlSubUsers');
-  if (ddl) ddl.value = '';
+  if (ddl) {
+    ddl.value = '';
+    if (window.$ && $.fn.select2) {
+      $('#ddlSubUsers').val('').trigger('change.select2');
+    }
+  }
 }
 
 // ── ACCESS RIGHTS FUNCTIONS ──
@@ -312,19 +376,25 @@ async function loadAccessRights() {
   document.getElementById('chkADDContacts').checked = isTrue(ar.ADDContacts);
   document.getElementById('chkADDGames').checked = isTrue(ar.ADDGames);
   document.getElementById('chkResult').checked = isTrue(ar.Result);
+  document.getElementById('chkFindChat').checked = isTrue(ar.FindChat);
   document.getElementById('chkHisab').checked = isTrue(ar.Hisab);
   document.getElementById('chkHisabSummary').checked = isTrue(ar.HisabSummary);
   document.getElementById('chkDateWiseHisab').checked = isTrue(ar.DateWiseHisab);
   document.getElementById('chkAccounts').checked = isTrue(ar.Accounts);
   document.getElementById('chkShowAllAccounts').checked = isTrue(ar.ShowAllAccounts);
+  document.getElementById('chkSubUsers').checked = isTrue(ar.SubUsers);
   document.getElementById('chkBalance').checked = isTrue(ar.Balance);
   document.getElementById('chkLC').checked = isTrue(ar.LC);
+  document.getElementById('chkPLYantri').checked = isTrue(ar.PLYantri);
   document.getElementById('chkYantri').checked = isTrue(ar.Yantri);
+  document.getElementById('chkAbsentReport').checked = isTrue(ar.AbsentReport);
+  document.getElementById('chkChangePassword').checked = isTrue(ar.ChangePassword);
 }
 
 function resetAccess() {
-  ['chkADDContacts','chkADDGames','chkResult','chkHisab','chkHisabSummary',
-   'chkDateWiseHisab','chkAccounts','chkShowAllAccounts','chkBalance','chkLC','chkYantri']
+  ['chkADDContacts','chkADDGames','chkResult','chkFindChat','chkHisab','chkHisabSummary',
+   'chkDateWiseHisab','chkAccounts','chkShowAllAccounts','chkSubUsers','chkBalance',
+   'chkLC','chkPLYantri','chkYantri','chkAbsentReport','chkChangePassword']
     .forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
 }
 
@@ -348,14 +418,19 @@ async function saveAccessRights() {
       addContacts: document.getElementById('chkADDContacts').checked,
       addGames: document.getElementById('chkADDGames').checked,
       result: document.getElementById('chkResult').checked,
+      findChat: document.getElementById('chkFindChat').checked,
       hisab: document.getElementById('chkHisab').checked,
       hisabSummary: document.getElementById('chkHisabSummary').checked,
       dateWiseHisab: document.getElementById('chkDateWiseHisab').checked,
       accounts: document.getElementById('chkAccounts').checked,
       showAllAccounts: document.getElementById('chkShowAllAccounts').checked,
+      subUsers: document.getElementById('chkSubUsers').checked,
       balance: document.getElementById('chkBalance').checked,
       lc: document.getElementById('chkLC').checked,
-      yantri: document.getElementById('chkYantri').checked
+      plYantri: document.getElementById('chkPLYantri').checked,
+      yantri: document.getElementById('chkYantri').checked,
+      absentReport: document.getElementById('chkAbsentReport').checked,
+      changePassword: document.getElementById('chkChangePassword').checked
     };
 
     const res = await API.post('/api/admin/access-rights', body);

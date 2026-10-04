@@ -33,8 +33,8 @@ tbody tr.selected-row{background:rgba(18,140,126,.08);}
 .content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 12px!important;font-size:.85rem!important;}
 .content table td{border:1px solid #ccc!important;padding:6px 12px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
 .content table td.pos{color:#1b7a1b!important;}
-.content table td.neg{color:#c62828!important;}
-.content table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr:hover:not(.selected-row){outline:2px solid #16a34a!important;outline-offset:-2px;}
+.content table tbody tr:hover:not(.selected-row) td{background:#bbf7d0!important;}
 .content table tbody tr.selected-row td{background:rgba(18,140,126,.15)!important;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */

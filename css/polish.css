@@ -43,8 +43,18 @@ body {
 .table-bordered-bd-primary tbody tr:nth-child(even):not(.selected-row) {
   background-color: #fafbfd;
 }
-.table-bordered-bd-primary tbody tr:hover:not(.selected-row) {
-  background-color: #f0f5fc;
+.table-bordered-bd-primary tbody tr:hover:not(.selected-row),
+.table-hover tbody tr:hover:not(.selected-row),
+.content table tbody tr:hover:not(.selected-row):not(.selected-entry),
+.legacy-grid tbody tr:hover:not(.selected-row) {
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+}
+.table-bordered-bd-primary tbody tr:hover:not(.selected-row) td,
+.table-hover tbody tr:hover:not(.selected-row) td,
+.content table tbody tr:hover:not(.selected-row):not(.selected-entry) td,
+.legacy-grid tbody tr:hover:not(.selected-row) td {
+  background-color: #bbf7d0 !important;
 }
 
 /* ── 3. Inputs: calm focus ring instead of browser default outline ── */
@@ -360,4 +370,60 @@ body {
 .sidebar.sidebar-style-2 .nav.nav-primary > .nav-item.active > a:before {
   display: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   10. Unified Dark Green Highlight for Dropdown Lists & Search Results
+       (Matching customer search list in received.html)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Select2 Dropdowns (hover & keyboard ArrowUp / ArrowDown selection) */
+.select2-results .select2-highlighted,
+.select2-results li.select2-highlighted,
+.select2-results__option--highlighted,
+.select2-results__option--highlighted[aria-selected],
+.select2-results li:hover {
+  background-color: #bbf7d0 !important;
+  color: #064e3b !important;
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+  font-weight: 800 !important;
+}
+
+.select2-results .select2-highlighted *,
+.select2-results li.select2-highlighted *,
+.select2-results__option--highlighted * {
+  color: #064e3b !important;
+}
+
+/* Custom Dropdown Lists: Customer / Game / Agent / Hissa dropdowns */
+.cust-drop .cust-item:hover,
+.cust-drop .cust-item.focused,
+.cust-drop .cust-item.active,
+.game-drop .game-item:hover,
+.game-drop .game-item.focused,
+.game-drop .game-item.active,
+.agent-dropdown-menu .agent-item:hover,
+.agent-dropdown-menu .agent-item.active,
+.hissa-dropdown-menu .hissa-item:hover,
+.hissa-dropdown-menu .hissa-item.active {
+  background-color: #bbf7d0 !important;
+  color: #064e3b !important;
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+  font-weight: 800 !important;
+}
+
+.cust-drop .cust-item:hover *,
+.cust-drop .cust-item.focused *,
+.cust-drop .cust-item.active *,
+.game-drop .game-item:hover *,
+.game-drop .game-item.focused *,
+.game-drop .game-item.active *,
+.agent-dropdown-menu .agent-item:hover *,
+.agent-dropdown-menu .agent-item.active *,
+.hissa-dropdown-menu .hissa-item:hover *,
+.hissa-dropdown-menu .hissa-item.active * {
+  color: #064e3b !important;
+}
+
 

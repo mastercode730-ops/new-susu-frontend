@@ -42,8 +42,8 @@ tbody tr{cursor:pointer;}
 .content table,#histModal table{border-collapse:collapse!important;}
 .content table th,#histModal table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:7px 14px!important;font-size:.85rem!important;}
 .content table td,#histModal table td{border:1px solid #ccc!important;padding:6px 14px!important;font-weight:900!important;color:#000!important;font-size:.95rem!important;}
-.content table tfoot td,#histModal table tfoot td{background:#eee!important;}
-.content table tbody tr:hover td,#histModal table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr:hover:not(.selected-row),#histModal table tbody tr:hover{outline:2px solid #16a34a!important;outline-offset:-2px;}
+.content table tbody tr:hover:not(.selected-row) td,#histModal table tbody tr:hover td{background:#bbf7d0!important;}
 #histModal table th,#histModal table td{white-space:nowrap;}
 #histModal .table-responsive{overflow-x:auto;}
 #histModal .modal-title{font-weight:800!important;}

@@ -20,9 +20,16 @@
 .game-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #888;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.15);max-height:240px;overflow-y:auto;z-index:999;display:none;}
 .game-drop.open{display:block;}
 .game-item{padding:9px 12px;cursor:pointer;font-size:.85rem;font-weight:700;color:var(--text);text-transform:capitalize;border-bottom:1px solid #eee;}
-.game-item:last-child{border-bottom:none;}
-.game-item:hover,.game-item.focused{background:#eef3ff;}
-.game-none{padding:10px 12px;color:var(--muted);font-size:.84rem;}
+.game-item:hover, .game-item.focused {
+  background: #bbf7d0 !important;
+  color: #064e3b !important;
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+  font-weight: 800 !important;
+}
+.game-item:hover *, .game-item.focused * {
+  color: #064e3b !important;
+}
 /* Bolder, higher-contrast text — visual only, no behavior change */
 .content .form-group label,.content>.row label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
 .content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
@@ -35,8 +42,8 @@
 #gridWrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 260px);}
 #gridWrap table{border-collapse:collapse!important;width:100%!important;}
 #gridWrap th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;position:sticky;top:0;}
-#gridWrap td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
-#gridWrap tbody tr:hover td{background:#eef3ff!important;}
+#gridWrap tbody tr:hover:not(.selected-row){outline:2px solid #16a34a!important;outline-offset:-2px;}
+#gridWrap tbody tr:hover:not(.selected-row) td{background:#bbf7d0!important;}
 #gridWrap tbody tr.selected-row td{background:#d3d3d3!important;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */

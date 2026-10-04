@@ -21,9 +21,16 @@
 .msg-actions{display:flex;gap:6px;margin-top:8px;}
 .msg-total-line{font-size:.72rem;font-weight:700;color:var(--primary);margin-top:4px;}
 .filter-row{padding:8px;border-bottom:1px solid var(--border);background:var(--panel2);}
-.game-item{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;font-size:.84rem;}
-.game-item:hover,.game-item.active{background:var(--primary-pale);}
-.game-item.active{border-left:2px solid var(--primary);font-weight:600;}
+.game-item:hover,.game-item.active{
+  background: #bbf7d0 !important;
+  color: #064e3b !important;
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+  font-weight: 800 !important;
+}
+.game-item:hover *, .game-item.active * {
+  color: #064e3b !important;
+}
 </style>
 </head>
 <body>

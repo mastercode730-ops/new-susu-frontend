@@ -25,8 +25,8 @@
 .legacy-toplink{color:#1d5fa8;font-weight:700;text-decoration:underline;cursor:pointer;font-size:.85rem;background:none;border:none;padding:0;}
 .legacy-grid table{border-collapse:collapse;}
 .legacy-grid th{background:#d9d9d9;border:1px solid #999;font-weight:800;color:#000;}
-.legacy-grid td{border:1px solid #ccc;}
-.legacy-grid tbody tr:hover td{background:#eef3ff;}
+.legacy-grid tbody tr:hover{outline:2px solid #16a34a!important;outline-offset:-2px;}
+.legacy-grid tbody tr:hover td{background:#bbf7d0!important;}
 .legacy-radio label{font-weight:800;margin-right:14px;cursor:pointer;}
 /* Remove increment/decrement counter arrows in all fields */
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
@@ -391,8 +391,14 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   justify-content: space-between;
 }
 .hissa-item:hover, .hissa-item.active {
-  background: #fbf1b3;
-  color: #8b1d1d;
+  background: #bbf7d0 !important;
+  color: #064e3b !important;
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+  font-weight: 800 !important;
+}
+.hissa-item:hover *, .hissa-item.active * {
+  color: #064e3b !important;
 }
 .hissa-item:last-child {
   border-bottom: none;

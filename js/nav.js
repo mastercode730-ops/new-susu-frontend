@@ -220,23 +220,23 @@ function _applyUserPermissions(u, active) {
     const isTrue = v => v === true || v === 1 || String(v).toLowerCase() === 'true' || String(v) === '1';
 
     // Only checked menus are visible, everything else is hidden
-    if (!isTrue(u.ADDContacts))  _hide('nav-customer');
-    if (!isTrue(u.ADDGames))     _hide('nav-game');
-    if (!isTrue(u.Result))       _hide('nav-results');
-    if (!isTrue(u.Hisab))        _hide('nav-hisab');
-    if (!isTrue(u.HisabSummary)) _hide('nav-hisab-summary');
-    if (!isTrue(u.Accounts))     _hide('nav-accounts');
-    if (!isTrue(u.Balance))      _hide('nav-balance');
-    if (!isTrue(u.LC))           _hide('nav-lc');
-    if (!isTrue(u.Yantri))       _hide('nav-yantri');
+    if (!isTrue(u.ADDContacts))    _hide('nav-customer');
+    if (!isTrue(u.ADDGames))       _hide('nav-game');
+    if (!isTrue(u.Result))         _hide('nav-results');
+    if (!isTrue(u.FindChat))       _hide('nav-sale-history');
+    if (!isTrue(u.Hisab))          _hide('nav-hisab');
+    if (!isTrue(u.HisabSummary))   _hide('nav-hisab-summary');
+    if (!isTrue(u.Accounts))       _hide('nav-accounts');
+    if (!isTrue(u.SubUsers))       _hide('nav-subusers');
+    if (!isTrue(u.Balance))        _hide('nav-balance');
+    if (!isTrue(u.LC))             _hide('nav-lc');
+    if (!isTrue(u.PLYantri))       _hide('nav-pl-yantri');
+    if (!isTrue(u.Yantri))         _hide('nav-yantri');
+    if (!isTrue(u.AbsentReport))   _hide('nav-absent-customers');
+    if (!isTrue(u.ChangePassword)) _hide('nav-change-password');
 
     // Admin-only / non-granted menus are always hidden for sub users
-    _hide('nav-sale-history');
-    _hide('nav-subusers');
-    _hide('nav-pl-yantri');
-    _hide('nav-absent-customers');
     _hide('nav-access');
-    _hide('nav-change-password');
     _hide('nav-date-wise');
     _hide('nav-admin');
     _hide('nav-staff-balance');
@@ -247,14 +247,19 @@ function _applyUserPermissions(u, active) {
       'customer': u.ADDContacts,
       'game': u.ADDGames,
       'results': u.Result,
+      'sale-history': u.FindChat,
       'hisab': u.Hisab,
       'hisab-summary': u.HisabSummary,
       'accounts': u.Accounts,
+      'subusers': u.SubUsers,
       'balance': u.Balance,
       'lc': u.LC,
-      'yantri': u.Yantri
+      'pl-yantri': u.PLYantri,
+      'yantri': u.Yantri,
+      'absent-customers': u.AbsentReport,
+      'change-password': u.ChangePassword
     };
-    const adminOnlyPages = ['subusers', 'access', 'assign-clients', 'pl-yantri', 'sale-history', 'absent-customers'];
+    const adminOnlyPages = ['access', 'assign-clients'];
     if (adminOnlyPages.includes(active)) {
       window.location.href = '/pages/home.html';
       return false;

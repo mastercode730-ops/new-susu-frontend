@@ -24,9 +24,16 @@ tbody tr{cursor:pointer;}
 .cust-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:999;display:none;}
 .cust-drop.open{display:block;}
 .cust-item{padding:8px 12px;cursor:pointer;font-size:.86rem;border-bottom:1px solid #f3f3f3;}
-.cust-item:last-child{border-bottom:none;}
-.cust-item:hover,.cust-item.focused{background:#f0fdf4;}
-.cust-none{padding:10px 12px;color:var(--muted);font-size:.84rem;}
+.cust-item:hover, .cust-item.focused {
+  background: #bbf7d0 !important;
+  color: #064e3b !important;
+  outline: 2px solid #16a34a !important;
+  outline-offset: -2px;
+  font-weight: 800 !important;
+}
+.cust-item:hover *, .cust-item.focused * {
+  color: #064e3b !important;
+}
 /* Bolder, higher-contrast text — visual only, no behavior change */
 .content .form-group label{font-weight:800!important;color:var(--text)!important;}
 .content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
@@ -54,8 +61,8 @@ tbody tr{cursor:pointer;}
 .content table{border-collapse:collapse!important;}
 .content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
 .content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
-.content table tfoot td{background:#eee!important;}
-.content table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr:hover:not(.selected-row){outline:2px solid #16a34a!important;outline-offset:-2px;}
+.content table tbody tr:hover:not(.selected-row) td{background:#bbf7d0!important;}
 .table-responsive{overflow-x:auto;}
 .content table{width:100%!important;min-width:1150px;}
 /* Vendor theme reserves 62px above .content for a second header row this

@@ -31,12 +31,12 @@
 .select2-drop .select2-search{padding:8px;}
 .select2-drop .select2-search input{width:100%!important;border:1px solid #ced4da;border-radius:4px;padding:8px 10px;font-size:1rem;}
 .select2-results{width:100%;max-height:360px;}
-.select2-results .select2-highlighted{background-color:#128c7e!important;}
+.select2-results .select2-highlighted, .select2-results li:hover{background-color:#bbf7d0!important;outline:2px solid #16a34a!important;outline-offset:-2px;color:#064e3b!important;font-weight:800!important;}
 .select2-results li{text-transform:capitalize;font-family:Arial,sans-serif;font-size:.82rem;font-weight:500;padding:6px 10px;line-height:1.5;color:#1572e8;}
-.select2-results li.select2-highlighted{color:#fff;}
+.select2-results li.select2-highlighted{color:#064e3b!important;font-weight:800!important;}
 #s2id_ddlType .select2-chosen{text-transform:none!important;font-weight:800!important;}
 .select2-drop-for-type .select2-results li{text-transform:none!important;font-size:.9rem!important;font-weight:700!important;color:#111!important;}
-.select2-drop-for-type .select2-results li.select2-highlighted{background-color:#128c7e!important;color:#fff!important;}
+.select2-drop-for-type .select2-results li.select2-highlighted, .select2-drop-for-type .select2-results li:hover{background-color:#bbf7d0!important;outline:2px solid #16a34a!important;outline-offset:-2px;color:#064e3b!important;font-weight:800!important;}
 
 /* ── Modern Paid Type Select ── */
 .type-select{
@@ -281,8 +281,8 @@
 .content table{border-collapse:collapse!important;}
 .content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
 .content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.9rem!important;}
-.content table tfoot td{background:#eee!important;}
-.content table tbody tr:hover td{background:#eef3ff!important;}
+.content table tbody tr:hover:not(.selected-entry){outline:2px solid #16a34a!important;outline-offset:-2px;}
+.content table tbody tr:hover:not(.selected-entry) td{background:#bbf7d0!important;}
 .content table tbody tr.recent-entry-row{cursor:pointer;user-select:none;}
 .content table tbody tr.recent-entry-row.selected-entry td,
 .content table tbody tr.recent-entry-row.selected-entry:hover td{background-color:#ffeaa7!important;color:#000!important;font-weight:900!important;}

@@ -483,6 +483,29 @@ function parseInputDate(s) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function parseDmy(s) {
+  return parseInputDate(s);
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dateObj = d instanceof Date ? d : new Date(d);
+  if (isNaN(dateObj.getTime())) return '';
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${dateObj.getFullYear()}`;
+}
+
+function formatToDdMmYyyy(s) {
+  if (!s) return '';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  const parsed = parseInputDate(s);
+  if (parsed && !isNaN(parsed.getTime())) {
+    return fmtDate(parsed);
+  }
+  return String(s);
+}
+
 function toIsoDate(dStr) {
   if (!dStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
@@ -552,13 +575,7 @@ async function init() {
     // of which Sub User is picked below — Sub User only decides who a
     // transaction gets attributed to, it doesn't filter the customer list.
     await loadCustomers();
-    const savedDate = localStorage.getItem('accounts_last_date');
-    const parsedSaved = parseInputDate(savedDate);
-    if (savedDate && parsedSaved && !isNaN(parsedSaved)) {
-      document.getElementById('txtDate').value = fmtDate(parsedSaved);
-    } else {
-      await setLatestDate();
-    }
+    await setLatestDate();
     initDatePickers();
 
     const advanceToType = () => {
@@ -891,10 +908,18 @@ function initDatePickers() {
 }
 
 async function setLatestDate() {
-  const r = await API.get('/api/accounts/latest-date');
-  const today = fmtDate(new Date());
-  let d = r?.date ? (fmtDate(new Date(r.date)) || today) : today;
-  document.getElementById('txtDate').value = d;
+  let targetDate = '';
+  try {
+    const r = await API.get('/api/accounts/latest-date');
+    const d = r?.dmy || r?.data || r?.date;
+    if (r?.success && d) targetDate = formatToDdMmYyyy(d);
+  } catch(e) {}
+  if (!targetDate) targetDate = fmtDate(new Date(Date.now() + 5.5 * 3600000));
+  const el = document.getElementById('txtDate');
+  if (el) {
+    el.value = targetDate;
+    if (el._flatpickr) el._flatpickr.setDate(parseDmy(targetDate), false, 'd/m/Y');
+  }
 }
 
 // ── CUSTOMERS ─────────────────────────────────────────

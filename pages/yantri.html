@@ -1388,29 +1388,32 @@
       try {
         const gid = document.getElementById('gamesDropdown').value;
         if (!gid) {
-          const now = new Date();
-          const istOffset = 5.5 * 60 * 60000;
-          const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
-          const ist = new Date(utcMs + istOffset);
-          setDate(fmtDate(ist));
+          const rAll = await API.get('/api/hisab/latest-date');
+          const d = rAll?.dmy || rAll?.data || rAll?.date;
+          if (rAll?.success && d) { setDate(d); return; }
+          const now = new Date(Date.now() + 5.5 * 3600000);
+          setDate(fmtDate(now));
           return;
         }
         const r = await API.get(`/api/yantri/latest-date?gid=${gid}`);
-        if (r?.success && r.date) {
-          setDate(r.date);
+        const d = r?.dmy || r?.data || r?.date;
+        if (r?.success && d) {
+          setDate(d);
         } else {
-          const now = new Date();
-          const istOffset = 5.5 * 60 * 60000;
-          const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
-          const ist = new Date(utcMs + istOffset);
-          setDate(fmtDate(ist));
+          const rAll = await API.get('/api/hisab/latest-date');
+          const dAll = rAll?.dmy || rAll?.data || rAll?.date;
+          if (rAll?.success && dAll) { setDate(dAll); return; }
+          const now = new Date(Date.now() + 5.5 * 3600000);
+          setDate(fmtDate(now));
         }
       } catch (e) {
-        const now = new Date();
-        const istOffset = 5.5 * 60 * 60000;
-        const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const ist = new Date(utcMs + istOffset);
-        setDate(fmtDate(ist));
+        try {
+          const rAll = await API.get('/api/hisab/latest-date');
+          const dAll = rAll?.dmy || rAll?.data || rAll?.date;
+          if (rAll?.success && dAll) { setDate(dAll); return; }
+        } catch(_) {}
+        const now = new Date(Date.now() + 5.5 * 3600000);
+        setDate(fmtDate(now));
       }
     }
 

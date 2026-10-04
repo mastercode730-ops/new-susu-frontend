@@ -215,10 +215,17 @@ async function init() {
 
   initDatePicker();
 
-  // Set dates: first of month → today (same as ASPX Page_Load)
-  const now = new Date(new Date().getTime() + 5.5 * 3600000);
-  const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  setDates(first, now);
+  // Set dates: first of month → latest work date
+  let workDate = new Date(Date.now() + 5.5 * 3600000);
+  try {
+    const dr = await API.get('/api/hisab/latest-date');
+    const dStr = dr?.dmy || dr?.data || dr?.date;
+    if (dr?.success && dStr) {
+      workDate = parseDmy(formatToDdMmYyyy(dStr));
+    }
+  } catch(e) {}
+  const first = new Date(workDate.getFullYear(), workDate.getMonth(), 1);
+  setDates(first, workDate);
 
   await loadAll();
   document.getElementById('txtsearch').focus();

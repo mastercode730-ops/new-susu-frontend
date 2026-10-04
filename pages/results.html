@@ -590,11 +590,14 @@ async function init() {
   bindAutoSlashDate('txtStartDate');
   bindAutoSlashDate('txtEndDate');
 
-  // ASPX Page_Load Step 1: Set IST date
-  const ist = getIST();
-  setDateVal('txtDate',      ist);
-  setDateVal('txtStartDate', ist);
-  setDateVal('txtEndDate',   ist);
+  // ASPX Page_Load Step 1: Set latest work date
+  await bindLastedDate();
+  if (!document.getElementById('txtDate').value) {
+    const ist = getIST();
+    setDateVal('txtDate',      ist);
+    setDateVal('txtStartDate', ist);
+    setDateVal('txtEndDate',   ist);
+  }
 
   // ASPX Step 2: BindDropDown → GetAllGames SP
   await bindDropDown();
@@ -661,10 +664,11 @@ async function bindDropDown() {
 async function bindLastedDate() {
   try {
     const r = await API.get('/api/hisab/latest-date');
-    if (r?.success && r.data) {
-      setDateVal('txtDate',      r.data);
-      setDateVal('txtStartDate', r.data);
-      setDateVal('txtEndDate',   r.data);
+    const d = r?.dmy || r?.data || r?.date;
+    if (r?.success && d) {
+      setDateVal('txtDate',      d);
+      setDateVal('txtStartDate', d);
+      setDateVal('txtEndDate',   d);
       await getResult(); // refresh result for new date
     }
   } catch(e) { console.error('bindLastedDate:', e); }

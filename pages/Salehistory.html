@@ -255,8 +255,9 @@ async function init() {
 async function setLatestDate() {
   try {
     const r = await API.get('/api/hisab/latest-date');
-    if (r?.success && r.data) {
-      document.getElementById('txtDate').value = r.data;
+    const d = r?.dmy || r?.data || r?.date;
+    if (r?.success && d) {
+      document.getElementById('txtDate').value = formatToDdMmYyyy(d);
     } else {
       document.getElementById('txtDate').value = fmtDate(new Date(Date.now() + 5.5*3600000));
     }

@@ -618,14 +618,24 @@ function bindCalButton(btnId, inputId) {
 async function init(){
   const u=await initPage('sale-history');if(!u)return;
   sh_uid=u.UID;
-  const ist = new Date(Date.now() + 5.5*3600000);
-  const dd = String(ist.getUTCDate()).padStart(2, '0');
-  const mm = String(ist.getUTCMonth() + 1).padStart(2, '0');
-  const yyyy = ist.getUTCFullYear();
-  let initialDate = `${dd}/${mm}/${yyyy}`;
-
+  let initialDate = '';
   const p=new URLSearchParams(location.search);
-  if(p.get('Date')) initialDate = formatToDdMmYyyy(p.get('Date'));
+  if(p.get('Date')) {
+    initialDate = formatToDdMmYyyy(p.get('Date'));
+  } else {
+    try {
+      const lr = await API.get('/api/hisab/latest-date');
+      const ld = lr?.dmy || lr?.data || lr?.date;
+      if (lr?.success && ld) initialDate = formatToDdMmYyyy(ld);
+    } catch(e) {}
+  }
+  if (!initialDate) {
+    const ist = new Date(Date.now() + 5.5*3600000);
+    const dd = String(ist.getUTCDate()).padStart(2, '0');
+    const mm = String(ist.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = ist.getUTCFullYear();
+    initialDate = `${dd}/${mm}/${yyyy}`;
+  }
 
   const fpCfg = {
     dateFormat: 'd/m/Y',

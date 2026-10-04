@@ -307,14 +307,14 @@ async function init() {
   _uid    = u.UID;
   _subUID = u.SubUID || null;
 
-  // ASPX: txtFromDate = "01/Jan/2022", txtToDate = indianTime
-  const ist = getIST();
-  document.getElementById('txtFromDate').value = '2022-01-01';
-  document.getElementById('txtToDate').value   = ist;
-
-  // ASPX: BindLastedDate() → overwrites txtStartDate
+  // ASPX: BindLastedDate() → overwrites txtStartDate and txtToDate
   const dr = await API.get('/api/balance/latest-date');
-  _currentDate = (dr?.success && dr.date) ? formatToDdMmYyyy(dr.date) : fmtDateToday();
+  const dVal = dr?.dmy || dr?.data || dr?.date;
+  _currentDate = (dr?.success && dVal) ? formatToDdMmYyyy(dVal) : fmtDateToday();
+
+  document.getElementById('txtFromDate').value = '2022-01-01';
+  document.getElementById('txtToDate').value   = _currentDate;
+
   const elDate = document.getElementById('txtStartDate');
   if (elDate) elDate.value = _currentDate;
 

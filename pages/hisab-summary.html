@@ -327,8 +327,7 @@ async function init() {
   myUID = u.UID;
 
   initDatePicker();
-  await Promise.all([loadGames(), loadCustomers()]);
-  setToday();
+  await Promise.all([loadGames(), loadCustomers(), setInitialDates()]);
 
   const p = new URLSearchParams(location.search);
   if (p.get('UID') && p.get('Date')) {
@@ -359,9 +358,19 @@ function setDates(d) {
   });
 }
 
+async function setInitialDates() {
+  let targetDate = '';
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    const d = r?.dmy || r?.data || r?.date;
+    if (r?.success && d) targetDate = formatToDdMmYyyy(d);
+  } catch(e) {}
+  if (!targetDate) targetDate = fmtDate(new Date(Date.now() + 5.5 * 3600000));
+  setDates(targetDate);
+}
+
 function setToday() {
-  const d = fmtDate(new Date());
-  setDates(d);
+  setInitialDates();
 }
 
 async function loadGames() {

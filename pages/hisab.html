@@ -641,15 +641,21 @@ function getPreviousDate() {
   return `${dd}/${mm}/${d.getUTCFullYear()}`;
 }
 
-// ── Bind Previous Day Date ──
+// ── Bind Latest Work Date ──
 async function setLatestDate() {
-  const prev = getPreviousDate();
+  let targetDate = '';
+  try {
+    const r = await API.get('/api/hisab/latest-date');
+    const d = r?.dmy || r?.data || r?.date;
+    if (r?.success && d) targetDate = formatToDdMmYyyy(d);
+  } catch(e) {}
+  if (!targetDate) targetDate = getPreviousDate();
   const el = document.getElementById('txtStartDate');
-  if (el) el.value = prev;
+  if (el) el.value = targetDate;
   if (window.fpStartDate) {
-    window.fpStartDate.setDate(parseDmy(prev), false, 'd/m/Y');
+    window.fpStartDate.setDate(parseDmy(targetDate), false, 'd/m/Y');
   }
-  _currentDate = prev;
+  _currentDate = targetDate;
 }
 
 // ── BindGrid() — calls both SPs ──

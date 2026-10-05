@@ -215,7 +215,7 @@ async function init() {
 
   initDatePicker();
 
-  // Set dates: first of month → latest work date
+  // Set dates: latest work date for both From Date and To Date
   let workDate = new Date(Date.now() + 5.5 * 3600000);
   try {
     const dr = await API.get('/api/hisab/latest-date');
@@ -224,8 +224,7 @@ async function init() {
       workDate = parseDmy(formatToDdMmYyyy(dStr));
     }
   } catch(e) {}
-  const first = new Date(workDate.getFullYear(), workDate.getMonth(), 1);
-  setDates(first, workDate);
+  setDates(workDate, workDate);
 
   await loadAll();
   document.getElementById('txtsearch').focus();

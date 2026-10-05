@@ -430,6 +430,7 @@
 const TX_TYPES = ['Paid', 'Received', 'Paid Adjustment', 'Receive Adjustment', 'Commission'];
 let allCustomers = [];
 let mySubUID = null; // set when the logged-in user IS a subuser — used to correctly attribute their own saves since the (inapplicable) picker stays hidden for them
+let myUID = null;
 
 function focusDateField() {
   const d = document.getElementById('txtDate');
@@ -566,6 +567,7 @@ async function init() {
   try {
     const u = await initPage('accounts');
     if (!u) return;
+    myUID = u.UID || null;
     mySubUID = u.SubUID || null;
     if (mySubUID) {
       updateTopSubUserBalance(mySubUID, u.subusername || u.SubUID);
@@ -665,24 +667,40 @@ async function init() {
     if (!u.SubUID) {
       await loadSubUsers();
       document.getElementById('staffRow').style.display = 'block';
+
+      // Restore previously chosen Sub User for this logged in user
+      const userStaffKey = 'accounts_last_staff_' + (u.UID || 'default');
+      const savedStaff = localStorage.getItem(userStaffKey) || localStorage.getItem('accounts_last_staff');
+      const ddlEl = document.getElementById('ddlStaff');
+      if (savedStaff !== null && savedStaff !== undefined && ddlEl) {
+        const hasOption = Array.from(ddlEl.options).some(o => String(o.value) === String(savedStaff));
+        if (hasOption) {
+          ddlEl.value = savedStaff;
+          $('#ddlStaff').val(savedStaff);
+        }
+      }
+
       $('#ddlStaff').select2({
         minimumResultsForSearch: 0
       });
       bindSelect2Open('#ddlStaff');
 
-      // Restore previously chosen Sub User if any
-      const savedStaff = localStorage.getItem('accounts_last_staff');
-      if (savedStaff !== null && $('#ddlStaff option[value="' + savedStaff + '"]').length) {
-        $('#ddlStaff').val(savedStaff);
-        $('#ddlStaff').select2('val', savedStaff);
-        fetchStaffNetBal(savedStaff);
-        const optText = $('#ddlStaff option[value="' + savedStaff + '"]').text();
-        updateTopSubUserBalance(savedStaff, optText);
+      // Sync Select2 display and balances with preselected value
+      if (ddlEl && ddlEl.value) {
+        const curVal = ddlEl.value;
+        $('#ddlStaff').select2('val', curVal);
+        if (curVal !== '0') {
+          fetchStaffNetBal(curVal);
+          const opt = Array.from(ddlEl.options).find(o => String(o.value) === String(curVal));
+          const optText = opt ? opt.textContent : '';
+          updateTopSubUserBalance(curVal, optText);
+        }
       }
 
       // DO NOT auto-save on Sub User selection! Only advance focus to Submit button
       $('#ddlStaff').on('change', function(){
         const val = $(this).val();
+        localStorage.setItem(userStaffKey, val || '0');
         localStorage.setItem('accounts_last_staff', val || '0');
         fetchStaffNetBal(val);
         const optText = $('#ddlStaff option:selected').text();
@@ -1178,6 +1196,8 @@ async function saveTransaction() {
   }
   localStorage.setItem('accounts_last_date', curDate);
   localStorage.setItem('accounts_last_type', type);
+  const userStaffKey = 'accounts_last_staff_' + (myUID || 'default');
+  localStorage.setItem(userStaffKey, rawStaffVal);
   localStorage.setItem('accounts_last_staff', rawStaffVal);
 
   try {
@@ -1224,6 +1244,8 @@ function resetForm() {
   if (rawStaffVal && rawStaffVal !== '0') {
     fetchStaffNetBal(rawStaffVal);
   }
+  const staffOptText = $('#ddlStaff option:selected').text();
+  updateTopSubUserBalance(rawStaffVal, staffOptText);
   // Date, Type, and Sub User remain preselected as chosen by user
   setTimeout(focusDateField, 60);
 }

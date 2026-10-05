@@ -1386,32 +1386,12 @@
 
     async function loadLatestDate() {
       try {
-        const gid = document.getElementById('gamesDropdown').value;
-        if (!gid) {
-          const rAll = await API.get('/api/hisab/latest-date');
-          const d = rAll?.dmy || rAll?.data || rAll?.date;
-          if (rAll?.success && d) { setDate(d); return; }
-          const now = new Date(Date.now() + 5.5 * 3600000);
-          setDate(fmtDate(now));
-          return;
-        }
-        const r = await API.get(`/api/yantri/latest-date?gid=${gid}`);
-        const d = r?.dmy || r?.data || r?.date;
-        if (r?.success && d) {
-          setDate(d);
-        } else {
-          const rAll = await API.get('/api/hisab/latest-date');
-          const dAll = rAll?.dmy || rAll?.data || rAll?.date;
-          if (rAll?.success && dAll) { setDate(dAll); return; }
-          const now = new Date(Date.now() + 5.5 * 3600000);
-          setDate(fmtDate(now));
-        }
+        const rAll = await API.get('/api/hisab/latest-date');
+        const d = rAll?.dmy || rAll?.data || rAll?.date;
+        if (rAll?.success && d) { setDate(d); return; }
+        const now = new Date(Date.now() + 5.5 * 3600000);
+        setDate(fmtDate(now));
       } catch (e) {
-        try {
-          const rAll = await API.get('/api/hisab/latest-date');
-          const dAll = rAll?.dmy || rAll?.data || rAll?.date;
-          if (rAll?.success && dAll) { setDate(dAll); return; }
-        } catch(_) {}
         const now = new Date(Date.now() + 5.5 * 3600000);
         setDate(fmtDate(now));
       }
@@ -1434,7 +1414,6 @@
 
     async function onGameChange() {
       if (currentMode === 'agent') await loadAgents();
-      await loadLatestDate();
       await loadData();
     }
 

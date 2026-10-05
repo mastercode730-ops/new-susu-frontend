@@ -651,16 +651,34 @@ async function init() {
       if (t) localStorage.setItem('accounts_last_type', t);
       setTimeout(advanceToAmount, 50);
     });
-    $(document).on('keydown', '#s2id_ddlType', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        if ($(this).hasClass('select2-dropdown-open')) {
-          // Select2 handles Enter
-        } else {
-          advanceToAmount();
+    // Enter key navigation: Type -> Amount; Sub User -> Submit.
+    // Dropdowns ONLY open when clicked by user, NOT when pressing Enter.
+    // Using capture phase (true) intercepts Enter BEFORE Select2's internal focusser opens the dropdown.
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        const typeContainer = document.getElementById('s2id_ddlType');
+        if (typeContainer && (typeContainer.contains(document.activeElement) || typeContainer.contains(e.target) || document.activeElement.id === 'ddlType')) {
+          if (!typeContainer.classList.contains('select2-dropdown-open')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            advanceToAmount();
+            return;
+          }
+        }
+
+        const staffContainer = document.getElementById('s2id_ddlStaff');
+        if (staffContainer && (staffContainer.contains(document.activeElement) || staffContainer.contains(e.target) || document.activeElement.id === 'ddlStaff')) {
+          if (!staffContainer.classList.contains('select2-dropdown-open')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            document.getElementById('btnSubmit').focus();
+            return;
+          }
         }
       }
-    });
+    }, true);
 
     // Sub User picker — only makes sense for the main admin (choosing which
     // staff member an entry belongs to).
@@ -710,14 +728,7 @@ async function init() {
       $('#ddlStaff').on('select2-close', function(){
         setTimeout(() => document.getElementById('btnSubmit').focus(), 50);
       });
-      $(document).on('keydown', '#s2id_ddlStaff', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (!$(this).hasClass('select2-dropdown-open')) {
-            document.getElementById('btnSubmit').focus();
-          }
-        }
-      });
+
     }
   } catch(e) { window.location.href = '/login.html'; }
 }

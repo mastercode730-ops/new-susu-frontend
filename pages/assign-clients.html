@@ -7,8 +7,17 @@
 <script src="/js/theme-preload.js"></script>
 <link rel="stylesheet" href="/css/main.css">
 <style>
-.hideGridColumn { display:none; }
-thead th.assign-hd { background-color:#1572e8; color:White; }
+thead th.assign-hd {
+  background-color: #1572e8 !important;
+  color: White !important;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  vertical-align: middle;
+}
+#clientTable td {
+  vertical-align: middle;
+}
 .select2-container{width:100%!important;}
 .select2-container, .select2-container.form-control{border:none!important;padding:0!important;height:auto!important;background:transparent!important;box-shadow:none!important;display:block!important;}
 .select2-container .select2-choice{
@@ -45,14 +54,23 @@ thead th.assign-hd { background-color:#1572e8; color:White; }
           <div class="card-title">Assign Customers</div>
         </div>
         <div class="card-body">
-          <div class="row">
-            <div class="col-md-5">
-              <div class="form-group">
-                <label for="ddlSrchCustomers">Select Sub user</label>
+          <div class="row align-items-end">
+            <div class="col-md-5 col-sm-6">
+              <div class="form-group" style="margin-bottom:15px;">
+                <label for="ddlSrchCustomers" style="font-weight:600;">Select Sub user</label>
                 <!-- Combined searchable dropdown with typing search -->
                 <select class="form-control" id="ddlSrchCustomers" style="text-transform:capitalize;">
                   <option value="">Select Sub user</option>
                 </select>
+              </div>
+            </div>
+            <div class="col-md-5 col-sm-6">
+              <div class="form-group" style="margin-bottom:15px;">
+                <label for="txtSearchCust" style="font-weight:600;">Search Customer</label>
+                <div style="position:relative;">
+                  <input type="text" class="form-control" id="txtSearchCust" placeholder="Search customer by name..." oninput="filterClients()" autocomplete="off" style="height:40px; font-size:.95rem; padding-right:32px;">
+                  <span id="btnClearSearch" onclick="clearSearch()" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color:#888; display:none; font-size:18px; line-height:1; font-weight:bold;" title="Clear search">&times;</span>
+                </div>
               </div>
             </div>
           </div>
@@ -63,16 +81,18 @@ thead th.assign-hd { background-color:#1572e8; color:White; }
                   style="text-align:center;font-weight:normal;text-transform:capitalize;width:100%;">
                   <thead>
                     <tr>
-                      <th class="assign-hd" style="width:100px;">SR</th>
-                      <th class="assign-hd" style="width:100px;">
-                        <input type="checkbox" id="chkAll" onclick="checkAll(this)">
+                      <th class="assign-hd" style="width:70px;text-align:center;">S.No</th>
+                      <th class="assign-hd" style="width:130px;text-align:center;">
+                        <div style="display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+                          <input type="checkbox" id="chkAll" onchange="checkAll(this)" style="cursor:pointer;width:16px;height:16px;margin:0;vertical-align:middle;">
+                          <label for="chkAll" style="cursor:pointer;margin:0;color:White;font-weight:bold;vertical-align:middle;user-select:none;">Select All</label>
+                        </div>
                       </th>
-                      <th class="assign-hd hideGridColumn">ID</th>
-                      <th class="assign-hd" style="width:500px;">Name</th>
+                      <th class="assign-hd" style="text-align:left;padding-left:16px;">Name</th>
                     </tr>
                   </thead>
                   <tbody id="clientBody">
-                    <tr><td colspan="4">Select a user to load clients</td></tr>
+                    <tr><td colspan="3" style="text-align:center;padding:16px;color:#888;">Select a user to load clients</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -164,84 +184,143 @@ async function loadSubUsers() {
 async function loadClients() {
   const staffID = document.getElementById('ddlSrchCustomers').value;
   const tbody = document.getElementById('clientBody');
-  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:16px;color:#888;">Loading...</td></tr>';
   _allClients = [];
 
   if (!staffID) {
-    tbody.innerHTML = '<tr><td colspan="4">Select a sub user to load clients</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:16px;color:#888;">Select a sub user to load clients</td></tr>';
+    updateHeaderCheckbox();
     return;
   }
 
   const r = await API.get(`/api/admin/assigned-clients?staffID=${staffID}`);
   if (!r?.success || !r.data?.length) {
-    tbody.innerHTML = '<tr><td colspan="4">No clients found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:16px;color:#888;">No clients found</td></tr>';
+    updateHeaderCheckbox();
     return;
   }
 
   _allClients = r.data;
   renderClients(_allClients);
 
-  // Uncheck "Select All" header
-  document.getElementById('chkAll').checked = false;
+  const searchVal = document.getElementById('txtSearchCust')?.value || '';
+  if (searchVal.trim()) {
+    filterClients();
+  } else {
+    updateHeaderCheckbox();
+  }
 }
 
 function renderClients(data) {
   const tbody = document.getElementById('clientBody');
   tbody.innerHTML = data.map((c, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td>
-        <!-- ASPX: ShiftCheck Checked=IsAssigned -->
-        <input type="checkbox" ${c.IsAssigned ? 'checked' : ''}>
+    <tr data-cid="${c.CID}" data-name="${String(c.CustomerName || c.CID || '').toLowerCase()}">
+      <td style="text-align:center;width:70px;">${i + 1}</td>
+      <td style="text-align:center;width:130px;">
+        <input type="checkbox" class="client-chk" value="${c.CID}" ${c.IsAssigned ? 'checked' : ''} onchange="onClientCheckChange()" style="cursor:pointer;width:16px;height:16px;margin:0;vertical-align:middle;">
       </td>
-      <td class="hideGridColumn">${c.CID}</td>
-      <td>${c.CustomerName || c.CID}</td>
+      <td style="text-align:left;padding-left:16px;">${c.CustomerName || c.CID}</td>
     </tr>`).join('');
 }
 
-// ── filterGrid() — ASPX: filter by CustomerName column (index 3) ──
-function filterGrid() {
-  const filterInput = document.getElementById('txtFilter');
-  if (!filterInput) return;
-  const filter = filterInput.value.toUpperCase();
-  const rows = document.querySelectorAll('#clientBody tr');
+// ── filterClients() — Live search by CustomerName ──
+function filterClients() {
+  const inp = document.getElementById('txtSearchCust');
+  const clearBtn = document.getElementById('btnClearSearch');
+  const query = (inp?.value || '').trim().toLowerCase();
+
+  if (clearBtn) {
+    clearBtn.style.display = query ? 'block' : 'none';
+  }
+
+  const rows = document.querySelectorAll('#clientBody tr[data-cid]');
+  let visibleIndex = 0;
   rows.forEach(tr => {
-    const td = tr.cells[3]; // CustomerName col index 3
-    if (td) {
-      const val = td.textContent || td.innerText;
-      tr.style.display = val.toUpperCase().indexOf(filter) > -1 ? '' : 'none';
+    const name = tr.getAttribute('data-name') || '';
+    if (!query || name.includes(query)) {
+      tr.style.display = '';
+      visibleIndex++;
+      const snoCell = tr.cells[0];
+      if (snoCell) snoCell.textContent = visibleIndex;
+    } else {
+      tr.style.display = 'none';
     }
   });
+
+  let noMatchRow = document.getElementById('noMatchRow');
+  if (visibleIndex === 0 && rows.length > 0) {
+    if (!noMatchRow) {
+      noMatchRow = document.createElement('tr');
+      noMatchRow.id = 'noMatchRow';
+      noMatchRow.innerHTML = '<td colspan="3" style="text-align:center;padding:16px;color:#888;">No matching customer found</td>';
+      document.getElementById('clientBody').appendChild(noMatchRow);
+    }
+    noMatchRow.style.display = '';
+  } else if (noMatchRow) {
+    noMatchRow.style.display = 'none';
+  }
+
+  updateHeaderCheckbox();
 }
 
-// ── checkAll() — ASPX: header checkbox → check/uncheck all ──
+function clearSearch() {
+  const inp = document.getElementById('txtSearchCust');
+  if (inp) {
+    inp.value = '';
+    filterClients();
+    inp.focus();
+  }
+}
+
+// ── checkAll() — header checkbox → check/uncheck visible rows ──
 function checkAll(headerChk) {
-  const inputs = document.querySelectorAll('#clientBody input[type=checkbox]');
-  inputs.forEach(chk => { chk.checked = headerChk.checked; });
+  const isChecked = headerChk.checked;
+  const rows = document.querySelectorAll('#clientBody tr[data-cid]');
+  rows.forEach(tr => {
+    if (tr.style.display !== 'none') {
+      const chk = tr.querySelector('.client-chk');
+      if (chk) chk.checked = isChecked;
+    }
+  });
+  updateHeaderCheckbox();
+}
+
+function onClientCheckChange() {
+  updateHeaderCheckbox();
+}
+
+function updateHeaderCheckbox() {
+  const headerChk = document.getElementById('chkAll');
+  if (!headerChk) return;
+  const visibleCheckboxes = Array.from(document.querySelectorAll('#clientBody tr[data-cid]'))
+    .filter(tr => tr.style.display !== 'none')
+    .map(tr => tr.querySelector('.client-chk'))
+    .filter(Boolean);
+
+  if (visibleCheckboxes.length === 0) {
+    headerChk.checked = false;
+  } else {
+    headerChk.checked = visibleCheckboxes.every(chk => chk.checked);
+  }
 }
 
 // ── GetSelectedRowValue → SaveCopyMessage → POST /api/admin/assign-clients ──
-// ASPX: reads checked rows → AllID = comma separated CIDs → AJAX call
 async function saveAssignments() {
   const staffID = document.getElementById('ddlSrchCustomers').value;
   if (!staffID) { showToast('Select Sub user first!', true); return; }
 
-  // ASPX: collect checked CIDs from hidden column (index 2)
-  const checkedRows = document.querySelectorAll('#clientBody tr');
+  // Collect all checked CIDs (including rows currently hidden by search filter)
+  const checkedBoxes = document.querySelectorAll('#clientBody .client-chk:checked');
   const customerIDs = [];
-  checkedRows.forEach(tr => {
-    const chk = tr.querySelector('input[type=checkbox]');
-    if (chk?.checked && tr.cells[2]) {
-      const cid = tr.cells[2].textContent.trim();
-      if (cid) customerIDs.push(cid);
-    }
+  checkedBoxes.forEach(chk => {
+    const cid = (chk.value || '').trim();
+    if (cid) customerIDs.push(cid);
   });
 
   try {
     const r = await API.post('/api/admin/assign-clients', { staffID, customerIDs });
     if (r?.success) {
       showToast('Data Update Successfully!');
-      // Reload to show updated IsAssigned
       await loadClients();
     } else {
       showToast('Something Wrong', true);

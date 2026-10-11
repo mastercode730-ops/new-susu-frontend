@@ -155,6 +155,12 @@ tbody tr{cursor:pointer;}
     padding: 6px 8px !important;
     display: flex !important;
     gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  #highlightBalanceWrap {
+    width: 100% !important;
+    justify-content: flex-end !important;
+    margin-top: 2px !important;
   }
   .content .card-action .btn {
     flex: 1 !important;
@@ -281,9 +287,17 @@ tbody tr{cursor:pointer;}
             </div>
           </div>
         </div>
-        <div class="card-action">
-          <button class="btn btn-success" id="btnSearch" onclick="bindGrid()">Search</button>
-          <button class="btn btn-success" onclick="exportExcel()">Export To Excel</button>
+        <div class="card-action" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div style="display:inline-flex;gap:8px;align-items:center;">
+            <button class="btn btn-success" id="btnSearch" onclick="bindGrid()">Search</button>
+            <button class="btn btn-success" onclick="exportExcel()">Export To Excel</button>
+          </div>
+          <div id="highlightBalanceWrap" style="display:none;align-items:center;margin-left:auto;">
+            <div style="background:#fff9c4;border:2px solid #fbc02d;border-radius:6px;padding:5px 16px;box-shadow:0 2px 6px rgba(0,0,0,0.08);display:inline-flex;align-items:center;gap:8px;">
+              <span style="font-weight:800;font-size:0.85rem;color:#000;text-transform:uppercase;letter-spacing:0.5px;">Balance:</span>
+              <span id="highlightBalanceVal" style="font-weight:900;font-size:1.18rem;color:#000;">0</span>
+            </div>
+          </div>
         </div>
         <div class="card-header">
           <div class="card-title">Summary</div>
@@ -472,6 +486,8 @@ async function bindGrid() {
   const tbody = document.getElementById('summaryBody');
   tbody.innerHTML = `<tr><td colspan="13" class="emsg"><span class="spin"></span> Loading...</td></tr>`;
   document.getElementById('summaryFoot').style.display = 'none';
+  const hlWrap = document.getElementById('highlightBalanceWrap');
+  if (hlWrap) hlWrap.style.display = 'none';
 
   const startDate = document.getElementById('txtStartDate').value;
   const endDate   = document.getElementById('txtEndDate').value;
@@ -486,6 +502,7 @@ async function bindGrid() {
     if (!r?.success || !r.data?.length) {
       tbody.innerHTML = '<tr><td colspan="13" class="emsg">No Data Found!</td></tr>';
       tableData = [];
+      if (hlWrap) hlWrap.style.display = 'none';
     } else {
       tableData = r.data;
       renderTable(tableData);
@@ -493,6 +510,7 @@ async function bindGrid() {
     resetCustSearchReady();
   } catch(e) {
     tbody.innerHTML = '<tr><td colspan="13" class="emsg">Error loading</td></tr>';
+    if (hlWrap) hlWrap.style.display = 'none';
   }
 }
 
@@ -523,8 +541,23 @@ function renderTable(data) {
   document.getElementById('ftOAkhar').textContent  = s('O_Akhar');
   document.getElementById('ftWin').textContent     = s('WinAmount');
   document.getElementById('ftPati').textContent    = s('Pati');
-  document.getElementById('ftBalance').textContent = s('Balance');
+  const totalBal = s('Balance');
+  document.getElementById('ftBalance').textContent = totalBal;
   document.getElementById('summaryFoot').style.display = '';
+
+  const hlWrap = document.getElementById('highlightBalanceWrap');
+  const hlVal = document.getElementById('highlightBalanceVal');
+  if (hlWrap && hlVal) {
+    hlVal.textContent = totalBal;
+    if (totalBal < 0) {
+      hlVal.style.color = '#dc2626';
+    } else if (totalBal > 0) {
+      hlVal.style.color = '#15803d';
+    } else {
+      hlVal.style.color = '#000';
+    }
+    hlWrap.style.display = 'inline-flex';
+  }
 }
 
 function selectRow(row) {

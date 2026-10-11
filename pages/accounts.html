@@ -1158,6 +1158,8 @@ async function loadSubUsers() {
   const sel = document.getElementById('ddlStaff');
   if (r?.success && r.data?.length) {
     r.data.forEach(s => {
+      const isActive = s.IsActive === undefined || s.IsActive === true || s.IsActive === 1 || String(s.IsActive).toLowerCase() === 'true' || String(s.IsActive) === '1';
+      if (!isActive) return;
       const o = document.createElement('option');
       o.value = s.SubUserID; o.textContent = s.subusername;
       sel.appendChild(o);

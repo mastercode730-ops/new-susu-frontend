@@ -1183,12 +1183,13 @@
       await loadForwardClients();
       await loadNegClients();
 
-      if (GAME_ID_PARAM && SEL_UID_PARAM && DATE_PARAM && RATES_PARAM) {
+      if (GAME_ID_PARAM && SEL_UID_PARAM) {
         document.querySelector('input[name=yMode][value=agent]').checked = true;
         currentMode = 'agent';
         setModeUI('agent');
-        document.getElementById('lblRates').textContent = RATES_PARAM;
-        setDate(DATE_PARAM);
+        if (RATES_PARAM) document.getElementById('lblRates').textContent = RATES_PARAM;
+        if (DATE_PARAM) setDate(DATE_PARAM);
+        else await loadLatestDate();
         await loadAgents();
         setAgentValue(SEL_UID_PARAM);
         await loadData();
@@ -1572,26 +1573,35 @@
       const input = document.getElementById('txtAgentSearch');
       const btnClear = document.getElementById('btnClearAgent');
 
-      if (sel) sel.value = val || '';
-      if (!val) {
+      let matchedVal = val || '';
+      let name = fallbackName || '';
+      if (val && agentsList && agentsList.length) {
+        const match = agentsList.find(a => 
+          String(a.fSenderID || '') === String(val) || 
+          String(a.UID || '') === String(val) || 
+          String(a.CID || '') === String(val)
+        );
+        if (match) {
+          matchedVal = String(match.fSenderID || match.UID || match.CID || val);
+          name = match.CustomerName || match.Name || '';
+        }
+      }
+
+      if (sel) sel.value = matchedVal || '';
+      if (!matchedVal) {
         if (input) input.value = '';
         if (btnClear) btnClear.style.display = 'none';
       } else {
-        let name = fallbackName || '';
-        if (!name && agentsList && agentsList.length) {
-          const match = agentsList.find(a => String(a.fSenderID || a.UID || '') === String(val));
-          if (match) name = match.CustomerName || match.Name || '';
-        }
         if (!name && sel && sel.options) {
           for (let i = 0; i < sel.options.length; i++) {
-            if (sel.options[i].value === String(val)) {
+            if (sel.options[i].value === String(matchedVal)) {
               name = sel.options[i].textContent;
               break;
             }
           }
         }
         if (input) input.value = name || '';
-        if (btnClear) btnClear.style.display = 'inline-flex';
+        if (btnClear) btnClear.style.display = name ? 'inline-flex' : 'none';
       }
       renderAgentDropdown();
     }

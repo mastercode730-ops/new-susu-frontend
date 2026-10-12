@@ -1418,10 +1418,16 @@
       await loadData();
     }
 
+    let currentLoadDataReqId = 0;
+    let dateChangeDebounceTimer = null;
+
     // ─── DATE CHANGE ────────────────────────────────
-    async function onDateChange() {
-      if (currentMode === 'agent') await loadAgents();
-      await loadData();
+    function onDateChange() {
+      clearTimeout(dateChangeDebounceTimer);
+      dateChangeDebounceTimer = setTimeout(async () => {
+        if (currentMode === 'agent') await loadAgents();
+        await loadData();
+      }, 50);
     }
 
     // ─── AGENTS ─────────────────────────────────────
@@ -1757,11 +1763,8 @@
 
     // ─── LOAD DATA ────────────────────────────────────
     async function loadData() {
+      const myReqId = ++currentLoadDataReqId;
       showLoading(true);
-
-      // ✅ FIX: Float 0 se reset karo
-      ALL_NUMS.forEach(n => numData[n] = 0);
-      renderData();
 
       try {
         const gid = document.getElementById('gamesDropdown').value;
@@ -1777,10 +1780,20 @@
           `&negSale=${negSale}&agentUID=${agentUID}&rates=${encodeURIComponent(rates)}`
         );
 
-        if (!r?.success || !r.data?.length) { showLoading(false); renderData(); return; }
+        // Ignore stale response if a newer request was dispatched
+        if (myReqId !== currentLoadDataReqId) return;
 
-        // ✅ FIX: Float mein accumulate karo - bilkul ASPX ki tarah
-        // ASPX: pehle sab float mein sum karta hai, phir GroupBy ke baad ek baar Truncate
+        // Fresh in-memory map so numbers never accumulate across calls
+        const freshNumData = {};
+        ALL_NUMS.forEach(n => freshNumData[n] = 0);
+
+        if (!r?.success || !r.data?.length) {
+          numData = freshNumData;
+          showLoading(false);
+          renderData();
+          return;
+        }
+
         r.data.forEach(row => {
           const entries = (row.Message || '').split(',');
           entries.forEach(entry => {
@@ -1795,45 +1808,29 @@
             if (!num || isNaN(num)) return;
 
             if (currentMode === 'actual') {
-              // ✅ ASPX formula exactly:
-              // DComm = 100 - D_Amt
-              // AComm = 100 - (A_Amt * 10)
               const dAmt = parseFloat(row.D_Amt) || 100;
               const aAmt = parseFloat(row.A_Amt) || 10;
-              const dComm = 100 - dAmt;         // = D_PComm
-              const aComm = 100 - (aAmt * 10);  // = A_PComm
+              const dComm = 100 - dAmt;
+              const aComm = 100 - (aAmt * 10);
               const pati = parseFloat(row.Pati_PComm) || 0;
               const hissa = parseFloat(row.HissaPerc) || 0;
 
-              // ✅ ASPX condition: length <= 2 OR == "100" → Dara
               const numStrPadded = String(num);
               if (numStrPadded.length <= 2 || num === 100) {
-                // Dara numbers (1-100)
                 val = val * ((100 - dComm) / 100);
               } else {
-                // Akhar numbers (111-10000)
                 val = val * ((100 - aComm) / 100);
               }
-              // Pati commission
               val = val * ((100 - pati) / 100);
-              // Hissa commission
               val = val * ((100 - hissa) / 100);
             }
-            // ✅ FIX: Float mein add karo - TRUNC MAT KARO YAHAN
-            // ASPX: Table1 mein float add karta hai, GroupBy ke baad SUM, phir ek baar Truncate
-            numData[num] = (numData[num] || 0) + val;
+            freshNumData[num] = (freshNumData[num] || 0) + val;
           });
         });
 
-        // ✅ FIX: YE BLOCK HATA DIYA - pehle truncate nahi karna
-        // Pehle:
-        // ALL_NUMS.forEach(n => {
-        //   numData[n] = numData[n] ? Math.trunc(numData[n]) : 0;
-        // });
-        // Truncate sirf renderData() aur calcSubtotals() mein hoga
+        if (document.getElementById('cbShiftAtoD').checked) applyShiftAtoD(freshNumData);
 
-        if (document.getElementById('cbShiftAtoD').checked) applyShiftAtoD();
-
+        numData = freshNumData;
         renderData();
       } catch (e) {
         console.error('loadData error:', e);
@@ -1842,8 +1839,7 @@
     }
 
     // ─── SHIFT A TO D ────────────────────────────────
-    // ✅ FIX: ShiftAtoD mein bhi float values use karo
-    function applyShiftAtoD() {
+    function applyShiftAtoD(targetData = numData) {
       const ANDER_MAP = {
         1111: ['11', '12', '13', '14', '15', '16', '17', '18', '19', '10'],
         2222: ['21', '22', '23', '24', '25', '26', '27', '28', '29', '20'],
@@ -1869,28 +1865,26 @@
         1000: ['10', '20', '30', '40', '50', '60', '70', '80', '90', '100']
       };
 
-      // ✅ ASPX mein Math.Round use hota hai - isliye yahan bhi Math.round
       AKHAR_ANDER.forEach(n => {
-        if (!numData[n]) return;
-        // ✅ ASPX: Decimal.Truncate se integer nikalta hai phir /10 karta hai, Math.Round karta hai
-        const adj = bankersRound(Math.trunc(numData[n]) / 10);
+        if (!targetData[n]) return;
+        const adj = bankersRound(Math.trunc(targetData[n]) / 10);
         (ANDER_MAP[n] || []).forEach(dn => {
           const d = parseInt(dn);
-          if (!numData[d]) numData[d] = 0;
-          numData[d] += adj;
+          if (!targetData[d]) targetData[d] = 0;
+          targetData[d] += adj;
         });
-        numData[n] = 0;
+        targetData[n] = 0;
       });
 
       AKHAR_AADAR.forEach(n => {
-        if (!numData[n]) return;
-        const adj = bankersRound(Math.trunc(numData[n]) / 10);
+        if (!targetData[n]) return;
+        const adj = bankersRound(Math.trunc(targetData[n]) / 10);
         (AADAR_MAP[n] || []).forEach(dn => {
           const d = parseInt(dn);
-          if (!numData[d]) numData[d] = 0;
-          numData[d] += adj;
+          if (!targetData[d]) targetData[d] = 0;
+          targetData[d] += adj;
         });
-        numData[n] = 0;
+        targetData[n] = 0;
       });
     }
 

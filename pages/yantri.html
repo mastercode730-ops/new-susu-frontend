@@ -1353,10 +1353,8 @@
           return `${d}/${m}/${y}`;
         },
         onClose: function(selectedDates, dateStr, instance) {
-          if (instance && instance.element) instance.element.blur();
         },
         onChange: function(sel, dateStr, instance) {
-          if (instance && instance.element) instance.element.blur();
           el.value = dateStr;
           onDateChange();
         }
@@ -1427,7 +1425,7 @@
       dateChangeDebounceTimer = setTimeout(async () => {
         if (currentMode === 'agent') await loadAgents();
         await loadData();
-      }, 50);
+      }, 120);
     }
 
     // ─── AGENTS ─────────────────────────────────────

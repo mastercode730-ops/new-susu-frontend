@@ -1375,6 +1375,7 @@
       const el = document.getElementById('datePicker');
       if (el) {
         el.value = val;
+        lastHandledDate = val;
         if (el._flatpickr) {
           el._flatpickr.setDate(parseDmy(val), false, 'd/m/Y');
         }
@@ -1412,20 +1413,25 @@
     }
 
     async function onGameChange() {
+      lastHandledDate = null;
       if (currentMode === 'agent') await loadAgents();
       await loadData();
     }
 
     let currentLoadDataReqId = 0;
     let dateChangeDebounceTimer = null;
+    let lastHandledDate = null;
 
     // ─── DATE CHANGE ────────────────────────────────
     function onDateChange() {
       clearTimeout(dateChangeDebounceTimer);
       dateChangeDebounceTimer = setTimeout(async () => {
+        const d = getDate();
+        if (d && d === lastHandledDate) return;
+        lastHandledDate = d;
         if (currentMode === 'agent') await loadAgents();
         await loadData();
-      }, 120);
+      }, 100);
     }
 
     // ─── AGENTS ─────────────────────────────────────
@@ -1641,6 +1647,7 @@
     // ─── MODE ────────────────────────────────────────
     async function onModeChange(el) {
       currentMode = el.value;
+      lastHandledDate = null;
       setModeUI(currentMode);
       if (currentMode === 'agent') {
         await loadAgents();

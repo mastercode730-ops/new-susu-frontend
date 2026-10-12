@@ -65,6 +65,53 @@ tbody tr{cursor:pointer;}
 .content table tbody tr:hover:not(.selected-row) td{background:#bbf7d0!important;}
 .table-responsive{overflow-x:auto;}
 .content table{width:100%!important;min-width:1150px;}
+/* Short View (6 columns) */
+.table-short-view .col-full-only { display: none !important; }
+.content table.table-short-view { min-width: 650px !important; }
+
+/* Sortable Table Headers */
+.sortable-th {
+  cursor: pointer !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+  position: relative !important;
+  transition: background 0.15s ease !important;
+}
+.sortable-th:hover { background: #c8c8c8 !important; }
+.sortable-th.active-sort { background: #bfdbfe !important; color: #1e3a8a !important; }
+.sort-icon {
+  display: inline-block !important;
+  margin-left: 4px !important;
+  font-size: 0.74rem !important;
+  color: #444 !important;
+  vertical-align: middle !important;
+  opacity: 0.45;
+}
+.sortable-th.active-sort .sort-icon {
+  color: #1d4ed8 !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+}
+
+/* Toggle Short View Button */
+.btn-short-toggle {
+  background: #e8f0fe !important;
+  color: #1572e8 !important;
+  border: 1.5px solid #1572e8 !important;
+  padding: 3px 12px !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+  transition: all 0.15s ease !important;
+}
+.btn-short-toggle:hover { background: #1572e8 !important; color: #fff !important; }
+.btn-short-toggle.active { background: #1572e8 !important; color: #fff !important; border-color: #0d47a1 !important; }
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
@@ -299,28 +346,42 @@ tbody tr{cursor:pointer;}
             </div>
           </div>
         </div>
-        <div class="card-header">
-          <div class="card-title">Summary</div>
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="display:inline-flex;align-items:center;gap:12px;">
+            <div class="card-title" style="margin:0;">Summary</div>
+            <button type="button" class="btn-short-toggle" id="btnToggleShortView" onclick="toggleShortView()" title="Switch to 6-column short view">
+              <span>⚡ Short View</span>
+            </button>
+          </div>
         </div>
         <div class="table-responsive">
-          <table cellpadding="4" style="text-transform:capitalize;text-align:center;">
+          <table id="summaryTable" cellpadding="4" style="text-transform:capitalize;text-align:center;">
             <thead>
               <tr>
-                <th>Customer</th><th>Game</th><th>Rates</th>
-                <th>T_Sale</th><th>D_Sale</th><th>A_Sale</th><th>Comm</th>
-                <th>O_Dara</th><th>O_Akhar</th><th>Win_Amt</th>
-                <th>Hissa</th><th>Balance</th><th>Result</th>
+                <th class="sortable-th" onclick="sortTable('CustomerName')" title="Sort by Customer">Customer <span class="sort-icon" id="sortIcon_CustomerName">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('GameName')" title="Sort by Game">Game <span class="sort-icon" id="sortIcon_GameName">⇅</span></th>
+                <th class="sortable-th" onclick="sortTable('Rates')" title="Sort by Rates">Rates <span class="sort-icon" id="sortIcon_Rates">⇅</span></th>
+                <th class="sortable-th" onclick="sortTable('Total_Amount')" title="Sort by T_Sale">T_Sale <span class="sort-icon" id="sortIcon_Total_Amount">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('D_Sale')" title="Sort by D_Sale">D_Sale <span class="sort-icon" id="sortIcon_D_Sale">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('A_Sale')" title="Sort by A_Sale">A_Sale <span class="sort-icon" id="sortIcon_A_Sale">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('Commision')" title="Sort by Comm">Comm <span class="sort-icon" id="sortIcon_Commision">⇅</span></th>
+                <th class="sortable-th" onclick="sortTable('O_Dara')" title="Sort by O_Dara">O_Dara <span class="sort-icon" id="sortIcon_O_Dara">⇅</span></th>
+                <th class="sortable-th" onclick="sortTable('O_Akhar')" title="Sort by O_Akhar">O_Akhar <span class="sort-icon" id="sortIcon_O_Akhar">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('WinAmount')" title="Sort by Win_Amt">Win_Amt <span class="sort-icon" id="sortIcon_WinAmount">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('Pati')" title="Sort by Hissa">Hissa <span class="sort-icon" id="sortIcon_Pati">⇅</span></th>
+                <th class="sortable-th col-full-only" onclick="sortTable('Balance')" title="Sort by Balance">Balance <span class="sort-icon" id="sortIcon_Balance">⇅</span></th>
+                <th class="sortable-th" onclick="sortTable('Result')" title="Sort by Result">Result <span class="sort-icon" id="sortIcon_Result">⇅</span></th>
               </tr>
             </thead>
             <tbody id="summaryBody">
-              <tr><td colspan="13" class="emsg">Search karo data dekhne ke liye</td></tr>
+              <tr><td colspan="13" class="emsg" id="emptyMsgTd">Search karo data dekhne ke liye</td></tr>
             </tbody>
             <tfoot id="summaryFoot" style="display:none;">
               <tr>
-                <td></td><td></td><td>Total</td>
-                <td id="ftTotal"></td><td id="ftDSale"></td><td id="ftASale"></td><td id="ftComm"></td>
-                <td id="ftODara"></td><td id="ftOAkhar"></td><td id="ftWin"></td>
-                <td id="ftPati"></td><td id="ftBalance"></td><td>Result</td>
+                <td></td><td class="col-full-only"></td><td>Total</td>
+                <td id="ftTotal"></td><td id="ftDSale" class="col-full-only"></td><td id="ftASale" class="col-full-only"></td><td id="ftComm" class="col-full-only"></td>
+                <td id="ftODara"></td><td id="ftOAkhar"></td><td id="ftWin" class="col-full-only"></td>
+                <td id="ftPati" class="col-full-only"></td><td id="ftBalance" class="col-full-only"></td><td>Result</td>
               </tr>
             </tfoot>
           </table>
@@ -482,9 +543,105 @@ document.addEventListener('click', e => {
     document.getElementById('custDrop')?.classList.remove('open');
 });
 
+let currentSortCol = null;
+let currentSortDir = 'asc';
+let isShortView = false;
+
+function toggleShortView() {
+  isShortView = !isShortView;
+  const tableEl = document.getElementById('summaryTable');
+  const btnEl = document.getElementById('btnToggleShortView');
+  const emptyTd = document.getElementById('emptyMsgTd');
+
+  if (tableEl) {
+    tableEl.classList.toggle('table-short-view', isShortView);
+  }
+  if (emptyTd) {
+    emptyTd.colSpan = isShortView ? 6 : 13;
+  }
+  if (btnEl) {
+    btnEl.classList.toggle('active', isShortView);
+    if (isShortView) {
+      btnEl.innerHTML = '<span>📋 Full View</span>';
+      btnEl.title = 'Switch to full 13-column view';
+    } else {
+      btnEl.innerHTML = '<span>⚡ Short View</span>';
+      btnEl.title = 'Switch to compact 6-column view';
+    }
+  }
+}
+
+function sortTable(colKey) {
+  if (!tableData || !tableData.length) return;
+
+  if (currentSortCol === colKey) {
+    currentSortDir = (currentSortDir === 'asc') ? 'desc' : 'asc';
+  } else {
+    currentSortCol = colKey;
+    currentSortDir = 'asc';
+  }
+
+  const numFields = ['Total_Amount', 'D_Sale', 'A_Sale', 'Commision', 'O_Dara', 'O_Akhar', 'WinAmount', 'Pati', 'Balance'];
+
+  tableData.sort((a, b) => {
+    let va = a[colKey];
+    let vb = b[colKey];
+
+    if (colKey === 'CustomerName') {
+      va = (a.CustomerName || a.Mobile || '').replace(/\s+\d{4,5}$/, '');
+      vb = (b.CustomerName || b.Mobile || '').replace(/\s+\d{4,5}$/, '');
+    }
+
+    if (numFields.includes(colKey)) {
+      const na = parseFloat(va) || 0;
+      const nb = parseFloat(vb) || 0;
+      return currentSortDir === 'asc' ? na - nb : nb - na;
+    }
+
+    if (colKey === 'Result') {
+      const na = parseFloat(va);
+      const nb = parseFloat(vb);
+      const isNumA = !isNaN(na) && String(va || '').trim() !== '';
+      const isNumB = !isNaN(nb) && String(vb || '').trim() !== '';
+      if (isNumA && isNumB) return currentSortDir === 'asc' ? na - nb : nb - na;
+      if (isNumA && !isNumB) return currentSortDir === 'asc' ? -1 : 1;
+      if (!isNumA && isNumB) return currentSortDir === 'asc' ? 1 : -1;
+      const sa = String(va || '').trim();
+      const sb = String(vb || '').trim();
+      return currentSortDir === 'asc' ? sa.localeCompare(sb) : sb.localeCompare(sa);
+    }
+
+    const sa = String(va || '').trim();
+    const sb = String(vb || '').trim();
+    const cmp = sa.localeCompare(sb, undefined, { numeric: true, sensitivity: 'base' });
+    return currentSortDir === 'asc' ? cmp : -cmp;
+  });
+
+  updateSortIcons();
+  renderTable(tableData);
+}
+
+function updateSortIcons() {
+  const allCols = ['CustomerName', 'GameName', 'Rates', 'Total_Amount', 'D_Sale', 'A_Sale', 'Commision', 'O_Dara', 'O_Akhar', 'WinAmount', 'Pati', 'Balance', 'Result'];
+  allCols.forEach(col => {
+    const iconEl = document.getElementById('sortIcon_' + col);
+    const thEl = iconEl?.closest('th');
+    if (!iconEl) return;
+    if (col === currentSortCol) {
+      iconEl.textContent = (currentSortDir === 'asc') ? '▲' : '▼';
+      iconEl.style.opacity = '1';
+      if (thEl) thEl.classList.add('active-sort');
+    } else {
+      iconEl.textContent = '⇅';
+      iconEl.style.opacity = '0.45';
+      if (thEl) thEl.classList.remove('active-sort');
+    }
+  });
+}
+
 async function bindGrid() {
   const tbody = document.getElementById('summaryBody');
-  tbody.innerHTML = `<tr><td colspan="13" class="emsg"><span class="spin"></span> Loading...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="${isShortView ? 6 : 13}" class="emsg" id="emptyMsgTd"><span class="spin"></span> Loading...</td></tr>`;
   document.getElementById('summaryFoot').style.display = 'none';
   const hlWrap = document.getElementById('highlightBalanceWrap');
   if (hlWrap) hlWrap.style.display = 'none';
@@ -500,16 +657,22 @@ async function bindGrid() {
       `/api/hisab/summary?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&gid=${gid}&cid=${cid}`
     );
     if (!r?.success || !r.data?.length) {
-      tbody.innerHTML = '<tr><td colspan="13" class="emsg">No Data Found!</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="${isShortView ? 6 : 13}" class="emsg" id="emptyMsgTd">No Data Found!</td></tr>`;
       tableData = [];
+      currentSortCol = null;
+      currentSortDir = 'asc';
+      updateSortIcons();
       if (hlWrap) hlWrap.style.display = 'none';
     } else {
       tableData = r.data;
+      currentSortCol = null;
+      currentSortDir = 'asc';
+      updateSortIcons();
       renderTable(tableData);
     }
     resetCustSearchReady();
   } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="13" class="emsg">Error loading</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${isShortView ? 6 : 13}" class="emsg" id="emptyMsgTd">Error loading</td></tr>`;
     if (hlWrap) hlWrap.style.display = 'none';
   }
 }
@@ -525,10 +688,18 @@ function resetCustSearchReady() {
 function renderTable(data) {
   document.getElementById('summaryBody').innerHTML = data.map((row,i) => `
     <tr onclick="selectRow(this)" tabindex="0" onkeydown="arrowNav(event,this,${i})">
-      <td>${(row.CustomerName || row.Mobile || '').replace(/\s+\d{4,5}$/, '')}</td><td>${row.GameName||''}</td><td>${row.Rates||''}</td>
-      <td>${row.Total_Amount||0}</td><td>${row.D_Sale||0}</td><td>${row.A_Sale||0}</td>
-      <td>${row.Commision||0}</td><td>${row.O_Dara||0}</td><td>${row.O_Akhar||0}</td>
-      <td>${row.WinAmount||0}</td><td>${row.Pati||0}</td><td>${row.Balance||0}</td>
+      <td>${(row.CustomerName || row.Mobile || '').replace(/\s+\d{4,5}$/, '')}</td>
+      <td class="col-full-only">${row.GameName||''}</td>
+      <td>${row.Rates||''}</td>
+      <td>${row.Total_Amount||0}</td>
+      <td class="col-full-only">${row.D_Sale||0}</td>
+      <td class="col-full-only">${row.A_Sale||0}</td>
+      <td class="col-full-only">${row.Commision||0}</td>
+      <td>${row.O_Dara||0}</td>
+      <td>${row.O_Akhar||0}</td>
+      <td class="col-full-only">${row.WinAmount||0}</td>
+      <td class="col-full-only">${row.Pati||0}</td>
+      <td class="col-full-only">${row.Balance||0}</td>
       <td>${row.Result||''}</td>
     </tr>`).join('');
 

@@ -339,7 +339,7 @@ async function init() {
     document.getElementById('txStaff').innerHTML = '<option value="">All Staff</option><option value="0">Self</option>' + (sr?.data||[]).map(s => `<option value="${s.SubUserID}">${s.subusername}</option>`).join('');
   }
   const cr = await API.get('/api/accounts/customers');
-  document.getElementById('txCust').innerHTML = '<option value="">All Customers</option><option value="0">Self</option>' + (cr?.data||[]).map(c => {
+  document.getElementById('txCust').innerHTML = (isSubUser ? '<option value="">All Customers</option>' : '<option value="">All Customers</option><option value="0">Self</option>') + (cr?.data||[]).map(c => {
     const cName = (c.Name || c.CustomerName || '').replace(/\s+\d{4,5}$/, '').trim();
     return `<option value="${c.UID||c.CID}">${cName}</option>`;
   }).join('');

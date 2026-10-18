@@ -284,7 +284,7 @@ async function initPage(active) {
   if (cachedUserStr) {
     try {
       const cached = JSON.parse(cachedUserStr);
-      if (!_applyUserPermissions(cached, active)) return null;
+      _applyUserPermissions(cached, null);
     } catch(e) {}
   }
 

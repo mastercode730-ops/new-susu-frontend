@@ -6,6 +6,10 @@
             "destination": "https://marketai.solutions/sapi/api/:path*"
         },
         {
+            "source": "/app/:path*",
+            "destination": "/pages/:path*"
+        },
+        {
             "source": "/",
             "destination": "/login.html"
         }

@@ -648,15 +648,37 @@ async function bindGrid() {
 
   const startDate = document.getElementById('txtStartDate').value;
   const endDate   = document.getElementById('txtEndDate').value;
-  const gid       = document.getElementById('gameSelection').value;
+  const gameSel   = document.getElementById('gameSelection');
+  const gid       = gameSel?.value || '';
+  const selectedGameName = (gameSel?.options?.[gameSel?.selectedIndex]?.text || '').trim();
   const cid       = document.getElementById('customerSelection').value;
   lastQuery = { startDate, endDate, gid, cid };
 
   try {
     const r = await API.get(
-      `/api/hisab/summary?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&gid=${gid}&cid=${cid}`
+      `/api/hisab/summary?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&gid=${encodeURIComponent(gid)}&cid=${cid}`
     );
-    if (!r?.success || !r.data?.length) {
+    let data = r?.data || [];
+
+    // Fallback: If a specific game was selected from dropdown, but returned 0 rows (e.g. because of split Game IDs like Shree Ganesh 61234/11428 or Delhi Bazaar 61235/11429),
+    // fetch all games for the range and filter by game name case-insensitively!
+    if (gid && selectedGameName && selectedGameName !== 'All Game' && (!data || !data.length)) {
+      const rAll = await API.get(
+        `/api/hisab/summary?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&gid=&cid=${cid}`
+      );
+      if (rAll?.success && Array.isArray(rAll.data)) {
+        const normTarget = selectedGameName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        data = rAll.data.filter(row => {
+          const rowNorm = String(row.GameName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (rowNorm === normTarget) return true;
+          if (normTarget.includes('delhi') && (rowNorm.includes('delhi') || rowNorm.includes('bazar') || rowNorm.includes('bazaar'))) return true;
+          if (normTarget.includes('ganesh') && rowNorm.includes('ganesh')) return true;
+          return false;
+        });
+      }
+    }
+
+    if (!data.length) {
       tbody.innerHTML = `<tr><td colspan="${isShortView ? 6 : 13}" class="emsg" id="emptyMsgTd">No Data Found!</td></tr>`;
       tableData = [];
       currentSortCol = null;
@@ -664,7 +686,7 @@ async function bindGrid() {
       updateSortIcons();
       if (hlWrap) hlWrap.style.display = 'none';
     } else {
-      tableData = r.data;
+      tableData = data;
       currentSortCol = null;
       currentSortDir = 'asc';
       updateSortIcons();

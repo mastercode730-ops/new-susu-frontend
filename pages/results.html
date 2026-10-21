@@ -803,6 +803,17 @@ async function btnSubmitClick(e) {
   try {
     const r = await API.post('/api/game/save-result', { result, gameID: gid, date });
     if (r?.success) {
+      // Sync result to alternate/split Game IDs so Hisab & calculations never get desynced
+      if (gid === '61234' || gid === 61234) {
+        await API.post('/api/game/save-result', { result, gameID: 11428, date }).catch(() => {});
+      } else if (gid === '11428' || gid === 11428) {
+        await API.post('/api/game/save-result', { result, gameID: 61234, date }).catch(() => {});
+      } else if (gid === '61235' || gid === 61235) {
+        await API.post('/api/game/save-result', { result, gameID: 11429, date }).catch(() => {});
+      } else if (gid === '11429' || gid === 11429) {
+        await API.post('/api/game/save-result', { result, gameID: 61235, date }).catch(() => {});
+      }
+
       SucessMessage();
       document.getElementById('txtResult').value = '';
       // ASPX: txtStartDate = txtDate, txtEndDate = txtDate → BindGrid

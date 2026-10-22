@@ -1259,8 +1259,16 @@
       if (!customer || !customer.CID) return;
       try {
         const r = await API.get(`/api/received/customer-rates?cid=${customer.CID}`);
-        if (!r?.success || !r.data?.length) return;
-        const dt = r.data;
+        const dt = (r?.success && r.data?.length) ? r.data : null;
+        if (!dt || !dt.length) {
+          const pati = customer.Patti || '0';
+          const custUID = customer.UID || customer.fUID || _uid;
+          redirectToChat(customer.Mobile, _GID, _Game, custUID, getIST(), customer.Rate || '0/100-0/10-0',
+            customer.D_PComm || '0', customer.D_Amt || '100', customer.A_PComm || '0', customer.A_Amt || '10', pati,
+            customer.ThirdPartyHissaID || '0', customer.ThirdPartyHissaPer || '0',
+            customer.ThirdPartyCommID || '0', customer.ThirdPartyDaraComm || '0', customer.ThirdPartyAkharComm || '0');
+          return;
+        }
         if (dt.length === 1) {
           const d = dt[0];
           const pati = d.Patti || d.Pati_PComm || d.patti || '0';
@@ -1281,6 +1289,12 @@
         }
       } catch (e) {
         console.error('Error fetching customer rates:', e);
+        const pati = customer.Patti || '0';
+        const custUID = customer.UID || customer.fUID || _uid;
+        redirectToChat(customer.Mobile, _GID, _Game, custUID, getIST(), customer.Rate || '0/100-0/10-0',
+          customer.D_PComm || '0', customer.D_Amt || '100', customer.A_PComm || '0', customer.A_Amt || '10', pati,
+          customer.ThirdPartyHissaID || '0', customer.ThirdPartyHissaPer || '0',
+          customer.ThirdPartyCommID || '0', customer.ThirdPartyDaraComm || '0', customer.ThirdPartyAkharComm || '0');
       }
     }
 

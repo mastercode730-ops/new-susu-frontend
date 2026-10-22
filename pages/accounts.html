@@ -437,6 +437,15 @@ function focusDateField() {
   if (d) { d.focus(); d.select(); }
 }
 
+function focusCustomerField() {
+  const el = $('#ddlAccounts');
+  if (el.length && el.data('select2')) {
+    el.select2('focus');
+  } else {
+    document.getElementById('ddlAccounts')?.focus();
+  }
+}
+
 function advanceFromDate() {
   const fp = document.getElementById('txtDate')?._flatpickr;
   if (fp) fp.close();
@@ -1239,7 +1248,8 @@ async function saveTransaction() {
       }
       const staffOptText = $('#ddlStaff option:selected').text();
       updateTopSubUserBalance(rawStaffVal, staffOptText);
-      setTimeout(focusDateField, 60);
+      setTimeout(focusCustomerField, 60);
+      setTimeout(focusCustomerField, 950);
     } else {
       toast(r?.message || 'Error saving', 'err');
     }

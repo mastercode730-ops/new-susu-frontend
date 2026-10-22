@@ -802,6 +802,7 @@ async function btnSubmitClick(e) {
 
   try {
     const r = await API.post('/api/game/save-result', { result, gameID: gid, date });
+    if (r?.success) {
       SucessMessage();
       document.getElementById('txtResult').value = '';
       // ASPX: txtStartDate = txtDate, txtEndDate = txtDate → BindGrid

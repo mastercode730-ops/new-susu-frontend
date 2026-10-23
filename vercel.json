@@ -14,6 +14,14 @@
             "destination": "/pages/hisab-summary.html"
         },
         {
+            "source": "/pages/all_balance_sheet.html",
+            "destination": "/pages/all-balance-sheet.html"
+        },
+        {
+            "source": "/pages/all%20balance%20sheet.html",
+            "destination": "/pages/all-balance-sheet.html"
+        },
+        {
             "source": "/",
             "destination": "/login.html"
         }

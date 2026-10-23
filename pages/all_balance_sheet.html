@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balance Sheet - Susu9</title>
+<script src="/js/theme-preload.js"></script>
+<link rel="stylesheet" href="/css/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<style>
+/* Bolder, high-contrast typography and compact layout */
+.content label{font-weight:800!important;color:var(--text)!important;font-size:.78rem!important;margin-bottom:3px!important;display:block;}
+.content .card-title{font-weight:800!important;color:var(--text)!important;font-size:1.05rem!important;}
+.content .form-control{font-weight:700!important;color:var(--text)!important;background:#fff!important;border:1px solid #888!important;padding:.32rem .6rem!important;height:auto!important;font-size:.85rem!important;}
+.content .card-header{padding:8px 16px!important;}
+.content .card-body{padding:10px 16px!important;}
+.content table{border-collapse:collapse!important;width:100%!important;}
+.content table th{background:#d9d9d9!important;border:1px solid #999!important;font-weight:800!important;color:#000!important;padding:8px 14px!important;font-size:.85rem!important;}
+.content table td{border:1px solid #ccc!important;padding:7px 14px!important;font-weight:900!important;color:#000!important;font-size:.92rem!important;}
+.content table tbody tr:hover{outline:2px solid #16a34a!important;outline-offset:-2px;}
+.content table tbody tr:hover td{background:#bbf7d0!important;}
+.pos{color:#28a745!important;font-weight:900!important;}
+.neg{color:#dc3545!important;font-weight:900!important;}
+.table-responsive{overflow-x:auto;max-height:500px;overflow-y:auto;}
+.table-responsive thead th{position:sticky;top:0;z-index:2;background:#d9d9d9!important;}
+.table-responsive tfoot td{position:sticky;bottom:0;z-index:2;background:#eee!important;}
+.emsg{padding:24px;text-align:center;color:var(--muted);font-size:.88rem;font-weight:700;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Vendor theme reserves 62px above .content */
+.main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+/* Flatpickr calendar popup - bold, clear text throughout */
+.flatpickr-weekday{font-weight:800!important;color:#000!important;}
+.flatpickr-day{font-weight:800!important;color:#000!important;}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay,.flatpickr-day.notAllowed{color:#999!important;font-weight:700!important;}
+.flatpickr-day.today{font-weight:900!important;}
+.flatpickr-current-month .cur-month,.flatpickr-current-month input.cur-year{font-weight:800!important;color:#000!important;}
+.flatpickr-months .flatpickr-month,.flatpickr-current-month{font-weight:800!important;}
+</style>
+</head>
+<body>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            Balance Sheet
+            <button class="btn btn-danger btn-sm" style="float:right; font-weight:800; padding:4px 14px;" onclick="history.back()">&larr; Back</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-end" style="margin-bottom: 12px;">
+            <div class="col-md-4 col-sm-12">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="custSel">Customer</label>
+                <select class="form-control" id="custSel" onchange="loadData()">
+                  <option value="">Select Customer</option>
+                </select>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="fromDate">From Date</label>
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" class="form-control" id="fromDate" placeholder="dd/mm/yyyy"
+                    style="padding-right: 36px;">
+                  <button type="button" id="btnFromCal" aria-label="Open Calendar" tabindex="-1"
+                    style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="toDate">To Date</label>
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" class="form-control" id="toDate" placeholder="dd/mm/yyyy"
+                    style="padding-right: 36px;">
+                  <button type="button" id="btnToCal" aria-label="Open Calendar" tabindex="-1"
+                    style="position: absolute; right: 0; top: 0; bottom: 0; width: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; padding: 0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-12">
+              <button class="btn btn-success btn-block" id="btnLoad" onclick="loadData()" style="font-weight: 800; padding: 7px 16px;">Load</button>
+            </div>
+          </div>
+
+          <!-- Type Filters: All, Sale, Account -->
+          <div style="margin-bottom: 12px;">
+            <div class="btn-group" id="typeGroup">
+              <button class="btn btn-success" id="typeAll" onclick="setType('all')" style="font-weight: 800; min-width: 65px; padding: 6px 16px;">All</button>
+              <button class="btn btn-secondary" id="typeSale" onclick="setType('sale')" style="font-weight: 800; min-width: 65px; padding: 6px 16px;">Sale</button>
+              <button class="btn btn-secondary" id="typeAccounts" onclick="setType('accounts')" style="font-weight: 800; min-width: 75px; padding: 6px 16px;">Account</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive" id="tableWrap">
+          <div class="emsg">Select a customer and click Load</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Game-wise history modal (row click) -->
+<div class="modal fade" id="histModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="histTitle" style="font-weight: 800;">Game History</h5>
+        <button type="button" class="close" onclick="closeHist()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+            <thead>
+              <tr style="background-color:LightGray;">
+                <th>Game</th><th>Rates</th><th>T_Sale</th><th>D_Sale</th><th>A_Sale</th>
+                <th>Comm</th><th>O_Dara</th><th>O_Akhar</th><th>WinAmt</th><th>Hissa</th><th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="bodyHist">
+              <tr><td colspan="11" class="emsg">Loading...</td></tr>
+            </tbody>
+            <tfoot id="footHist" style="display:none;background-color:LightGray;font-weight:bold;">
+              <tr>
+                <td>&ndash;</td><td>Total</td>
+                <td id="ft_h_tsale">&ndash;</td><td id="ft_h_dsale">&ndash;</td><td id="ft_h_asale">&ndash;</td>
+                <td id="ft_h_comm">&ndash;</td><td id="ft_h_odara">&ndash;</td><td id="ft_h_oakhar">&ndash;</td>
+                <td id="ft_h_win">&ndash;</td><td id="ft_h_pati">&ndash;</td><td id="ft_h_bal">&ndash;</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/nav.js"></script>
+<script>
+let currentType = 'all';
+let currentCustUID = '';
+let currentCustName = '';
+let allRowsData = [];
+let displayRows = [];
+
+const p = new URLSearchParams(location.search);
+
+let fpFrom, fpTo;
+
+function parseDmy(s) {
+  if (!s) return new Date();
+  const p = s.split('/');
+  if (p.length === 3) return new Date(parseInt(p[2],10), parseInt(p[1],10)-1, parseInt(p[0],10));
+  return new Date(s);
+}
+
+function bindAutoSlashDate(id, onDateApplied) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  el.addEventListener('keydown', function(e) {
+    if (e.key === 'Backspace') {
+      const val = this.value;
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      // If cursor is immediately after a slash, delete both the slash and the preceding digit
+      if (start === end && (start === 3 || start === 6) && val[start - 1] === '/') {
+        e.preventDefault();
+        this.value = val.slice(0, start - 2) + val.slice(start);
+        this.setSelectionRange(start - 2, start - 2);
+        return;
+      }
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (id === 'fromDate') {
+        const toEl = document.getElementById('toDate');
+        if (toEl) { toEl.focus(); toEl.select?.(); }
+      } else if (id === 'toDate') {
+        const btn = document.getElementById('btnLoad');
+        if (btn) btn.click();
+      }
+    }
+  }, true);
+
+  el.addEventListener('input', function(e) {
+    if (e.inputType && e.inputType.startsWith('delete')) {
+      return;
+    }
+    const prevPos = this.selectionEnd;
+    const prevVal = this.value;
+    let v = prevVal.replace(/\D/g, '').slice(0, 8);
+    let formatted = '';
+    if (v.length > 4) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+    } else if (v.length > 2) {
+      formatted = v.slice(0, 2) + '/' + v.slice(2);
+    } else if (v.length === 2) {
+      formatted = v + '/';
+    } else {
+      formatted = v;
+    }
+    if (v.length === 4 && formatted.length === 5) {
+      formatted += '/';
+    }
+    if (this.value !== formatted) {
+      this.value = formatted;
+      if (prevPos >= prevVal.length) {
+        this.setSelectionRange(formatted.length, formatted.length);
+      } else {
+        let slashesBefore = (formatted.slice(0, prevPos).match(/\//g) || []).length;
+        let oldSlashesBefore = (prevVal.slice(0, prevPos).match(/\//g) || []).length;
+        let newPos = prevPos + (slashesBefore - oldSlashesBefore);
+        this.setSelectionRange(newPos, newPos);
+      }
+    }
+
+    if (v.length === 8) {
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(formatted, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(formatted);
+      }
+    }
+  });
+
+  el.addEventListener('change', function() {
+    if (this.value) {
+      let v = this.value.replace(/\D/g, '').slice(0, 8);
+      if (v.length === 8) {
+        this.value = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+      }
+      const fp = this._flatpickr;
+      if (fp) {
+        fp.setDate(this.value, false, 'd/m/Y');
+      }
+      if (typeof onDateApplied === 'function') {
+        onDateApplied(this.value);
+      }
+    }
+  });
+}
+
+function bindCalButton(btnId, inputId) {
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const fp = document.getElementById(inputId)?._flatpickr;
+      if (fp) {
+        if (fp.isOpen) fp.close();
+        else fp.open();
+      }
+    };
+  }
+}
+
+async function init() {
+  const u = await initPage('all-balance-sheet');
+
+  const ist   = new Date(new Date().getTime() + 5.5*3600000);
+  const dd    = String(ist.getUTCDate()).padStart(2, '0');
+  const mm    = String(ist.getUTCMonth() + 1).padStart(2, '0');
+  const yyyy  = ist.getUTCFullYear();
+  const first = `01/${mm}/${yyyy}`;
+  const today = `${dd}/${mm}/${yyyy}`;
+
+  const fpCfg = {
+    dateFormat: 'd/m/Y',
+    clickOpens: false,
+    allowInput: true,
+    disableMobile: true,
+    parseDate: function (datestr) {
+      if (!datestr) return new Date();
+      if (datestr instanceof Date) return datestr;
+      const s = String(datestr).trim();
+      const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dmy) {
+        let p1 = parseInt(dmy[1], 10), p2 = parseInt(dmy[2], 10), yr = parseInt(dmy[3], 10);
+        if (p2 > 12 && p1 <= 12) return new Date(yr, p1 - 1, p2);
+        return new Date(yr, p2 - 1, p1);
+      }
+      const m8 = s.match(/^(\d{2})(\d{2})(\d{4})/);
+      if (m8) return new Date(parseInt(m8[3], 10), parseInt(m8[2], 10) - 1, parseInt(m8[1], 10));
+      const mo = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      const mAlpha = s.match(/^(\d{1,2})[\/\s-]([A-Za-z]{3})[\/\s-](\d{4})/);
+      if (mAlpha) {
+        const mKey = mAlpha[2].charAt(0).toUpperCase() + mAlpha[2].slice(1,3).toLowerCase();
+        return new Date(parseInt(mAlpha[3], 10), mo[mKey] !== undefined ? mo[mKey] : 0, parseInt(mAlpha[1], 10));
+      }
+      const iso = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (iso) return new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? new Date() : d;
+    },
+    formatDate: function (date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
+    },
+    onClose: function(selectedDates, dateStr, instance) {
+      if (instance && instance.element) {
+        instance.element.blur();
+      }
+    },
+    onChange: function(selectedDates, dateStr, instance) {
+      if (instance && instance.element) {
+        instance.element.blur();
+      }
+      const el = instance ? instance.element : null;
+      if (el) el.dispatchEvent(new Event('change'));
+    }
+  };
+
+  try {
+    fpFrom = flatpickr('#fromDate', { ...fpCfg, defaultDate: parseDmy(first) });
+    fpTo   = flatpickr('#toDate',   { ...fpCfg, defaultDate: parseDmy(today) });
+  } catch(e) {
+    console.warn('Flatpickr failed:', e);
+  }
+
+  const elFrom = document.getElementById('fromDate');
+  const elTo   = document.getElementById('toDate');
+  if (elFrom) elFrom.value = first;
+  if (elTo)   elTo.value   = today;
+
+  bindCalButton('btnFromCal', 'fromDate');
+  bindCalButton('btnToCal',   'toDate');
+
+  bindAutoSlashDate('fromDate', () => {
+    const nextEl = document.getElementById('toDate');
+    if (nextEl) { nextEl.focus(); nextEl.select?.(); }
+  });
+  bindAutoSlashDate('toDate', () => {
+    const btn = document.getElementById('btnLoad');
+    if (btn) btn.click();
+  });
+
+  const uid = p.get('UID') || '';
+  await loadCustomers(u);
+
+  if (uid) {
+    document.getElementById('custSel').value = uid;
+    loadData();
+  }
+
+  window.__escPageHandler = function() {
+    if ($('#histModal').hasClass('show')) { closeHist(); return true; }
+    return false;
+  };
+}
+
+async function loadCustomers(user) {
+  try {
+    if (!user) {
+      const userStr = localStorage.getItem('susu9_user');
+      if (userStr) {
+        try { user = JSON.parse(userStr); } catch(e) {}
+      }
+    }
+    let list = [];
+    if (user && user.SubUID) {
+      // SubUser: fetch assigned customers via /api/hisab/customers or /api/home/receiver-list
+      const hr = await API.get('/api/hisab/customers');
+      if (hr?.data && hr.data.length) {
+        list = hr.data;
+      } else {
+        const r = await API.get('/api/home/receiver-list');
+        list = r?.data || [];
+      }
+    } else {
+      const r = await API.get('/api/home/receiver-list');
+      list = r?.data || [];
+    }
+
+    const sel = document.getElementById('custSel');
+    sel.innerHTML = '<option value="">Select Customer</option>';
+    list.sort((a,b) => (a.CustomerName||'').localeCompare(b.CustomerName||'')).forEach(c => {
+      sel.innerHTML += `<option value="${c.UID}">${c.CustomerName || c.Mobile}</option>`;
+    });
+  } catch(e) {}
+}
+
+function setType(t) {
+  currentType = t;
+  ['all','sale','accounts'].forEach(x => {
+    const el = document.getElementById('type' + x.charAt(0).toUpperCase() + x.slice(1));
+    if (el) el.className = 'btn ' + (x === t ? 'btn-success' : 'btn-secondary');
+  });
+  applyFilterAndRender();
+}
+
+async function loadData() {
+  const custUID = document.getElementById('custSel').value;
+  if (!custUID) return;
+  currentCustUID  = custUID;
+  currentCustName = document.getElementById('custSel').selectedOptions[0]?.text || '';
+  const from = document.getElementById('fromDate').value;
+  const to   = document.getElementById('toDate').value;
+
+  const btn = document.getElementById('btnLoad');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Loading...';
+  }
+  document.getElementById('tableWrap').innerHTML = '<div class="emsg"><span class="spin"></span> Loading...</div>';
+
+  try {
+    const endpoint = `/api/balance/game-balance-history?customerUID=${encodeURIComponent(custUID)}&fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}`;
+    const r = await API.get(endpoint);
+    allRowsData = r?.data || [];
+    applyFilterAndRender();
+  } catch(e) {
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg" style="color:#dc3545;">Error loading data</div>';
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = 'Load';
+    }
+  }
+}
+
+function applyFilterAndRender() {
+  if (!allRowsData.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg">No records found</div>';
+    return;
+  }
+
+  // Classification rule:
+  // - Adjustments ('Receive Adjustment', 'Paid Adjustment', 'AdjustReceipt(-)', 'AdjustPayment(+)', etc.)
+  //   MUST come under the 'Sale' tab, NOT under 'Account'.
+  // - 'Sale' includes: Game sales ('Sale', 'Self Hissa', 'Self Comm') AND all Adjustments.
+  // - 'Account' includes: Pure accounts ('Paid', 'Received', 'Commission', etc.) excluding Adjustments and Game sales.
+  // - 'All' includes: Everything.
+  let filtered = allRowsData;
+  if (currentType === 'sale') {
+    filtered = allRowsData.filter(d => {
+      const t = (d.Type || '').toLowerCase();
+      return ['sale', 'self hissa', 'self comm'].includes(t) || t.includes('adjust');
+    });
+  } else if (currentType === 'accounts') {
+    filtered = allRowsData.filter(d => {
+      const t = (d.Type || '').toLowerCase();
+      return !['sale', 'self hissa', 'self comm', 'opening'].includes(t) && !t.includes('adjust');
+    });
+  }
+
+  let running = 0;
+  displayRows = filtered.map(d => {
+    const win = (d.WinAmount !== undefined && d.WinAmount !== null)
+      ? parseFloat(d.WinAmount)
+      : ((parseFloat(d.Lene) || 0) - (parseFloat(d.Dene) || 0));
+    running += win;
+    return {
+      ...d,
+      ComputedWin: win,
+      ComputedRunning: running,
+      ComputedLene: (d.Lene !== undefined && d.Lene !== null && d.Lene !== '') ? parseFloat(d.Lene) : (win > 0 ? win : 0),
+      ComputedDene: (d.Dene !== undefined && d.Dene !== null && d.Dene !== '') ? parseFloat(d.Dene) : (win < 0 ? Math.abs(win) : 0)
+    };
+  });
+
+  renderTable(displayRows);
+}
+
+function renderTable(data) {
+  if (!data.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg">No records found for ' + currentType.toUpperCase() + '</div>';
+    return;
+  }
+  let totalLene = 0, totalDene = 0;
+  const rows = data.map((d, i) => {
+    const lene = d.ComputedLene || 0;
+    const dene = d.ComputedDene || 0;
+    totalLene += lene;
+    totalDene += dene;
+    const date = d.MessageDateTime ? new Date(d.MessageDateTime).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const bal = (d.ComputedRunning !== undefined) ? d.ComputedRunning : (parseFloat(d.RunningTotal) || 0);
+    return `<tr>
+      <td>${date}</td>
+      <td class="pos">${lene > 0 ? lene.toLocaleString('en-IN') : ''}</td>
+      <td class="neg">${dene > 0 ? dene.toLocaleString('en-IN') : ''}</td>
+      <td class="${bal < 0 ? 'neg' : 'pos'}">${bal.toLocaleString('en-IN')}</td>
+      <td>${d.Type || ''}</td>
+    </tr>`;
+  }).join('');
+  const net = totalLene - totalDene;
+  document.getElementById('tableWrap').innerHTML = `
+    <table class="table-bordered-bd-primary table-hover" cellpadding="4" style="text-align:center;width:100%;">
+      <thead><tr style="background-color:LightGray;">
+        <th>Date</th><th>Debit (Lene)</th><th>Credit (Dene)</th><th>Balance</th><th>Type</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot style="background-color:LightGray;font-weight:bold;"><tr>
+        <td>Total (${data.length})</td>
+        <td class="pos">${totalLene.toLocaleString('en-IN')}</td>
+        <td class="neg">${totalDene.toLocaleString('en-IN')}</td>
+        <td colspan="2" class="${net < 0 ? 'neg' : 'pos'}">Net: ${net.toLocaleString('en-IN')}</td>
+      </tr></tfoot>
+    </table>`;
+}
+
+function rowClick(i) {
+  const d = displayRows[i];
+  if (!d || !d.MessageDateTime) return;
+  // If it's pure account entry without game breakdown, do not open empty modal
+  const t = (d.Type || '').toLowerCase();
+  if (t === 'received' || t === 'paid') return;
+  showHistory(d.MessageDateTime);
+}
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function toDdMmmYyyy(dateVal) {
+  const d = new Date(dateVal);
+  return String(d.getDate()).padStart(2,'0') + '/' + MONTHS[d.getMonth()] + '/' + d.getFullYear();
+}
+
+async function showHistory(dateVal) {
+  const dateStr = toDdMmmYyyy(dateVal);
+  $('#histModal').modal('show');
+  document.getElementById('histTitle').textContent = `${currentCustName} — Game History (${dateStr})`;
+  document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg"><span class="spin"></span> Loading...</td></tr>';
+  document.getElementById('footHist').style.display = 'none';
+
+  try {
+    const endpoint = `/api/hisab/game-hisab-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`;
+    const r = await API.get(endpoint);
+    if (!r?.success || !r.data?.length) {
+      document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg">No Data Found!</td></tr>';
+      return;
+    }
+    const data = r.data;
+    document.getElementById('bodyHist').innerHTML = data.map(d => `
+      <tr>
+        <td>${d.GameName||'–'}</td>
+        <td>${d.Rates||'–'}</td>
+        <td>${d.Total_Amount||0}</td>
+        <td>${d.D_Sale||0}</td>
+        <td>${d.A_Sale||0}</td>
+        <td>${d.Commision||0}</td>
+        <td>${d.O_Dara||0}</td>
+        <td>${d.O_Akhar||0}</td>
+        <td>${d.WinAmount||0}</td>
+        <td>${d.Pati||0}</td>
+        <td>${d.Balance||0}</td>
+      </tr>`).join('');
+
+    const sum = f => data.reduce((s,x)=>s+(parseFloat(x[f])||0),0).toString();
+    document.getElementById('ft_h_tsale').textContent  = sum('Total_Amount');
+    document.getElementById('ft_h_dsale').textContent  = sum('D_Sale');
+    document.getElementById('ft_h_asale').textContent  = sum('A_Sale');
+    document.getElementById('ft_h_comm').textContent   = sum('Commision');
+    document.getElementById('ft_h_odara').textContent  = sum('O_Dara');
+    document.getElementById('ft_h_oakhar').textContent = sum('O_Akhar');
+    document.getElementById('ft_h_win').textContent    = sum('WinAmount');
+    document.getElementById('ft_h_pati').textContent   = sum('Pati');
+    document.getElementById('ft_h_bal').textContent    = sum('Balance');
+    document.getElementById('footHist').style.display = '';
+  } catch(e) {
+    document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg">Error loading</td></tr>';
+  }
+}
+
+function closeHist() { $('#histModal').modal('hide'); }
+
+init();
+</script>
+</body>
+</html>

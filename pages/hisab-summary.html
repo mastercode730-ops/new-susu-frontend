@@ -770,9 +770,56 @@ function resetCustSearchReady() {
   document.getElementById('custDrop').classList.remove('open');
 }
 
+function getCustomerUID(row) {
+  if (!row) return '';
+  if (row.CustUID) return String(row.CustUID);
+  if (row.UID) return String(row.UID);
+
+  const rawName = String(row.CustomerName || '').trim();
+  const rawMob  = String(row.Mobile || '').trim();
+  const cleanName = rawName.replace(/\s+\d{4,5}$/, '').trim().toLowerCase();
+  const cleanMob  = rawMob.replace(/\s+\d{4,5}$/, '').trim().toLowerCase();
+
+  let found = (allCustomers || []).find(c => {
+    const cName = String(c.CustomerName || '').trim().toLowerCase();
+    const cMob  = String(c.Mobile || '').trim().toLowerCase();
+    const cClean = cName.replace(/\s+\d{4,5}$/, '').trim();
+    const cMobClean = cMob.replace(/\s+\d{4,5}$/, '').trim();
+    return (rawName && (cName === rawName.toLowerCase() || cMob === rawName.toLowerCase())) ||
+           (rawMob && (cName === rawMob.toLowerCase() || cMob === rawMob.toLowerCase())) ||
+           (cleanName && (cClean === cleanName || cMobClean === cleanName)) ||
+           (cleanMob && (cClean === cleanMob || cMobClean === cleanMob));
+  });
+
+  return found?.UID ? String(found.UID) : '';
+}
+
+function openCustomerBalanceSheet(custUID) {
+  if (!custUID) return;
+  const url = `/pages/all-balance-sheet.html?UID=${encodeURIComponent(custUID)}&SelectUID=1`;
+  const win = window.open(url, '_blank');
+  if (!win || win.closed || typeof win.closed === 'undefined') {
+    window.location.href = url;
+  }
+}
+
+function onRowClick(rowEl, custUID) {
+  selectRow(rowEl);
+  if (!custUID) {
+    const idx = parseInt(rowEl.getAttribute('data-idx'), 10);
+    const row = tableData[idx];
+    custUID = getCustomerUID(row);
+  }
+  if (custUID) {
+    openCustomerBalanceSheet(custUID);
+  }
+}
+
 function renderTable(data) {
-  document.getElementById('summaryBody').innerHTML = data.map((row,i) => `
-    <tr onclick="selectRow(this)" tabindex="0" onkeydown="arrowNav(event,this,${i})">
+  document.getElementById('summaryBody').innerHTML = data.map((row,i) => {
+    const custUID = getCustomerUID(row);
+    return `
+    <tr onclick="onRowClick(this, '${custUID}')" data-idx="${i}" data-uid="${custUID}" tabindex="0" onkeydown="arrowNav(event,this,${i})" title="Click to open Balance Sheet">
       <td>${(row.CustomerName || row.Mobile || '').replace(/\s+\d{4,5}$/, '')}</td>
       <td class="col-full-only">${row.GameName||''}</td>
       <td>${row.Rates||''}</td>
@@ -786,7 +833,8 @@ function renderTable(data) {
       <td class="col-full-only">${row.Pati||0}</td>
       <td class="col-full-only">${row.Balance||0}</td>
       <td>${row.Result||''}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   const s = f => Math.round(data.reduce((a,r)=>a+(parseFloat(r[f])||0),0));
   document.getElementById('ftTotal').textContent   = s('Total_Amount');
@@ -824,6 +872,7 @@ function arrowNav(e,row,idx) {
   const rows = document.querySelectorAll('#summaryBody tr');
   if(e.key==='ArrowUp'&&idx>0){e.preventDefault();rows[idx-1].focus();selectRow(rows[idx-1]);}
   else if(e.key==='ArrowDown'&&idx<rows.length-1){e.preventDefault();rows[idx+1].focus();selectRow(rows[idx+1]);}
+  else if(e.key==='Enter'){e.preventDefault();onRowClick(row, row.getAttribute('data-uid'));}
 }
 
 async function exportExcel() {

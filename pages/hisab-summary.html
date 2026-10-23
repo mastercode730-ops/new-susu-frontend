@@ -270,6 +270,69 @@ tbody tr{cursor:pointer;}
     font-size: 0.82rem !important;
   }
 }
+
+/* ── Mobile Horizontal (Landscape) Table Optimization ──
+   When rotated horizontally, table adjusts to 100% width without horizontal
+   scrolling so user can capture a complete screenshot of all columns */
+@media screen and (orientation: landscape) and (max-height: 600px),
+       screen and (orientation: landscape) and (max-width: 1024px),
+       screen and (max-height: 500px) {
+  .main-panel > .content {
+    margin-top: 38px !important;
+    padding: 2px 4px !important;
+  }
+  .content .card {
+    margin-bottom: 4px !important;
+    border-radius: 4px !important;
+  }
+  .content .card-header {
+    padding: 3px 6px !important;
+  }
+  .content .card-body {
+    padding: 3px 6px !important;
+  }
+  .content .card-action {
+    padding: 3px 6px !important;
+  }
+  .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .content table {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+  }
+  .content table.table-short-view {
+    min-width: 100% !important;
+  }
+  .content table th {
+    padding: 3px 2px !important;
+    font-size: 0.70rem !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.25px !important;
+  }
+  .content table th .sort-icon {
+    font-size: 0.52rem !important;
+    margin-left: 0.5px !important;
+  }
+  .content table td {
+    padding: 2px 2px !important;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.15px !important;
+  }
+}
+
 </style>
 </head>
 <body>

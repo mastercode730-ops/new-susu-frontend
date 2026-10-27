@@ -36,6 +36,25 @@
 .flatpickr-day.today{font-weight:900!important;}
 .flatpickr-current-month .cur-month,.flatpickr-current-month input.cur-year{font-weight:800!important;color:#000!important;}
 .flatpickr-months .flatpickr-month,.flatpickr-current-month{font-weight:800!important;}
+
+/* Short View / Full View for Hisab Summary */
+table.table-short-view .col-full-only { display: none !important; }
+.btn-short-toggle {
+  background: #e8f0fe !important;
+  color: #1572e8 !important;
+  border: 1.5px solid #1572e8 !important;
+  padding: 3px 12px !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  line-height: 1.4 !important;
+}
+.btn-short-toggle:hover { background: #d0e1fd !important; }
+.btn-short-toggle.active { background: #1572e8 !important; color: #fff !important; }
 </style>
 </head>
 <body>
@@ -51,7 +70,7 @@
           </div>
         </div>
         <div class="card-body">
-          <div class="row align-items-end" style="margin-bottom: 12px;">
+          <div class="row align-items-end" style="margin-bottom: 4px;">
             <div class="col-md-4 col-sm-12">
               <div class="form-group" style="margin-bottom: 0;">
                 <label for="custSel">Customer</label>
@@ -90,20 +109,47 @@
               <button class="btn btn-success btn-block" id="btnLoad" onclick="loadData()" style="font-weight: 800; padding: 7px 16px;">Load</button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Type Filters: All, Sale, Account -->
-          <div style="margin-bottom: 12px;">
-            <div class="btn-group" id="typeGroup">
-              <button class="btn btn-success" id="typeAll" onclick="setType('all')" style="font-weight: 800; min-width: 65px; padding: 6px 16px;">All</button>
-              <button class="btn btn-secondary" id="typeSale" onclick="setType('sale')" style="font-weight: 800; min-width: 65px; padding: 6px 16px;">Sale</button>
-              <button class="btn btn-secondary" id="typeAccounts" onclick="setType('accounts')" style="font-weight: 800; min-width: 75px; padding: 6px 16px;">Account</button>
+      <!-- Hisab Summary Section (Exact Hisab Summary Layout) -->
+      <div class="card" id="cardHisabSummary" style="margin-top: 14px;">
+        <div class="card-header" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px 16px !important;">
+          <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin:0; font-size: 0.98rem !important;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span>Hisab Summary</span>
+              <button class="btn-short-toggle" id="btnShortToggle" type="button" onclick="toggleShortView()">
+                <i class="fa fa-bolt"></i> <span id="lblShortToggle">Short View</span>
+              </button>
+            </div>
+            <div id="highlightBalanceWrap" style="display:none; align-items:center; padding:4px 14px; background:#fef08a; border:2px solid #ca8a04; border-radius:6px; font-weight:900; font-size:1.05rem; letter-spacing:0.5px;">
+              <span style="color:#000; margin-right:6px;">BALANCE:</span>
+              <span id="highlightBalanceVal">0</span>
             </div>
           </div>
         </div>
-
-        <div class="table-responsive" id="tableWrap">
+        <div class="table-responsive" id="hisabTableWrap" style="margin-bottom:0;">
           <div class="emsg">Select a customer and click Load</div>
         </div>
+      </div>
+
+      <!-- Balance Sheet Statement Section (Date Wise Ledger) -->
+      <div class="card" id="cardStatement" style="margin-top: 14px;">
+        <div class="card-header" style="padding: 8px 16px !important;">
+          <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin:0;">
+            <span>Statement (Date Wise)</span>
+            <!-- Type Filters: All, Sale, Account -->
+            <div class="btn-group" id="typeGroup">
+              <button class="btn btn-success" id="typeAll" onclick="setType('all')" style="font-weight: 800; min-width: 65px; padding: 5px 14px;">All</button>
+              <button class="btn btn-secondary" id="typeSale" onclick="setType('sale')" style="font-weight: 800; min-width: 65px; padding: 5px 14px;">Sale</button>
+              <button class="btn btn-secondary" id="typeAccounts" onclick="setType('accounts')" style="font-weight: 800; min-width: 75px; padding: 5px 14px;">Account</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive" id="tableWrap" style="margin-bottom:0;">
+          <div class="emsg">Select a customer and click Load</div>
+        </div>
+      </div>
       </div>
     </div>
   </div>
@@ -152,10 +198,25 @@ let currentCustUID = '';
 let currentCustName = '';
 let allRowsData = [];
 let displayRows = [];
+let isShortView = false;
+let hisabRowsData = [];
 
 const p = new URLSearchParams(location.search);
 
 let fpFrom, fpTo;
+
+function toggleShortView() {
+  isShortView = !isShortView;
+  const btn = document.getElementById('btnShortToggle');
+  const lbl = document.getElementById('lblShortToggle');
+  const tbl = document.getElementById('hisabTable');
+  if (tbl) {
+    if (isShortView) tbl.classList.add('table-short-view');
+    else tbl.classList.remove('table-short-view');
+  }
+  if (btn) btn.classList.toggle('active', isShortView);
+  if (lbl) lbl.textContent = isShortView ? 'Full View' : 'Short View';
+}
 
 function parseDmy(s) {
   if (!s) return new Date();
@@ -417,20 +478,123 @@ async function loadData() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Loading...';
   }
-  document.getElementById('tableWrap').innerHTML = '<div class="emsg"><span class="spin"></span> Loading...</div>';
+  document.getElementById('hisabTableWrap').innerHTML = '<div class="emsg"><span class="spin"></span> Loading Hisab...</div>';
+  document.getElementById('tableWrap').innerHTML = '<div class="emsg"><span class="spin"></span> Loading Statement...</div>';
+
+  const selUid = p.get('SelectUID');
+  const histEp = (selUid === '2')
+    ? `/api/balance/my-balance-history?customerUID=${encodeURIComponent(custUID)}&fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}`
+    : `/api/balance/game-balance-history?customerUID=${encodeURIComponent(custUID)}&fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}`;
+
+  const hisabEp = `/api/hisab/summary?startDate=${encodeURIComponent(from)}&endDate=${encodeURIComponent(to)}&gid=&cid=${encodeURIComponent(custUID)}`;
 
   try {
-    const endpoint = `/api/balance/game-balance-history?customerUID=${encodeURIComponent(custUID)}&fromDate=${encodeURIComponent(from)}&toDate=${encodeURIComponent(to)}`;
-    const r = await API.get(endpoint);
-    allRowsData = r?.data || [];
+    const [rHist, rHisab] = await Promise.all([
+      API.get(histEp).catch(() => null),
+      API.get(hisabEp).catch(() => null)
+    ]);
+
+    hisabRowsData = rHisab?.data || [];
+    renderHisabSummary(hisabRowsData);
+
+    allRowsData = rHist?.data || [];
     applyFilterAndRender();
   } catch(e) {
-    document.getElementById('tableWrap').innerHTML = '<div class="emsg" style="color:#dc3545;">Error loading data</div>';
+    document.getElementById('hisabTableWrap').innerHTML = '<div class="emsg" style="color:#dc3545;">Error loading hisab summary</div>';
+    document.getElementById('tableWrap').innerHTML = '<div class="emsg" style="color:#dc3545;">Error loading statement</div>';
   } finally {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = 'Load';
     }
+  }
+}
+
+function renderHisabSummary(data) {
+  const wrap = document.getElementById('hisabTableWrap');
+  const hlWrap = document.getElementById('highlightBalanceWrap');
+  const hlVal = document.getElementById('highlightBalanceVal');
+
+  if (!data || !data.length) {
+    wrap.innerHTML = '<div class="emsg">No Hisab Data Found for this period</div>';
+    if (hlWrap) hlWrap.style.display = 'none';
+    return;
+  }
+
+  const rows = data.map((row) => {
+    const custDisp = (row.CustomerName || row.Mobile || currentCustName || '').replace(/\s+\d{4,5}$/, '');
+    return `
+    <tr>
+      <td>${custDisp}</td>
+      <td class="col-full-only">${row.GameName || ''}</td>
+      <td>${row.Rates || ''}</td>
+      <td>${row.Total_Amount || 0}</td>
+      <td class="col-full-only">${row.D_Sale || 0}</td>
+      <td class="col-full-only">${row.A_Sale || 0}</td>
+      <td class="col-full-only">${row.Commision || 0}</td>
+      <td>${row.O_Dara || 0}</td>
+      <td>${row.O_Akhar || 0}</td>
+      <td class="col-full-only">${row.WinAmount || 0}</td>
+      <td class="col-full-only">${row.Pati || 0}</td>
+      <td class="col-full-only">${row.Balance || 0}</td>
+      <td>${row.Result || ''}</td>
+    </tr>`;
+  }).join('');
+
+  const s = f => Math.round(data.reduce((a, r) => a + (parseFloat(r[f]) || 0), 0));
+  const totSale   = s('Total_Amount');
+  const dSale     = s('D_Sale');
+  const aSale     = s('A_Sale');
+  const comm      = s('Commision');
+  const oDara     = s('O_Dara');
+  const oAkhar    = s('O_Akhar');
+  const winAmt    = s('WinAmount');
+  const pati      = s('Pati');
+  const totalBal  = s('Balance');
+
+  wrap.innerHTML = `
+    <table id="hisabTable" class="table-bordered-bd-primary table-hover ${isShortView ? 'table-short-view' : ''}" cellpadding="4" style="text-align:center;width:100%;margin-bottom:0;">
+      <thead>
+        <tr style="background-color:LightGray;">
+          <th>Customer</th>
+          <th class="col-full-only">Game</th>
+          <th>Rates</th>
+          <th>T_Sale</th>
+          <th class="col-full-only">D_Sale</th>
+          <th class="col-full-only">A_Sale</th>
+          <th class="col-full-only">Comm</th>
+          <th>O_Dara</th>
+          <th>O_Akhar</th>
+          <th class="col-full-only">Win_Amt</th>
+          <th class="col-full-only">Hissa</th>
+          <th class="col-full-only">Balance</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot style="background-color:LightGray;font-weight:bold;">
+        <tr>
+          <td>Total</td>
+          <td class="col-full-only">&ndash;</td>
+          <td>&ndash;</td>
+          <td>${totSale}</td>
+          <td class="col-full-only">${dSale}</td>
+          <td class="col-full-only">${aSale}</td>
+          <td class="col-full-only">${comm}</td>
+          <td>${oDara}</td>
+          <td>${oAkhar}</td>
+          <td class="col-full-only">${winAmt}</td>
+          <td class="col-full-only">${pati}</td>
+          <td class="col-full-only">${totalBal}</td>
+          <td>&ndash;</td>
+        </tr>
+      </tfoot>
+    </table>`;
+
+  if (hlWrap && hlVal) {
+    hlVal.textContent = totalBal;
+    hlVal.style.color = totalBal < 0 ? '#dc2626' : (totalBal > 0 ? '#15803d' : '#000');
+    hlWrap.style.display = 'inline-flex';
   }
 }
 
@@ -490,7 +654,7 @@ function renderTable(data) {
     totalDene += dene;
     const date = d.MessageDateTime ? new Date(d.MessageDateTime).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '';
     const bal = (d.ComputedRunning !== undefined) ? d.ComputedRunning : (parseFloat(d.RunningTotal) || 0);
-    return `<tr>
+    return `<tr style="cursor:pointer;" onclick="rowClick(${i})" title="Click to view date breakdown">
       <td>${date}</td>
       <td class="pos">${lene > 0 ? lene.toLocaleString('en-IN') : ''}</td>
       <td class="neg">${dene > 0 ? dene.toLocaleString('en-IN') : ''}</td>
@@ -537,7 +701,10 @@ async function showHistory(dateVal) {
   document.getElementById('footHist').style.display = 'none';
 
   try {
-    const endpoint = `/api/hisab/game-hisab-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`;
+    const selUid = p.get('SelectUID');
+    const endpoint = (selUid === '2')
+      ? `/api/hisab/win-amount-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`
+      : `/api/hisab/game-hisab-history?date=${encodeURIComponent(dateStr)}&uid=${currentCustUID}`;
     const r = await API.get(endpoint);
     if (!r?.success || !r.data?.length) {
       document.getElementById('bodyHist').innerHTML = '<tr><td colspan="11" class="emsg">No Data Found!</td></tr>';

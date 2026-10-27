@@ -44,6 +44,210 @@ tbody tr{cursor:pointer;}
 /* Vendor theme reserves 62px above .content for a second header row this
    app doesn't render — page-scoped so it doesn't affect other pages. */
 .main-panel>.content{margin-top:50px!important;padding-top:8px!important;}
+
+/* ── Mobile Optimization for Balance Page & Tables ──
+   Minimises extra margins, paddings, and column gaps so that tables
+   fit cleanly across mobile screens with minimal or zero scrolling */
+@media (max-width: 768px) {
+  /* Slim blue header with hamburger */
+  .main-header,
+  .logo-header {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 8px !important;
+  }
+  .logo-header {
+    display: flex !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+  .logo-header .navbar-toggler {
+    order: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 38px !important;
+    padding: 0 !important;
+    margin: 0 auto 0 0 !important;
+    border: none !important;
+    background: transparent !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+  }
+  .logo-header .navbar-toggler-icon i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+    display: block !important;
+  }
+  .logo-header .logo {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 1.5px !important;
+    line-height: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #fff !important;
+  }
+  .logo-header .more {
+    order: 3 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    width: 36px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    line-height: 1 !important;
+  }
+  .logo-header .more i {
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    color: #fff !important;
+  }
+
+  .main-panel > .content {
+    margin-top: 40px !important;
+    padding: 4px 6px !important;
+  }
+  .content .card {
+    margin-bottom: 8px !important;
+    border-radius: 6px !important;
+  }
+  .content .card-header {
+    padding: 6px 10px !important;
+  }
+  .content .card-title {
+    font-size: 0.92rem !important;
+    margin: 0 !important;
+  }
+  .content .card-body {
+    padding: 6px 8px !important;
+  }
+  .content .card-body .form-group {
+    margin-bottom: 4px !important;
+  }
+  .content .form-control {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.82rem !important;
+  }
+  #txtStartDate {
+    max-width: 100% !important;
+  }
+
+  /* Date & Action buttons layout on mobile */
+  .col-md-9[style*="display:flex"] {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-bottom: 0.5rem !important;
+    align-items: center !important;
+  }
+  .col-md-9[style*="display:flex"] .btn {
+    padding: 5px 10px !important;
+    font-size: 0.78rem !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    flex: 1 1 auto !important;
+  }
+  .col-md-9[style*="display:flex"] .btn:last-child {
+    margin-left: 0 !important;
+    flex: 1 1 100% !important;
+  }
+
+  /* Table container: zero out surrounding space and shadows */
+  .table-responsive {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Compact table styling: minimise cell padding and column gaps */
+  .content table {
+    width: 100% !important;
+    min-width: 100% !important;
+    table-layout: auto !important;
+  }
+  .content table th {
+    padding: 5px 3px !important;
+    font-size: 0.78rem !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.2px !important;
+  }
+  .content table td {
+    padding: 4px 3px !important;
+    font-size: 0.80rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.15px !important;
+  }
+  /* Column 1: SRNo — ultra-compact */
+  .content table th:first-child,
+  .content table td:first-child {
+    width: 28px !important;
+    max-width: 32px !important;
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+    text-align: center !important;
+  }
+  /* Column 2: Customer / Name / Total — readable with comfortable spacing */
+  .content table th:nth-child(2),
+  .content table td:nth-child(2) {
+    text-align: left !important;
+    padding-left: 5px !important;
+    padding-right: 4px !important;
+    word-break: break-word;
+  }
+  /* Number columns (Opening, Today, Balance): compact padding */
+  .content table th:nth-child(3),
+  .content table td:nth-child(3),
+  .content table th:nth-child(4),
+  .content table td:nth-child(4),
+  .content table th:nth-child(5),
+  .content table td:nth-child(5) {
+    white-space: nowrap !important;
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+  }
+  /* Subuser ADD button */
+  .btn-add {
+    height: 24px !important;
+    width: 38px !important;
+    font-size: 0.72rem !important;
+    padding: 0 !important;
+    line-height: 24px !important;
+  }
+
+  /* History & Summary modals on mobile */
+  #summaryModal .modal-dialog,
+  #histModal .modal-dialog,
+  #txnModal .modal-dialog {
+    margin: 0.5rem auto !important;
+    width: 98vw !important;
+    max-width: 98vw !important;
+  }
+  #summaryModal .modal-body,
+  #histModal .modal-body {
+    padding: 6px !important;
+  }
+}
 </style>
 </head>
 <body>
